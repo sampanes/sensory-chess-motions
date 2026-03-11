@@ -69,11 +69,12 @@ function pieceDescription(type: PieceType) {
 }
 
 function getDecoration(r: number, c: number): string | null {
-  const hash = (r * 7 + c * 13) % 20;
-  if (hash === 3) return '🌱';
-  if (hash === 7) return '🌼';
-  if (hash === 11) return '🍀';
-  if (hash === 15) return '🌿';
+  // Using a larger prime and bitwise XOR creates more "chaos" in a small grid
+  const hash = Math.abs((r * 31) ^ (c * 37)) % 10; 
+  if (hash === 1) return '🌱';
+  if (hash === 2) return '🌼';
+  if (hash === 3) return '🍀';
+  if (hash === 4) return '🌿';
   return null;
 }
 
