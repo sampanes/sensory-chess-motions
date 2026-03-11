@@ -67,12 +67,17 @@ export const levels: Level[] = [
     goal: { row: 0, col: 4 },
     obstacles: {
       fences: [
-        { row: 3, col: 1, side: 'top' },
-        { row: 1, col: 3, side: 'bottom' },
-        { row: 2, col: 2, side: 'left' }
+        { row: 3, col: 3, side: 'left' },
+        { row: 3, col: 3, side: 'left' },
       ],
-      rivers: [],
-      bridges: [],
+      rivers: [
+        { row: 2, col: 0 },
+        { row: 2, col: 1 },
+        { row: 2, col: 3 },
+      ],
+      bridges: [
+        { row: 2, col: 2 },        
+      ],
     },
     starThresholds: { three: 3, two: 5 },
     hint: 'Try a diagonal move to the center, then a straight move to clear the fences.',
