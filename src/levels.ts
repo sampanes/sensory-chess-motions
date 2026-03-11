@@ -64,11 +64,11 @@ export const levels: Level[] = [
     description: 'The Queen must weave through a forest of fences.',
     pieceType: 'queen',
     start: { row: 4, col: 0 },
-    goal: { row: 0, col: 4 },
+    goal: { row: 2, col: 4 },
     obstacles: {
       fences: [
         { row: 3, col: 3, side: 'left' },
-        { row: 3, col: 3, side: 'left' },
+        { row: 4, col: 3, side: 'left' },
       ],
       rivers: [
         { row: 2, col: 0 },
