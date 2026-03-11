@@ -65,6 +65,26 @@ export const ChessPieceIcon = ({ type, size = 48 }: ChessPieceIconProps) => {
             </g>
           </svg>
         );
+        
+      default:
+        return (
+          <svg width={size} height={size} viewBox="0 0 45 45">
+            <g fill="#fff" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {/* Stylized Question Mark */}
+              <path 
+                d="M17.5 15.5c0-3 2.5-5.5 5-5.5s5 2.5 5 5.5c0 3-2.5 4.5-5 5.5v3" 
+                fill="none" 
+              />
+              <circle cx="22.5" cy="30" r="1.5" fill="#222" stroke="none" />
+              
+              {/* Subtle "Thinking" Cloud or Base to match other pieces */}
+              <path 
+                d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.46 3-2 3-2z" 
+                opacity="0.5"
+              />
+            </g>
+          </svg>
+        );
     }
   };
 
