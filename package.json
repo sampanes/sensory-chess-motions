@@ -1,6 +1,7 @@
 {
-  "name": "react-vite-tailwind",
+  "name": "sensory-chess-motions",
   "private": true,
+  "homepage": "https://sampanes.github.io/sensory-chess-motions/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
