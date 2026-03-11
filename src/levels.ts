@@ -61,26 +61,27 @@ export const levels: Level[] = [
   {
     id: 4,
     name: 'The Grand Slalom',
-    description: 'The Queen must weave through a forest of fences.',
+    description: 'The Queen must weave through rivers and fences.',
     pieceType: 'queen',
     start: { row: 4, col: 0 },
-    goal: { row: 2, col: 4 },
+    goal: { row: 0, col: 4 },
     obstacles: {
       fences: [
-        { row: 3, col: 3, side: 'left' },
-        { row: 4, col: 3, side: 'left' },
+        { row: 0, col: 2, side: 'bottom' },
       ],
       rivers: [
         { row: 2, col: 0 },
         { row: 2, col: 1 },
         { row: 2, col: 3 },
+        { row: 1, col: 3 },
+        { row: 1, col: 4 },
       ],
       bridges: [
         { row: 2, col: 2 },        
       ],
     },
     starThresholds: { three: 3, two: 5 },
-    hint: 'Try a diagonal move to the center, then a straight move to clear the fences.',
+    hint: 'Try a diagonal move to the center, then another diagonal to clear the fences.',
   },
   {
     id: 5,
