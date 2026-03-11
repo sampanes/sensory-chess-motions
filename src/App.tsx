@@ -20,7 +20,9 @@ import { getValidMoves, isValidMove } from './utils/moveCalculator';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
 
 const BOARD_SIZE = 5;
-const SQUARE_SIZE = 88;
+const DESKTOP_SQUARE_SIZE = 88;
+const MOBILE_MIN_BOARD_SIZE = 300;
+const MOBILE_SIDE_PADDING = 20;
 
 type CompletionRecord = {
   bestMoves: number;
@@ -83,6 +85,9 @@ function getStarsForLevel(levelIndex: number, moves: number) {
 }
 
 function App() {
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window === 'undefined' ? 1200 : window.innerWidth
+  );
   const [levelIndex, setLevelIndex] = useState(0);
   const [phase, setPhase] = useState<GamePhase>('intro');
   const [piecePos, setPiecePos] = useState<Position>(levels[0].start);
@@ -94,8 +99,30 @@ function App() {
   const [unlockedLevel, setUnlockedLevel] = useState(0);
   const [completedLevels, setCompletedLevels] = useState<Record<number, CompletionRecord>>({});
   const [lastRunStars, setLastRunStars] = useState(0);
+  const [mobileCoach, setMobileCoach] = useState<string | null>(null);
+  const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
+  const [lastActionAt, setLastActionAt] = useState(() => Date.now());
 
   const level = levels[levelIndex];
+  const isMobile = viewportWidth < 768;
+  const boardPixelSize = useMemo(() => {
+    if (!isMobile) return BOARD_SIZE * DESKTOP_SQUARE_SIZE;
+    return Math.max(MOBILE_MIN_BOARD_SIZE, Math.min(viewportWidth - MOBILE_SIDE_PADDING, 520));
+  }, [isMobile, viewportWidth]);
+  const squareSize = boardPixelSize / BOARD_SIZE;
+
+  const triggerHaptic = (pattern: number | number[]) => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const initLevel = useCallback((idx: number) => {
     const lv = levels[idx];
@@ -105,6 +132,9 @@ function App() {
     setShowHint(false);
     setTrail([lv.start]);
     setAnimKey(prev => prev + 1);
+    setMobileCoach(null);
+    setSuggestedMove(null);
+    setLastActionAt(Date.now());
   }, []);
 
   const openLevel = useCallback(
@@ -119,16 +149,35 @@ function App() {
   const handleStart = () => {
     setPhase('playing');
     initLevel(levelIndex);
+    setLastActionAt(Date.now());
   };
 
   const handleSquareClick = (row: number, col: number) => {
     if (phase !== 'playing') return;
 
-    if (!isValidMove(validMoves, row, col)) return;
+    setLastActionAt(Date.now());
+
+    if (!isValidMove(validMoves, row, col)) {
+      if (isMobile && validMoves.length > 0) {
+        const nearest = validMoves.reduce((best, candidate) => {
+          const bestDistance = Math.abs(best.row - row) + Math.abs(best.col - col);
+          const candidateDistance = Math.abs(candidate.row - row) + Math.abs(candidate.col - col);
+          return candidateDistance < bestDistance ? candidate : best;
+        }, validMoves[0]);
+
+        setSuggestedMove(nearest);
+        setMobileCoach('Try one of the glowing circles ✨');
+        triggerHaptic(24);
+      }
+      return;
+    }
 
     const newPos = { row, col };
     const nextMoveCount = moveCount + 1;
 
+    setSuggestedMove(null);
+    setMobileCoach(null);
+    triggerHaptic(10);
     setPiecePos(newPos);
     setMoveCount(nextMoveCount);
     setTrail(prev => [...prev, newPos]);
@@ -152,6 +201,7 @@ function App() {
         return { ...prev, [levelIndex]: updated };
       });
       setUnlockedLevel(prev => Math.max(prev, Math.min(levelIndex + 1, levels.length - 1)));
+      triggerHaptic([25, 35, 25]);
       setTimeout(() => {
         setPhase('celebration');
       }, 600);
@@ -164,6 +214,17 @@ function App() {
     }
   }, [phase, piecePos, level.pieceType, level.obstacles]);
 
+  useEffect(() => {
+    if (!isMobile || phase !== 'playing' || showHint) return;
+
+    const idleTimer = window.setTimeout(() => {
+      setShowHint(true);
+      setMobileCoach('Need help? I popped open the hint for you 💡');
+    }, 10000);
+
+    return () => window.clearTimeout(idleTimer);
+  }, [isMobile, phase, showHint, lastActionAt]);
+
   const handleNext = () => {
     if (levelIndex + 1 < levels.length) {
       openLevel(levelIndex + 1, 'intro');
@@ -174,6 +235,7 @@ function App() {
 
   const handleReset = () => {
     initLevel(levelIndex);
+    setLastActionAt(Date.now());
   };
 
   const handleRetryLevel = () => {
@@ -204,6 +266,7 @@ function App() {
     level.obstacles.fences.some(f => f.row === r && f.col === c && f.side === side);
   const isValid = (r: number, c: number) => validMoves.some(m => m.row === r && m.col === c);
   const isPiece = (r: number, c: number) => piecePos.row === r && piecePos.col === c;
+  const controlButtonSizeClass = isMobile ? 'min-h-12 py-3 px-5 text-base' : 'py-2.5 px-5 text-sm';
 
   const getSquareClasses = (r: number, c: number) => {
     if (isRiver(r, c) && !isBridge(r, c)) return 'bg-blue-400';
@@ -255,7 +318,7 @@ function App() {
               key={lv.id}
               onClick={() => !locked && openLevel(i, 'intro')}
               disabled={locked}
-              className={`rounded-xl border p-2 text-left transition-all ${
+              className={`rounded-xl border ${isMobile ? 'p-3' : 'p-2'} text-left transition-all ${
                 locked
                   ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                   : i === levelIndex
@@ -271,7 +334,7 @@ function App() {
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
                 ) : null}
               </div>
-              <div className="text-xs font-semibold text-gray-700 truncate">{lv.name}</div>
+              <div className={`${isMobile ? 'text-sm' : 'text-xs'} font-semibold text-gray-700 truncate`}>{lv.name}</div>
               <div className="mt-1 flex items-center justify-between">
                 <span className="text-[10px] text-gray-500">{pieceEmoji(lv.pieceType)}</span>
                 <div className="flex gap-0.5">
@@ -587,7 +650,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100 flex flex-col items-center justify-center p-4 select-none">
+    <div
+      className="min-h-screen bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100 flex flex-col items-center justify-center p-4 select-none"
+      style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+    >
       <motion.div className="w-full max-w-xl mb-4" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
         <div className="flex justify-center mb-3">
           <ProgressBar />
@@ -618,7 +684,7 @@ function App() {
 
       <motion.div
         className="relative rounded-2xl shadow-2xl overflow-hidden border-4 border-amber-700"
-        style={{ width: `${BOARD_SIZE * SQUARE_SIZE}px`, height: `${BOARD_SIZE * SQUARE_SIZE}px` }}
+        style={{ width: `${boardPixelSize}px`, height: `${boardPixelSize}px` }}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
@@ -632,6 +698,7 @@ function App() {
             const bridge = isBridge(r, c);
             const goal = isGoal(r, c);
             const valid = isValid(r, c);
+            const suggested = suggestedMove?.row === r && suggestedMove?.col === c;
             const piece = isPiece(r, c);
             const inTrail = isTrail(r, c) && !piece;
             const decoration = !river && !bridge && !goal && !piece ? getDecoration(r, c) : null;
@@ -640,7 +707,7 @@ function App() {
               <motion.div
                 key={`${r}-${c}`}
                 className={`relative ${getSquareClasses(r, c)} ${valid ? 'cursor-pointer' : ''}`}
-                style={{ width: `${SQUARE_SIZE}px`, height: `${SQUARE_SIZE}px` }}
+                style={{ width: `${squareSize}px`, height: `${squareSize}px` }}
                 onClick={() => handleSquareClick(r, c)}
                 whileHover={valid ? { scale: 1.03 } : {}}
               >
@@ -719,7 +786,11 @@ function App() {
                   >
                     <motion.div
                       className={`rounded-full border-2 ${
-                        goal ? 'w-10 h-10 bg-green-300/50 border-green-400' : 'w-5 h-5 bg-yellow-300/60 border-yellow-400/80'
+                        goal
+                          ? 'w-10 h-10 bg-green-300/50 border-green-400'
+                          : isMobile
+                          ? 'w-7 h-7 bg-yellow-300/70 border-yellow-300'
+                          : 'w-5 h-5 bg-yellow-300/60 border-yellow-400/80'
                       }`}
                       animate={{
                         boxShadow: goal
@@ -733,7 +804,7 @@ function App() {
                               '0 0 14px rgba(250,204,21,0.6)',
                               '0 0 6px rgba(250,204,21,0.3)',
                             ],
-                        scale: [1, 1.12, 1],
+                        scale: suggested ? [1, 1.35, 1] : [1, 1.12, 1],
                       }}
                       transition={{ duration: 1.2, repeat: Infinity }}
                     />
@@ -791,8 +862,8 @@ function App() {
 
         <motion.div
           className="absolute z-10 pointer-events-none"
-          style={{ width: `${SQUARE_SIZE}px`, height: `${SQUARE_SIZE}px` }}
-          animate={{ left: piecePos.col * SQUARE_SIZE, top: piecePos.row * SQUARE_SIZE }}
+          style={{ width: `${squareSize}px`, height: `${squareSize}px` }}
+          animate={{ left: piecePos.col * squareSize, top: piecePos.row * squareSize }}
           transition={
             level.pieceType === 'knight'
               ? { type: 'spring', stiffness: 160, damping: 16 }
@@ -815,7 +886,7 @@ function App() {
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <ChessPieceIcon type={level.pieceType} size={SQUARE_SIZE * 0.7} />
+              <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
             </motion.div>
           </motion.div>
         </motion.div>
@@ -829,7 +900,7 @@ function App() {
       >
         <motion.button
           onClick={() => openLevel(levelIndex, 'intro')}
-          className="bg-white/80 hover:bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-xl shadow-md flex items-center gap-2 text-sm border border-gray-200 cursor-pointer"
+          className={`bg-white/80 hover:bg-white text-gray-700 font-semibold rounded-xl shadow-md flex items-center gap-2 border border-gray-200 cursor-pointer ${controlButtonSizeClass}`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -839,7 +910,7 @@ function App() {
         {levelIndex > 0 && (
           <motion.button
             onClick={() => openLevel(levelIndex - 1, 'intro')}
-            className="bg-white/80 hover:bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-xl shadow-md flex items-center gap-2 text-sm border border-gray-200 cursor-pointer"
+            className={`bg-white/80 hover:bg-white text-gray-700 font-semibold rounded-xl shadow-md flex items-center gap-2 border border-gray-200 cursor-pointer ${controlButtonSizeClass}`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -849,7 +920,7 @@ function App() {
 
         <motion.button
           onClick={handleReset}
-          className="bg-white/80 hover:bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-xl shadow-md flex items-center gap-2 text-sm border border-gray-200 cursor-pointer"
+          className={`bg-white/80 hover:bg-white text-gray-700 font-semibold rounded-xl shadow-md flex items-center gap-2 border border-gray-200 cursor-pointer ${controlButtonSizeClass}`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -858,7 +929,7 @@ function App() {
 
         <motion.button
           onClick={() => setShowHint(!showHint)}
-          className={`font-semibold py-2.5 px-5 rounded-xl shadow-md flex items-center gap-2 text-sm border cursor-pointer ${
+          className={`font-semibold rounded-xl shadow-md flex items-center gap-2 border cursor-pointer ${controlButtonSizeClass} ${
             showHint
               ? 'bg-yellow-200 text-yellow-900 border-yellow-300'
               : 'bg-yellow-50/80 hover:bg-yellow-100 text-yellow-800 border-yellow-200'
@@ -869,6 +940,19 @@ function App() {
           <HelpCircle className="w-4 h-4" /> Hint
         </motion.button>
       </motion.div>
+
+      <AnimatePresence>
+        {mobileCoach && isMobile && (
+          <motion.div
+            className="mt-3 bg-sky-50 border-2 border-sky-200 rounded-xl py-2.5 px-4 max-w-sm text-sm text-sky-800 shadow-md"
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+          >
+            🤖 {mobileCoach}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showHint && level.hint && (
