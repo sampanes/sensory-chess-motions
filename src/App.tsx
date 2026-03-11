@@ -277,7 +277,7 @@ function App() {
   };
 
   const ProgressBar = () => (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-3">
       {progressData.map((p, i) => (
         <div key={i} className="flex items-center">
           <div
@@ -293,7 +293,7 @@ function App() {
             title={`Level ${i + 1}: ${levels[i].name}`}
           />
           {i < progressData.length - 1 && (
-            <div className={`w-2 h-0.5 ${i < unlockedLevel ? 'bg-green-300' : 'bg-gray-300'}`} />
+            <div className={`w-2 h-0.5 mx-0.5 ${i < unlockedLevel ? 'bg-green-300' : 'bg-gray-300'}`} />
           )}
         </div>
       ))}
