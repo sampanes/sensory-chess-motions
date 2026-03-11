@@ -1,4 +1,4 @@
-export type PieceType = 'rook' | 'bishop' | 'knight';
+export type PieceType = 'queen' | 'rook' | 'bishop' | 'knight';
 
 export type Position = {
   row: number;
