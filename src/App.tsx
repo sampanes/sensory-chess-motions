@@ -29,6 +29,8 @@ type CompletionRecord = {
 
 function pieceEmoji(type: PieceType) {
   switch (type) {
+    case 'queen':
+      return '👸';
     case 'rook':
       return '🏰';
     case 'bishop':
@@ -40,6 +42,8 @@ function pieceEmoji(type: PieceType) {
 
 function pieceName(type: PieceType) {
   switch (type) {
+    case 'queen':
+      return 'Queen';
     case 'rook':
       return 'Rook';
     case 'bishop':
@@ -51,6 +55,8 @@ function pieceName(type: PieceType) {
 
 function pieceDescription(type: PieceType) {
   switch (type) {
+    case 'queen':
+      return 'Can go up, down, left, right, or cormer to corner!';
     case 'rook':
       return 'Slides straight — up, down, left, right';
     case 'bishop':
@@ -532,6 +538,7 @@ function App() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
             <div className="grid grid-cols-3 gap-4">
               {[
+                { type: 'queen' as PieceType, label: 'Queen', desc: 'Straight or Diagonal' },
                 { type: 'rook' as PieceType, label: 'Rook', desc: 'Straight lines' },
                 { type: 'bishop' as PieceType, label: 'Bishop', desc: 'Diagonals' },
                 { type: 'knight' as PieceType, label: 'Knight', desc: 'L-shaped jumps' },
