@@ -72,6 +72,7 @@ export const levels: Level[] = [
       rivers: [
         { row: 2, col: 0 },
         { row: 2, col: 1 },
+        { row: 2, col: 2 },  
         { row: 2, col: 3 },
         { row: 1, col: 3 },
         { row: 1, col: 4 },
@@ -81,7 +82,7 @@ export const levels: Level[] = [
       ],
     },
     starThresholds: { three: 3, two: 5 },
-    hint: 'Try a diagonal move to the center, then another diagonal to clear the fences.',
+    hint: 'Try going straight to the bottom corner, then diagonal to clear the fences.',
   },
   {
     id: 5,
