@@ -354,7 +354,7 @@ function App() {
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-left text-sm text-amber-800">
                 <div className="font-semibold mb-1">Star Goal</div>
                 <div>3 stars: {level.starThresholds.three} move{level.starThresholds.three !== 1 ? 's' : ''}</div>
-                <div>2 stars: {level.starThresholds.two} move{level.starThresholds.two !== 1 ? 's' : ''} or fewer</div>
+                <div>2 stars: {level.starThresholds.two} move{level.starThresholds.two !== 1 ? 's' : ''} or greater</div>
                 {record && (
                   <div className="mt-2 text-green-700 font-medium">
                     Best run: {record.bestMoves} move{record.bestMoves !== 1 ? 's' : ''} · {record.bestStars} star{record.bestStars !== 1 ? 's' : ''}
