@@ -86,6 +86,51 @@ export const getValidMoves = (
   const { row, col } = position;
 
   switch (pieceType) {
+    
+
+    case 'queen': {
+      const directions = [
+        { dr: -1, dc: -1 }, // up-left
+        { dr: -1, dc: 1 },  // up-right
+        { dr: 1, dc: -1 },  // down-left
+        { dr: 1, dc: 1 },   // down-right
+        { dr: -1, dc: 0 }, // up
+        { dr: 1, dc: 0 },  // down
+        { dr: 0, dc: -1 }, // left
+        { dr: 0, dc: 1 },  // right
+      ];
+
+      for (const { dr, dc } of directions) {
+        let cr = row + dr;
+        let cc = col + dc;
+        let prevR = row;
+        let prevC = col;
+
+        while (cr >= 0 && cr < BOARD_SIZE && cc >= 0 && cc < BOARD_SIZE) {
+          if (isFenceBlocking(prevR, prevC, cr, cc, obstacles)) break;
+
+          if (isRiver(cr, cc, obstacles)) {
+            if (isBridge(cr, cc, obstacles)) {
+              prevR = cr;
+              prevC = cc;
+              cr += dr;
+              cc += dc;
+              continue;
+            } else {
+              break;
+            }
+          }
+
+          validMoves.push({ row: cr, col: cc });
+          prevR = cr;
+          prevC = cc;
+          cr += dr;
+          cc += dc;
+        }
+      }
+      break;
+    }
+      
     case 'rook': {
       // Slide in 4 directions, stopped by fences, rivers (unless bridge), or board edge
       const directions = [
