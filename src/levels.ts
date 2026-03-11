@@ -61,8 +61,10 @@ export const levels: Level[] = [
     goal: { row: 0, col: 4 },
     obstacles: {
       fences: [
+        { row: 0, col: 0, side: 'bottom' },
         { row: 3, col: 1, side: 'top' },
         { row: 1, col: 3, side: 'left' },
+        { row: 4, col: 4, side: 'left' },
       ],
       rivers: [],
       bridges: [],
@@ -112,7 +114,7 @@ export const levels: Level[] = [
     description: 'A pond blocks the easy diagonal path.',
     pieceType: 'bishop',
     start: { row: 4, col: 0 },
-    goal: { row: 0, col: 4 },
+    goal: { row: 1, col: 3 },
     obstacles: {
       fences: [],
       rivers: [
@@ -164,7 +166,7 @@ export const levels: Level[] = [
         { row: 2, col: 4 },
       ],
     },
-    starThresholds: { three: 4, two: 5 },
+    starThresholds: { three: 5, two: 6 },
     hint: 'If the longest diagonal is blocked, land on a different color-matching square first.',
   },
   {
@@ -188,7 +190,7 @@ export const levels: Level[] = [
     description: 'Fences do not stop a Knight.',
     pieceType: 'knight',
     start: { row: 4, col: 0 },
-    goal: { row: 0, col: 4 },
+    goal: { row: 1, col: 3 },
     obstacles: {
       fences: [
         { row: 3, col: 0, side: 'top' },
@@ -209,7 +211,7 @@ export const levels: Level[] = [
     description: 'Jump over the river and land safely on the other side!',
     pieceType: 'knight',
     start: { row: 4, col: 2 },
-    goal: { row: 0, col: 3 },
+    goal: { row: 1, col: 1 },
     obstacles: {
       fences: [],
       rivers: [
@@ -229,7 +231,7 @@ export const levels: Level[] = [
     name: 'Bridge and Fence Picnic',
     description: 'The Knight ignores both fences and rivers while it hops.',
     pieceType: 'knight',
-    start: { row: 4, col: 4 },
+    start: { row: 4, col: 3 },
     goal: { row: 1, col: 0 },
     obstacles: {
       fences: [
@@ -266,7 +268,7 @@ export const levels: Level[] = [
       ],
       bridges: [],
     },
-    starThresholds: { three: 2, two: 3 },
-    hint: 'Look for a two-jump route: one hop to set up, and one hop to finish.',
+    starThresholds: { three: 3, two: 4 },
+    hint: 'Look for a three-jump route: the first hop is tricky, it lands FAR from the goal!',
   },
 ];
