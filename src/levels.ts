@@ -155,10 +155,14 @@ export const levels: Level[] = [
     obstacles: {
       fences: [],
       rivers: [
+        { row: 2, col: 3 },
         { row: 2, col: 2 },
-        { row: 1, col: 1 },
+        { row: 2, col: 1 },
+        { row: 2, col: 0 },
       ],
-      bridges: [],
+      bridges: [
+        { row: 2, col: 4 },
+      ],
     },
     starThresholds: { three: 4, two: 5 },
     hint: 'If the longest diagonal is blocked, land on a different color-matching square first.',
