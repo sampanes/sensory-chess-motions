@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* Custom scrollbar for a softer look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+/* Prevent text selection on game board */
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Grass texture pattern via CSS */
+.grass-light {
+  background-image: radial-gradient(circle at 30% 40%, rgba(0,0,0,0.03) 1px, transparent 1px),
+                     radial-gradient(circle at 70% 60%, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.grass-dark {
+  background-image: radial-gradient(circle at 40% 30%, rgba(0,0,0,0.05) 1px, transparent 1px),
+                     radial-gradient(circle at 60% 70%, rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
