@@ -77,10 +77,16 @@ function isRiverWithoutBridge(row: number, col: number, obstacles: Obstacle): bo
   return isRiver(row, col, obstacles) && !isBridge(row, col, obstacles);
 }
 
+function isActiveFood(row: number, col: number, obstacles: Obstacle, consumedFood: Position[]): boolean {
+  return obstacles.food.some(f => f.row === row && f.col === col)
+    && !consumedFood.some(f => f.row === row && f.col === col);
+}
+
 export const getValidMoves = (
   pieceType: PieceType,
   position: Position,
-  obstacles: Obstacle
+  obstacles: Obstacle,
+  consumedFood: Position[] = []
 ): Position[] => {
   const validMoves: Position[] = [];
   const { row, col } = position;
@@ -121,6 +127,11 @@ export const getValidMoves = (
             }
           }
 
+          if (isActiveFood(cr, cc, obstacles, consumedFood)) {
+            validMoves.push({ row: cr, col: cc });
+            break;
+          }
+
           validMoves.push({ row: cr, col: cc });
           prevR = cr;
           prevC = cc;
@@ -130,7 +141,7 @@ export const getValidMoves = (
       }
       break;
     }
-      
+
     case 'rook': {
       // Slide in 4 directions, stopped by fences, rivers (unless bridge), or board edge
       const directions = [
@@ -163,6 +174,11 @@ export const getValidMoves = (
               // Blocked by river without bridge
               break;
             }
+          }
+
+          if (isActiveFood(cr, cc, obstacles, consumedFood)) {
+            validMoves.push({ row: cr, col: cc });
+            break;
           }
 
           validMoves.push({ row: cr, col: cc });
@@ -204,6 +220,11 @@ export const getValidMoves = (
             }
           }
 
+          if (isActiveFood(cr, cc, obstacles, consumedFood)) {
+            validMoves.push({ row: cr, col: cc });
+            break;
+          }
+
           validMoves.push({ row: cr, col: cc });
           prevR = cr;
           prevC = cc;
@@ -236,6 +257,45 @@ export const getValidMoves = (
           validMoves.push({ row: nr, col: nc });
         }
       }
+      break;
+    }
+
+    case 'pawn': {
+      const forwardRow = row - 1;
+
+      // One square forward — only if no active food blocking it
+      if (forwardRow >= 0) {
+        if (!isFenceBlocking(row, col, forwardRow, col, obstacles)
+          && !isRiverWithoutBridge(forwardRow, col, obstacles)
+          && !isActiveFood(forwardRow, col, obstacles, consumedFood)) {
+          validMoves.push({ row: forwardRow, col: col });
+
+          // Two squares from back rank — only if one-square move was also clear
+          if (row === 4) {
+            const twoForwardRow = row - 2;
+            if (twoForwardRow >= 0
+              && !isFenceBlocking(forwardRow, col, twoForwardRow, col, obstacles)
+              && !isRiverWithoutBridge(twoForwardRow, col, obstacles)
+              && !isActiveFood(twoForwardRow, col, obstacles, consumedFood)) {
+              validMoves.push({ row: twoForwardRow, col: col });
+            }
+          }
+        }
+      }
+
+      // Diagonal food eating: (-1, -1) and (-1, +1)
+      for (const dc of [-1, 1]) {
+        const nr = row - 1;
+        const nc = col + dc;
+        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+          if (!isFenceBlocking(row, col, nr, nc, obstacles)
+            && !isRiverWithoutBridge(nr, nc, obstacles)
+            && isActiveFood(nr, nc, obstacles, consumedFood)) {
+            validMoves.push({ row: nr, col: nc });
+          }
+        }
+      }
+
       break;
     }
   }

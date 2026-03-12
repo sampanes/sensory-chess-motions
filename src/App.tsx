@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
-import { Position, GamePhase, PieceType } from './types';
+import { Position, GamePhase, PieceType, Food } from './types';
 import { levels } from './levels';
 import { getValidMoves, isValidMove } from './utils/moveCalculator';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
@@ -39,6 +39,8 @@ function pieceEmoji(type: PieceType) {
       return '⛪';
     case 'knight':
       return '🐴';
+    case 'pawn':
+      return '♟️';
   }
 }
 
@@ -52,6 +54,8 @@ function pieceName(type: PieceType) {
       return 'Bishop';
     case 'knight':
       return 'Knight';
+    case 'pawn':
+      return 'Pawn';
   }
 }
 
@@ -65,6 +69,8 @@ function pieceDescription(type: PieceType) {
       return 'Slides diagonally — corner to corner';
     case 'knight':
       return 'Jumps in a 2-and-1 L-shape — over anything!';
+    case 'pawn':
+      return 'Marches forward — eats food diagonally!';
   }
 }
 
@@ -76,6 +82,26 @@ function getDecoration(r: number, c: number): string | null {
   if (hash === 3) return '🍀';
   if (hash === 4) return '🌿';
   return null;
+}
+
+function isFoodConsumed(pos: Position, consumed: Food[]): boolean {
+  return consumed.some(f => f.row === pos.row && f.col === pos.col);
+}
+
+function playCrunchSound() {
+  const ctx = new AudioContext();
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.4, ctx.currentTime);
+  source.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
 }
 
 function getStarsForLevel(levelIndex: number, moves: number) {
@@ -103,6 +129,7 @@ function App() {
   const [mobileCoach, setMobileCoach] = useState<string | null>(null);
   const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
   const [lastActionAt, setLastActionAt] = useState(() => Date.now());
+  const [consumedFood, setConsumedFood] = useState<Food[]>([]);
 
   const level = levels[levelIndex];
   const isMobile = viewportWidth < 768;
@@ -136,6 +163,7 @@ function App() {
     setMobileCoach(null);
     setSuggestedMove(null);
     setLastActionAt(Date.now());
+    setConsumedFood([]);
   }, []);
 
   const openLevel = useCallback(
@@ -184,6 +212,12 @@ function App() {
     setTrail(prev => [...prev, newPos]);
     setAnimKey(prev => prev + 1);
 
+    const eatenFood = level.obstacles.food.find(f => f.row === row && f.col === col);
+    if (eatenFood) {
+      setConsumedFood(prev => [...prev, eatenFood]);
+      playCrunchSound();
+    }
+
     if (row === level.goal.row && col === level.goal.col) {
       const earnedStars = getStarsForLevel(levelIndex, nextMoveCount);
       setLastRunStars(earnedStars);
@@ -211,7 +245,7 @@ function App() {
 
   useEffect(() => {
     if (phase === 'playing') {
-      setValidMoves(getValidMoves(level.pieceType, piecePos, level.obstacles));
+      setValidMoves(getValidMoves(level.pieceType, piecePos, level.obstacles, consumedFood));
     }
   }, [phase, piecePos, level.pieceType, level.obstacles]);
 
@@ -767,6 +801,24 @@ function App() {
                   </motion.div>
                 )}
 
+                <AnimatePresence>
+                  {level.obstacles.food.some(f => f.row === r && f.col === c)
+                    && !isFoodConsumed({ row: r, col: c }, consumedFood)
+                    && !(level.goal.row === r && level.goal.col === c)
+                    && (
+                      <motion.span
+                        key={`food-${r}-${c}`}
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
+                        initial={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 1.8, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        style={{ fontSize: squareSize * 0.7 }}
+                      >
+                        🍎
+                      </motion.span>
+                    )}
+                </AnimatePresence>
+
                 {goal && !piece && (
                   <motion.div
                     className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -990,6 +1042,11 @@ function App() {
         {level.obstacles.fences.length > 0 && (
           <span className="flex items-center gap-1.5">
             <span className="w-5 h-1.5 rounded bg-amber-800 inline-block" /> Fence
+          </span>
+        )}
+        {level.obstacles.food.length > 0 && (
+          <span className="flex items-center gap-1.5">
+            🍎 Food
           </span>
         )}
         <span className="flex items-center gap-1.5">

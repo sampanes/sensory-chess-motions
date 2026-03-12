@@ -1,4 +1,4 @@
-export type PieceType = 'queen' | 'rook' | 'bishop' | 'knight';
+export type PieceType = 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn';
 
 export type Position = {
   row: number;
@@ -26,10 +26,17 @@ export type Bridge = {
   col: number;
 };
 
+// A food item occupies a cell — sliding pieces stop on it (consuming it), then can pass next turn
+export type Food = {
+  row: number;
+  col: number;
+};
+
 export type Obstacle = {
   fences: Fence[];
   rivers: RiverCell[];
   bridges: Bridge[];
+  food: Food[];
 };
 
 export type Level = {

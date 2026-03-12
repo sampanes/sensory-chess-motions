@@ -65,7 +65,18 @@ export const ChessPieceIcon = ({ type, size = 48 }: ChessPieceIconProps) => {
             </g>
           </svg>
         );
-        
+
+      case 'pawn':
+        return (
+          <svg width={size} height={size} viewBox="0 0 45 45">
+            <g fill="#fff" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="22.5" cy="11" r="5.5" />
+              <path d="M16 21c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6c0 2.5-1.5 4.7-3.7 5.7L27 35H18l1.7-8.3C17.5 25.7 16 23.5 16 21z" />
+              <rect x="13" y="35" width="19" height="3" rx="1" />
+            </g>
+          </svg>
+        );
+
       default:
         return (
           <svg width={size} height={size} viewBox="0 0 45 45">
