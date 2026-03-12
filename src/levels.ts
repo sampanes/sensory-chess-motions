@@ -441,7 +441,7 @@ export const levels: Level[] = [
       ],
     },
     starThresholds: { three: 4, two: 6 },
-    hint: 'Eat diagonally left, but don't eat the next one or you'll be blocked!',
+    hint: 'Eat diagonally left, and then avoid getting blocked!',
   },
   {
     id: 22,
