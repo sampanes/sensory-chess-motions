@@ -261,7 +261,6 @@ export const levels: Level[] = [
     goal: { row: 0, col: 1 },
     obstacles: {
       fences: [
-        { row: 1, col: 2, side: 'top' },
         { row: 1, col: 3, side: 'top' },
         { row: 1, col: 3, side: 'right' },
         { row: 2, col: 3, side: 'right' },
@@ -276,8 +275,7 @@ export const levels: Level[] = [
         { row: 1, col: 2 },
         { row: 1, col: 1 },
         { row: 2, col: 1 },
-        { row: 3, col: 1 },
-        { row: 3, col: 0 },
+        { row: 2, col: 0 },
       ],
       bridges: [],
     },
