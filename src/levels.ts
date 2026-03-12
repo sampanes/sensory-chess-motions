@@ -437,10 +437,11 @@ export const levels: Level[] = [
       food: [
         { row: 3, col: 1 },
         { row: 2, col: 2 },
+        { row: 1, col: 2 },
       ],
     },
     starThresholds: { three: 4, two: 6 },
-    hint: 'Eat diagonally left, then eat diagonally right to get back on track!',
+    hint: 'Eat diagonally left, but don't eat the next one or you'll be blocked!',
   },
   {
     id: 22,
