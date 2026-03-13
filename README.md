@@ -3,6 +3,8 @@
 A visually engaging, interactive chess adventure designed to teach the fundamental movements of chess pieces through a series of "nature trail" puzzles. 
 
 **[Live Demo](https://sampanes.github.io/sensory-chess-motions/)**
+**[Cheat Mode](https://sampanes.github.io/sensory-chess-motions/?cheat)** — start with all levels unlocked
+**[Level Creator](https://sampanes.github.io/sensory-chess-motions/?creator)** — build and export custom levels
 
 ## 🧩 The Game
 Navigate your chess piece across a 5x5 grid to reach the red flag. Each level introduces different terrains and obstacles that test your understanding of how pieces move.
