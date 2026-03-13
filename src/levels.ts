@@ -2,7 +2,6 @@ import { Level } from './types';
 
 export const levels: Level[] = [
   {
-    id: 1,
     name: 'The Royal Path',
     description: 'The Queen can move any way she likes!',
     pieceType: 'queen',
@@ -18,7 +17,6 @@ export const levels: Level[] = [
     hint: 'A Queen can move like a Rook or a Bishop. Go straight there in one diagonal slide!',
   },
   {
-    id: 2,
     name: 'The Crown’s Detour',
     description: 'A long fence blocks the direct diagonal. Use your Rook moves!',
     pieceType: 'queen',
@@ -37,7 +35,6 @@ export const levels: Level[] = [
     hint: 'If you can’t slide diagonally through the fence, try moving straight up and then left.',
   },
   {
-    id: 3,
     name: 'The Queen’s Moat',
     description: 'The river is wide, but the Queen finds the gap.',
     pieceType: 'queen',
@@ -62,7 +59,6 @@ export const levels: Level[] = [
     hint: 'Use a diagonal move to reach a bridge, cross it, and slide back to the center.',
   },
   {
-    id: 4,
     name: 'The Grand Slalom',
     description: 'The Queen must weave through rivers and fences.',
     pieceType: 'queen',
@@ -89,7 +85,6 @@ export const levels: Level[] = [
     hint: 'Try going straight to the bottom corner, then diagonal to clear the fences.',
   },
   {
-    id: 5,
     name: 'The Castle Road',
     description: 'Guide the Rook straight up to the flag!',
     pieceType: 'rook',
@@ -105,7 +100,6 @@ export const levels: Level[] = [
     hint: 'The Rook moves in straight lines — up, down, left, or right.',
   },
   {
-    id: 6,
     name: 'Around the Fence',
     description: 'A fence blocks the way — go around it!',
     pieceType: 'rook',
@@ -121,7 +115,6 @@ export const levels: Level[] = [
     hint: 'Move sideways first, then slide up, then come back toward the flag.',
   },
   {
-    id: 7,
     name: 'River Crossing',
     description: 'A river blocks the path. Find the bridge!',
     pieceType: 'rook',
@@ -143,7 +136,6 @@ export const levels: Level[] = [
     hint: 'Slide to the far-right bridge, cross the river, then slide back to the goal.',
   },
   {
-    id: 8,
     name: 'Fence Garden',
     description: 'Two fences make a tiny maze for the Rook.',
     pieceType: 'rook',
@@ -164,7 +156,6 @@ export const levels: Level[] = [
     hint: 'The Rook likes long straight roads. Find the route that lines up the goal.',
   },
   {
-    id: 9,
     name: 'Bridge Parade',
     description: 'A wider river has a bridge in the middle lane.',
     pieceType: 'rook',
@@ -186,7 +177,6 @@ export const levels: Level[] = [
     hint: 'Line up with the center bridge first, then cross.',
   },
   {
-    id: 10,
     name: 'Diagonal Dash',
     description: 'The Bishop slides corner to corner.',
     pieceType: 'bishop',
@@ -202,7 +192,6 @@ export const levels: Level[] = [
     hint: 'Bishops only move diagonally.',
   },
   {
-    id: 11,
     name: 'Zigzag Meadow',
     description: 'A pond blocks the easy diagonal path.',
     pieceType: 'bishop',
@@ -221,7 +210,6 @@ export const levels: Level[] = [
     hint: 'Take a smaller diagonal first, then change direction.',
   },
   {
-    id: 12,
     name: 'Bridge Hop',
     description: 'The Bishop can cross the stream through the bridge.',
     pieceType: 'bishop',
@@ -243,7 +231,6 @@ export const levels: Level[] = [
     hint: 'Aim along a diagonal that passes through the center bridge.',
   },
   {
-    id: 13,
     name: 'Mirror Mountain',
     description: 'Bounce diagonally around little obstacles to the far side.',
     pieceType: 'bishop',
@@ -266,7 +253,6 @@ export const levels: Level[] = [
     hint: 'If the longest diagonal is blocked, land on a different color-matching square first.',
   },
   {
-    id: 14,
     name: 'The Horse Jump',
     description: 'The Knight jumps in an L-shape.',
     pieceType: 'knight',
@@ -297,7 +283,6 @@ export const levels: Level[] = [
     hint: 'Two squares one way and one square sideways makes an L.',
   },
   {
-    id: 15,
     name: 'Leaping the Fence',
     description: 'Fences do not stop a Knight.',
     pieceType: 'knight',
@@ -319,7 +304,6 @@ export const levels: Level[] = [
     hint: 'Jump over the fence line and keep aiming for the corner.',
   },
   {
-    id: 16,
     name: 'River Jumper',
     description: 'Jump over the river and land safely on the other side!',
     pieceType: 'knight',
@@ -341,7 +325,6 @@ export const levels: Level[] = [
     hint: 'Knights can jump over the river row. Try landing on the top half of the board first.',
   },
   {
-    id: 17,
     name: 'Bridge and Fence Picnic',
     description: 'The Knight ignores both fences and rivers while it hops.',
     pieceType: 'knight',
@@ -366,7 +349,6 @@ export const levels: Level[] = [
     hint: 'Hop to the top side, then land on the flag square in one more jump.',
   },
   {
-    id: 18,
     name: 'Knight Parade',
     description: 'A longer hopping path for your final adventure.',
     pieceType: 'knight',
@@ -388,7 +370,6 @@ export const levels: Level[] = [
     hint: 'Look for a three-jump route: the first hop is tricky, it lands FAR from the goal!',
   },
   {
-    id: 19,
     name: 'First Steps',
     description: 'The Pawn marches straight toward the goal!',
     pieceType: 'pawn',
@@ -404,7 +385,6 @@ export const levels: Level[] = [
     hint: 'From the back rank, a pawn can move one or two squares forward. March straight up!',
   },
   {
-    id: 20,
     name: 'Harvest Time',
     description: 'Food blocks the straight path — eat it diagonally!',
     pieceType: 'pawn',
@@ -424,7 +404,6 @@ export const levels: Level[] = [
     hint: 'Pawns eat food diagonally — step left or right to grab the apple, then keep going!',
   },
   {
-    id: 21,
     name: 'The Long Road',
     description: 'Food blocks the straight path — eat your way back on track!',
     pieceType: 'pawn',
@@ -444,7 +423,6 @@ export const levels: Level[] = [
     hint: 'Eat diagonally left, and then avoid getting blocked!',
   },
   {
-    id: 22,
     name: 'Feast or Famine',
     description: 'Eat the first apple to unlock the path forward.',
     pieceType: 'pawn',
@@ -463,7 +441,6 @@ export const levels: Level[] = [
     hint: 'Eat diagonally to shift your column, then eat again to reach the right side.',
   },
   {
-    id: 23,
     name: "Pawn's Puzzle",
     description: 'Fences, food, and a long journey — put it all together!',
     pieceType: 'pawn',

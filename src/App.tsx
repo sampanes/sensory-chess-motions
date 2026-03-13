@@ -123,8 +123,16 @@ function App() {
   const [showHint, setShowHint] = useState(false);
   const [trail, setTrail] = useState<Position[]>([]);
   const [animKey, setAnimKey] = useState(0);
-  const [unlockedLevel, setUnlockedLevel] = useState(0);
-  const [completedLevels, setCompletedLevels] = useState<Record<number, CompletionRecord>>({});
+  const isCheatMode = new URLSearchParams(window.location.search).has('cheat');
+  const [unlockedLevel, setUnlockedLevel] = useState(() =>
+    isCheatMode ? levels.length - 1 : 0
+  );
+  const [completedLevels, setCompletedLevels] = useState<Record<number, CompletionRecord>>(() => {
+    if (!isCheatMode) return {};
+    return Object.fromEntries(
+      levels.map((_, i) => [i, { bestMoves: 1, bestStars: 3 }])
+    );
+  });
   const [lastRunStars, setLastRunStars] = useState(0);
   const [mobileCoach, setMobileCoach] = useState<string | null>(null);
   const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
@@ -350,7 +358,7 @@ function App() {
           const locked = i > unlockedLevel;
           return (
             <button
-              key={lv.id}
+              key={i}
               onClick={() => !locked && openLevel(i, 'intro')}
               disabled={locked}
               className={`rounded-xl border ${isMobile ? 'p-3' : 'p-2'} text-left transition-all ${
@@ -362,7 +370,7 @@ function App() {
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold">#{lv.id}</span>
+                <span className="text-xs font-bold">#{i + 1}</span>
                 {locked ? (
                   <Lock className="w-3.5 h-3.5" />
                 ) : record ? (
@@ -442,7 +450,7 @@ function App() {
               <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-yellow-500" />
                 <span className="text-xs font-semibold text-yellow-600 uppercase tracking-wider">
-                  Level {level.id} of {levels.length}
+                  Level {levelIndex + 1} of {levels.length}
                 </span>
                 <Sparkles className="w-4 h-4 text-yellow-500" />
               </div>
@@ -702,7 +710,7 @@ function App() {
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-gray-800 leading-tight truncate">{level.name}</h2>
               <p className="text-xs text-gray-500">
-                {pieceName(level.pieceType)} · Level {level.id} · 3★ in {level.starThresholds.three}
+                {pieceName(level.pieceType)} · Level {levelIndex + 1} · 3★ in {level.starThresholds.three}
               </p>
             </div>
           </div>
