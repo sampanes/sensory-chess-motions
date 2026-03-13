@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
-import { Position, GamePhase, PieceType, Food } from './types';
+import { Position, GamePhase, PieceType, Food, Level } from './types';
 import { levels } from './levels';
 import { getValidMoves, isValidMove } from './utils/moveCalculator';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
@@ -126,8 +126,16 @@ function playCrunchSound() {
   source.start();
 }
 
-function getStarsForLevel(levelIndex: number, moves: number) {
-  const thresholds = levels[levelIndex].starThresholds;
+const isSandbox = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('sandbox');
+const sandboxLevel: Level | null = (() => {
+  if (!isSandbox) return null;
+  try {
+    const raw = typeof window !== 'undefined' ? sessionStorage.getItem('sandboxLevel') : null;
+    return raw ? (JSON.parse(raw) as Level) : null;
+  } catch { return null; }
+})();
+
+function getStarsForLevel(thresholds: { three: number; two: number }, moves: number) {
   if (moves <= thresholds.three) return 3;
   if (moves <= thresholds.two) return 2;
   return 1;
@@ -139,7 +147,7 @@ function App() {
   );
   const [levelIndex, setLevelIndex] = useState(0);
   const [phase, setPhase] = useState<GamePhase>('intro');
-  const [piecePos, setPiecePos] = useState<Position>(levels[0].start);
+  const [piecePos, setPiecePos] = useState<Position>((sandboxLevel ?? levels[0]).start);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [moveCount, setMoveCount] = useState(0);
   const [showHint, setShowHint] = useState(false);
@@ -162,7 +170,7 @@ function App() {
   const [consumedFood, setConsumedFood] = useState<Food[]>([]);
   const [isStuck, setIsStuck] = useState(false);
 
-  const level = levels[levelIndex];
+  const level = (sandboxLevel ?? levels[levelIndex]);
   const isMobile = viewportWidth < 768;
   const boardPixelSize = useMemo(() => {
     if (!isMobile) return BOARD_SIZE * DESKTOP_SQUARE_SIZE;
@@ -184,7 +192,7 @@ function App() {
   }, []);
 
   const initLevel = useCallback((idx: number) => {
-    const lv = levels[idx];
+    const lv = sandboxLevel ?? levels[idx];
     setPiecePos(lv.start);
     setValidMoves([]);
     setMoveCount(0);
@@ -251,7 +259,7 @@ function App() {
     }
 
     if (row === level.goal.row && col === level.goal.col) {
-      const earnedStars = getStarsForLevel(levelIndex, nextMoveCount);
+      const earnedStars = getStarsForLevel(level.starThresholds, nextMoveCount);
       setLastRunStars(earnedStars);
       setValidMoves([]);
       setCompletedLevels(prev => {
@@ -480,7 +488,7 @@ function App() {
               <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-yellow-500" />
                 <span className="text-xs font-semibold text-yellow-600 uppercase tracking-wider">
-                  Level {levelIndex + 1} of {levels.length}
+                  {isSandbox ? 'Sandbox Mode' : `Level ${levelIndex + 1} of ${levels.length}`}
                 </span>
                 <Sparkles className="w-4 h-4 text-yellow-500" />
               </div>
@@ -514,7 +522,7 @@ function App() {
                   Let&apos;s Go! <ChevronRight className="inline w-6 h-6 ml-1" />
                 </motion.button>
 
-                {levelIndex > 0 && (
+                {levelIndex > 0 && !isSandbox && (
                   <motion.button
                     onClick={() => openLevel(levelIndex - 1, 'intro')}
                     className="bg-white hover:bg-gray-50 text-gray-700 font-bold text-lg py-4 px-6 rounded-2xl shadow-md border border-gray-200 cursor-pointer"
@@ -524,12 +532,24 @@ function App() {
                     <ChevronLeft className="inline w-5 h-5 mr-1" /> Prev
                   </motion.button>
                 )}
+                {isSandbox && (
+                  <motion.button
+                    onClick={() => { window.location.href = window.location.pathname + '?creator'; }}
+                    className="bg-white hover:bg-gray-50 text-indigo-700 font-bold text-lg py-4 px-6 rounded-2xl shadow-md border border-indigo-200 cursor-pointer"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <ChevronLeft className="inline w-5 h-5 mr-1" /> Back to Creator
+                  </motion.button>
+                )}
               </div>
             </div>
 
-            <div className="lg:w-80">
-              <LevelPicker compact />
-            </div>
+            {!isSandbox && (
+              <div className="lg:w-80">
+                <LevelPicker compact />
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -537,7 +557,7 @@ function App() {
   }
 
   if (phase === 'celebration') {
-    const isLastLevel = levelIndex + 1 >= levels.length;
+    const isLastLevel = isSandbox || levelIndex + 1 >= levels.length;
     const nextPieceType = !isLastLevel ? levels[levelIndex + 1].pieceType : null;
     const isNewPieceNext = nextPieceType && nextPieceType !== level.pieceType;
     const showRetry = lastRunStars < 3;
@@ -627,21 +647,35 @@ function App() {
               </motion.button>
             )}
 
-            <motion.button
-              onClick={handleNext}
-              className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white font-bold text-xl py-3.5 px-8 rounded-2xl shadow-lg cursor-pointer"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            >
-              {isLastLevel ? (
-                <>See Results! <Trophy className="inline w-6 h-6 ml-1" /></>
-              ) : (
-                <>Next Adventure! <ChevronRight className="inline w-6 h-6 ml-1" /></>
-              )}
-            </motion.button>
+            {isSandbox ? (
+              <motion.button
+                onClick={() => { window.location.href = window.location.pathname + '?creator'; }}
+                className="bg-gradient-to-r from-indigo-400 to-blue-500 hover:from-indigo-500 hover:to-blue-600 text-white font-bold text-xl py-3.5 px-8 rounded-2xl shadow-lg cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                <ChevronLeft className="inline w-6 h-6 mr-1" /> Back to Creator
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={handleNext}
+                className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white font-bold text-xl py-3.5 px-8 rounded-2xl shadow-lg cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                {isLastLevel ? (
+                  <>See Results! <Trophy className="inline w-6 h-6 ml-1" /></>
+                ) : (
+                  <>Next Adventure! <ChevronRight className="inline w-6 h-6 ml-1" /></>
+                )}
+              </motion.button>
+            )}
           </div>
         </motion.div>
       </div>
@@ -678,6 +712,7 @@ function App() {
                 { type: 'rook' as PieceType, label: 'Rook', desc: 'Straight lines' },
                 { type: 'bishop' as PieceType, label: 'Bishop', desc: 'Diagonals' },
                 { type: 'knight' as PieceType, label: 'Knight', desc: 'L-shaped jumps' },
+                { type: 'pawn' as PieceType, label: 'Pawn', desc: 'One step forward!' },
               ].map((p, i) => (
                 <motion.div
                   key={p.type}

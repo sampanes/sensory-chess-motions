@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Position, PieceType, Direction, Fence, RiverCell, Bridge, Food } from './types';
+import { Position, PieceType, Direction, Fence, RiverCell, Bridge, Food, Level } from './types';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
 import { Flag } from 'lucide-react';
 
@@ -65,8 +65,8 @@ export function LevelCreator() {
   const [levelName,    setLevelName]    = useState('');
   const [description,  setDescription]  = useState('');
   const [hint,         setHint]         = useState('');
-  const [threeStars,   setThreeStars]   = useState(3);
-  const [twoStars,     setTwoStars]     = useState(5);
+  const [threeStars,   setThreeStars]   = useState('3');
+  const [twoStars,     setTwoStars]     = useState('5');
 
   // --- Modals ---
   const [fenceCell,    setFenceCell]    = useState<Position | null>(null);
@@ -180,6 +180,8 @@ export function LevelCreator() {
       return `[\n${sorted.map(x => `        { row: ${x.row}, col: ${x.col} },`).join('\n')}\n      ]`;
     };
 
+    const parsedThree = Math.max(1, parseInt(threeStars) || 1);
+    const parsedTwo   = Math.max(1, parseInt(twoStars)   || 1);
     return `{
   name: '${escapeQuotes(levelName || 'My Level')}',
   description: '${escapeQuotes(description)}',
@@ -192,7 +194,7 @@ export function LevelCreator() {
     bridges: ${fmtCells(bridges)},
     food: ${fmtCells(food)},
   },
-  starThresholds: { three: ${threeStars}, two: ${twoStars} },
+  starThresholds: { three: ${parsedThree}, two: ${parsedTwo} },
   hint: '${escapeQuotes(hint)}',
 },`;
   }, [fences, rivers, bridges, food, start, goal, pieceType, levelName, description, hint, threeStars, twoStars]);
@@ -201,6 +203,23 @@ export function LevelCreator() {
     await navigator.clipboard.writeText(generateOutput());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleTrySandbox = () => {
+    const parsedThree = Math.max(1, parseInt(threeStars) || 1);
+    const parsedTwo   = Math.max(1, parseInt(twoStars)   || 1);
+    const level: Level = {
+      name: levelName || 'Sandbox',
+      description,
+      pieceType,
+      start: start ?? { row: 4, col: 2 },
+      goal: goal ?? { row: 0, col: 2 },
+      obstacles: { fences, rivers, bridges, food },
+      starThresholds: { three: parsedThree, two: parsedTwo },
+      hint,
+    };
+    sessionStorage.setItem('sandboxLevel', JSON.stringify(level));
+    window.location.href = window.location.pathname + '?sandbox';
   };
 
   // --- Render ---
@@ -396,22 +415,22 @@ export function LevelCreator() {
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold text-emerald-900 whitespace-nowrap">⭐⭐⭐ ≤</label>
             <input
-              type="number"
-              min={1}
-              max={30}
+              type="text"
+              inputMode="numeric"
+              placeholder="3"
               value={threeStars}
-              onChange={e => setThreeStars(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={e => setThreeStars(e.target.value.replace(/[^0-9]/g, ''))}
               className="w-16 px-2 py-2 rounded-lg border border-emerald-300 bg-white text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-center"
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold text-emerald-900 whitespace-nowrap">⭐⭐ ≤</label>
             <input
-              type="number"
-              min={1}
-              max={30}
+              type="text"
+              inputMode="numeric"
+              placeholder="5"
               value={twoStars}
-              onChange={e => setTwoStars(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={e => setTwoStars(e.target.value.replace(/[^0-9]/g, ''))}
               className="w-16 px-2 py-2 rounded-lg border border-emerald-300 bg-white text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-center"
             />
           </div>
@@ -422,14 +441,22 @@ export function LevelCreator() {
       <div className="flex flex-col gap-2 w-full pb-8" style={{ maxWidth: `${boardPixelSize}px` }}>
         <div className="flex justify-between items-center">
           <span className="text-sm font-semibold text-emerald-900">Output</span>
-          <button
-            onClick={handleCopy}
-            className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-              copied ? 'bg-green-500 text-white' : 'bg-emerald-700 text-white active:bg-emerald-900'
-            }`}
-          >
-            {copied ? '✓ Copied!' : '📋 Copy'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleTrySandbox}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-600 text-white active:bg-indigo-800 transition-all"
+            >
+              ▶ Try It
+            </button>
+            <button
+              onClick={handleCopy}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                copied ? 'bg-green-500 text-white' : 'bg-emerald-700 text-white active:bg-emerald-900'
+              }`}
+            >
+              {copied ? '✓ Copied!' : '📋 Copy'}
+            </button>
+          </div>
         </div>
         <pre className="bg-gray-900 text-green-300 text-xs p-3 rounded-xl overflow-x-auto whitespace-pre leading-relaxed">
           {generateOutput()}
