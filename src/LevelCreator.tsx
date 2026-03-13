@@ -77,6 +77,29 @@ export function LevelCreator() {
   // --- Copy state ---
   const [copied, setCopied] = useState(false);
 
+  // --- Restore creator state after sandbox ---
+  useEffect(() => {
+    const raw = sessionStorage.getItem('creatorState');
+    if (!raw) return;
+    sessionStorage.removeItem('creatorState');
+    try {
+      const s = JSON.parse(raw);
+      if (s.rivers)      setRivers(s.rivers);
+      if (s.bridges)     setBridges(s.bridges);
+      if (s.food)        setFood(s.food);
+      if (s.fences)      setFences(s.fences);
+      if (s.start)       setStart(s.start);
+      if (s.goal)        setGoal(s.goal);
+      if (s.pieceType)   setPieceType(s.pieceType);
+      if (s.levelName  !== undefined) setLevelName(s.levelName);
+      if (s.description !== undefined) setDescription(s.description);
+      if (s.hint        !== undefined) setHint(s.hint);
+      if (s.threeStars  !== undefined) setThreeStars(s.threeStars);
+      if (s.twoStars    !== undefined) setTwoStars(s.twoStars);
+      if (s.tool)        setTool(s.tool);
+    } catch {}
+  }, []);
+
   // --- Helpers ---
   const isRiver  = (r: number, c: number) => rivers.some(x => x.row === r && x.col === c);
   const isBridge = (r: number, c: number) => bridges.some(x => x.row === r && x.col === c);
@@ -219,6 +242,10 @@ export function LevelCreator() {
       hint,
     };
     sessionStorage.setItem('sandboxLevel', JSON.stringify(level));
+    sessionStorage.setItem('creatorState', JSON.stringify({
+      rivers, bridges, food, fences, start, goal, pieceType,
+      levelName, description, hint, threeStars, twoStars, tool,
+    }));
     window.location.href = window.location.pathname + '?sandbox';
   };
 
