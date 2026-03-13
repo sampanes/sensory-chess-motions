@@ -287,7 +287,8 @@ function App() {
     if (phase === 'playing') {
       const moves = getValidMoves(level.pieceType, piecePos, level.obstacles, consumedFood);
       setValidMoves(moves);
-      if (moves.length === 0 && moveCount > 0) {
+      const atGoal = piecePos.row === level.goal.row && piecePos.col === level.goal.col;
+      if (moves.length === 0 && moveCount > 0 && !atGoal) {
         setIsStuck(true);
         playWompSound();
         triggerHaptic([80, 60, 120]);
