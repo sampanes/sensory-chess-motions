@@ -348,6 +348,35 @@ export const levels: Level[] = [
     starThresholds: { three: 2, two: 3 },
     hint: 'Hop to the top side, then land on the flag square in one more jump.',
   },
+{
+  name: 'Horsin\' around ',
+  description: 'So many hops, try not to backtrack!',
+  pieceType: 'knight',
+  start: { row: 2, col: 1 },
+  goal: { row: 2, col: 3 },
+  obstacles: {
+    fences: [],
+    rivers: [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 0, col: 2 },
+        { row: 1, col: 1 },
+        { row: 3, col: 3 },
+        { row: 4, col: 2 },
+        { row: 4, col: 4 },
+      ],
+    bridges: [
+        { row: 0, col: 1 },
+        { row: 4, col: 3 },
+      ],
+    food: [
+        { row: 1, col: 2 },
+        { row: 2, col: 0 },
+      ],
+  },
+  starThresholds: { three: 6, two: 7 },
+  hint: '2 hops, then 2 apples, then 2 more hops to the finish!',
+},
   {
     name: 'Knight Parade',
     description: 'A longer hopping path for your final adventure.',
