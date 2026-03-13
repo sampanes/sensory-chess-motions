@@ -88,6 +88,28 @@ function isFoodConsumed(pos: Position, consumed: Food[]): boolean {
   return consumed.some(f => f.row === pos.row && f.col === pos.col);
 }
 
+function playWompSound() {
+  const ctx = new AudioContext();
+  const now = ctx.currentTime;
+
+  function makeWomp(startTime: number, startFreq: number, endFreq: number) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(startFreq, startTime);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + 0.38);
+    gain.gain.setValueAtTime(0.35, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.38);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + 0.4);
+  }
+
+  makeWomp(now, 220, 85);
+  makeWomp(now + 0.45, 185, 65);
+}
+
 function playCrunchSound() {
   const ctx = new AudioContext();
   const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
@@ -138,6 +160,7 @@ function App() {
   const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
   const [lastActionAt, setLastActionAt] = useState(() => Date.now());
   const [consumedFood, setConsumedFood] = useState<Food[]>([]);
+  const [isStuck, setIsStuck] = useState(false);
 
   const level = levels[levelIndex];
   const isMobile = viewportWidth < 768;
@@ -172,6 +195,7 @@ function App() {
     setSuggestedMove(null);
     setLastActionAt(Date.now());
     setConsumedFood([]);
+    setIsStuck(false);
   }, []);
 
   const openLevel = useCallback(
@@ -253,9 +277,15 @@ function App() {
 
   useEffect(() => {
     if (phase === 'playing') {
-      setValidMoves(getValidMoves(level.pieceType, piecePos, level.obstacles, consumedFood));
+      const moves = getValidMoves(level.pieceType, piecePos, level.obstacles, consumedFood);
+      setValidMoves(moves);
+      if (moves.length === 0 && moveCount > 0) {
+        setIsStuck(true);
+        playWompSound();
+        triggerHaptic([80, 60, 120]);
+      }
     }
-  }, [phase, piecePos, level.pieceType, level.obstacles]);
+  }, [phase, piecePos, level.pieceType, level.obstacles, consumedFood]);
 
   useEffect(() => {
     if (!isMobile || phase !== 'playing' || showHint) return;
@@ -981,9 +1011,22 @@ function App() {
 
         <motion.button
           onClick={handleReset}
-          className={`bg-white/80 hover:bg-white text-gray-700 font-semibold rounded-xl shadow-md flex items-center gap-2 border border-gray-200 cursor-pointer ${controlButtonSizeClass}`}
+          className={`font-semibold rounded-xl shadow-md flex items-center gap-2 border cursor-pointer ${controlButtonSizeClass} ${
+            isStuck
+              ? 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300'
+              : 'bg-white/80 hover:bg-white text-gray-700 border-gray-200'
+          }`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          animate={isStuck ? {
+            scale: [1, 1.09, 1],
+            boxShadow: [
+              '0 0 0px rgba(239,68,68,0)',
+              '0 0 18px rgba(239,68,68,0.55)',
+              '0 0 0px rgba(239,68,68,0)',
+            ],
+          } : { scale: 1, boxShadow: '0 0 0px rgba(0,0,0,0)' }}
+          transition={isStuck ? { duration: 0.85, repeat: Infinity, ease: 'easeInOut' } : {}}
         >
           <RotateCcw className="w-4 h-4" /> Restart
         </motion.button>
@@ -1001,6 +1044,19 @@ function App() {
           <HelpCircle className="w-4 h-4" /> Hint
         </motion.button>
       </motion.div>
+
+      <AnimatePresence>
+        {isStuck && (
+          <motion.div
+            className="mt-3 bg-red-50 border-2 border-red-300 rounded-xl py-2.5 px-4 max-w-sm text-sm text-red-700 shadow-md font-semibold text-center"
+            initial={{ opacity: 0, y: 8, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+          >
+            😬 Stuck! No moves left — hit Restart to try again.
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {mobileCoach && isMobile && (

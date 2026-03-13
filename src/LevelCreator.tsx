@@ -181,7 +181,6 @@ export function LevelCreator() {
     };
 
     return `{
-  id: 99,
   name: '${escapeQuotes(levelName || 'My Level')}',
   description: '${escapeQuotes(description)}',
   pieceType: '${pieceType}',
