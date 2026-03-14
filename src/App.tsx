@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 import { Position, GamePhase, PieceType, Food, Level } from './types';
 import { levels } from './levels';
-import { getValidMoves, isValidMove } from './utils/moveCalculator';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
+import { BoardShell } from './components/BoardShell';
 
 const BOARD_SIZE = 5;
 const DESKTOP_SQUARE_SIZE = 88;
@@ -41,6 +41,8 @@ function pieceEmoji(type: PieceType) {
       return '🐴';
     case 'pawn':
       return '♟️';
+    case 'king':
+      return '👑';
   }
 }
 
@@ -56,6 +58,8 @@ function pieceName(type: PieceType) {
       return 'Knight';
     case 'pawn':
       return 'Pawn';
+    case 'king':
+      return 'King';
   }
 }
 
@@ -71,60 +75,11 @@ function pieceDescription(type: PieceType) {
       return 'Jumps in a 2-and-1 L-shape — over anything!';
     case 'pawn':
       return 'Marches forward — eats food diagonally!';
+    case 'king':
+      return 'One step in any direction — careful and precise!';
   }
 }
 
-function getDecoration(r: number, c: number): string | null {
-  // Using a larger prime and bitwise XOR creates more "chaos" in a small grid
-  const hash = Math.abs((r * 31) ^ (c * 37)) % 10; 
-  if (hash === 1) return '🌱';
-  if (hash === 2) return '🌼';
-  if (hash === 3) return '🍀';
-  if (hash === 4) return '🌿';
-  return null;
-}
-
-function isFoodConsumed(pos: Position, consumed: Food[]): boolean {
-  return consumed.some(f => f.row === pos.row && f.col === pos.col);
-}
-
-function playWompSound() {
-  const ctx = new AudioContext();
-  const now = ctx.currentTime;
-
-  function makeWomp(startTime: number, startFreq: number, endFreq: number) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(startFreq, startTime);
-    osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + 0.38);
-    gain.gain.setValueAtTime(0.35, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.38);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(startTime);
-    osc.stop(startTime + 0.4);
-  }
-
-  makeWomp(now, 220, 85);
-  makeWomp(now + 0.45, 185, 65);
-}
-
-function playCrunchSound() {
-  const ctx = new AudioContext();
-  const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) {
-    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
-  }
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.4, ctx.currentTime);
-  source.connect(gain);
-  gain.connect(ctx.destination);
-  source.start();
-}
 
 const isSandbox = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('sandbox');
 const sandboxLevel: Level | null = (() => {
@@ -147,12 +102,10 @@ function App() {
   );
   const [levelIndex, setLevelIndex] = useState(0);
   const [phase, setPhase] = useState<GamePhase>('intro');
-  const [piecePos, setPiecePos] = useState<Position>((sandboxLevel ?? levels[0]).start);
-  const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [moveCount, setMoveCount] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [trail, setTrail] = useState<Position[]>([]);
-  const [animKey, setAnimKey] = useState(0);
+  const [resetCount, setResetCount] = useState(0);
   const isCheatMode = new URLSearchParams(window.location.search).has('cheat');
   const [unlockedLevel, setUnlockedLevel] = useState(() =>
     isCheatMode ? levels.length - 1 : 0
@@ -164,8 +117,6 @@ function App() {
     );
   });
   const [lastRunStars, setLastRunStars] = useState(0);
-  const [mobileCoach, setMobileCoach] = useState<string | null>(null);
-  const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
   const [lastActionAt, setLastActionAt] = useState(() => Date.now());
   const [consumedFood, setConsumedFood] = useState<Food[]>([]);
   const [isStuck, setIsStuck] = useState(false);
@@ -192,18 +143,13 @@ function App() {
   }, []);
 
   const initLevel = useCallback((idx: number) => {
-    const lv = sandboxLevel ?? levels[idx];
-    setPiecePos(lv.start);
-    setValidMoves([]);
     setMoveCount(0);
     setShowHint(false);
-    setTrail([lv.start]);
-    setAnimKey(prev => prev + 1);
-    setMobileCoach(null);
-    setSuggestedMove(null);
+    setTrail([(sandboxLevel ?? levels[idx]).start]);
     setLastActionAt(Date.now());
     setConsumedFood([]);
     setIsStuck(false);
+    setResetCount(c => c + 1);
   }, []);
 
   const openLevel = useCallback(
@@ -221,47 +167,15 @@ function App() {
     setLastActionAt(Date.now());
   };
 
-  const handleSquareClick = (row: number, col: number) => {
-    if (phase !== 'playing') return;
-
+  const handleMove = useCallback((newPos: Position) => {
     setLastActionAt(Date.now());
-
-    if (!isValidMove(validMoves, row, col)) {
-      if (isMobile && validMoves.length > 0) {
-        const nearest = validMoves.reduce((best, candidate) => {
-          const bestDistance = Math.abs(best.row - row) + Math.abs(best.col - col);
-          const candidateDistance = Math.abs(candidate.row - row) + Math.abs(candidate.col - col);
-          return candidateDistance < bestDistance ? candidate : best;
-        }, validMoves[0]);
-
-        setSuggestedMove(nearest);
-        setMobileCoach('Try one of the glowing circles ✨');
-        triggerHaptic(24);
-      }
-      return;
-    }
-
-    const newPos = { row, col };
-    const nextMoveCount = moveCount + 1;
-
-    setSuggestedMove(null);
-    setMobileCoach(null);
-    triggerHaptic(10);
-    setPiecePos(newPos);
-    setMoveCount(nextMoveCount);
     setTrail(prev => [...prev, newPos]);
-    setAnimKey(prev => prev + 1);
+    const nextMoveCount = moveCount + 1;
+    setMoveCount(nextMoveCount);
 
-    const eatenFood = level.obstacles.food.find(f => f.row === row && f.col === col);
-    if (eatenFood) {
-      setConsumedFood(prev => [...prev, eatenFood]);
-      playCrunchSound();
-    }
-
-    if (row === level.goal.row && col === level.goal.col) {
+    if (newPos.row === level.goal.row && newPos.col === level.goal.col) {
       const earnedStars = getStarsForLevel(level.starThresholds, nextMoveCount);
       setLastRunStars(earnedStars);
-      setValidMoves([]);
       setCompletedLevels(prev => {
         const existing = prev[levelIndex];
         const updated: CompletionRecord = existing
@@ -269,32 +183,14 @@ function App() {
               bestMoves: Math.min(existing.bestMoves, nextMoveCount),
               bestStars: Math.max(existing.bestStars, earnedStars),
             }
-          : {
-              bestMoves: nextMoveCount,
-              bestStars: earnedStars,
-            };
+          : { bestMoves: nextMoveCount, bestStars: earnedStars };
         return { ...prev, [levelIndex]: updated };
       });
       setUnlockedLevel(prev => Math.max(prev, Math.min(levelIndex + 1, levels.length - 1)));
       triggerHaptic([25, 35, 25]);
-      setTimeout(() => {
-        setPhase('celebration');
-      }, 600);
+      setTimeout(() => setPhase('celebration'), 600);
     }
-  };
-
-  useEffect(() => {
-    if (phase === 'playing') {
-      const moves = getValidMoves(level.pieceType, piecePos, level.obstacles, consumedFood);
-      setValidMoves(moves);
-      const atGoal = piecePos.row === level.goal.row && piecePos.col === level.goal.col;
-      if (moves.length === 0 && moveCount > 0 && !atGoal) {
-        setIsStuck(true);
-        playWompSound();
-        triggerHaptic([80, 60, 120]);
-      }
-    }
-  }, [phase, piecePos, level.pieceType, level.obstacles, consumedFood]);
+  }, [moveCount, level, levelIndex]);
 
   useEffect(() => {
     if (!isMobile || phase !== 'playing' || showHint) return;
@@ -340,22 +236,7 @@ function App() {
     }));
   }, [levelIndex, completedLevels, unlockedLevel]);
 
-  const isRiver = (r: number, c: number) => level.obstacles.rivers.some(rv => rv.row === r && rv.col === c);
-  const isBridge = (r: number, c: number) => level.obstacles.bridges.some(b => b.row === r && b.col === c);
-  const isGoal = (r: number, c: number) => level.goal.row === r && level.goal.col === c;
-  const isTrail = (r: number, c: number) => trail.some(t => t.row === r && t.col === c);
-  const hasFence = (r: number, c: number, side: string) =>
-    level.obstacles.fences.some(f => f.row === r && f.col === c && f.side === side);
-  const isValid = (r: number, c: number) => validMoves.some(m => m.row === r && m.col === c);
-  const isPiece = (r: number, c: number) => piecePos.row === r && piecePos.col === c;
   const controlButtonSizeClass = isMobile ? 'min-h-12 py-3 px-5 text-base' : 'py-2.5 px-5 text-sm';
-
-  const getSquareClasses = (r: number, c: number) => {
-    if (isRiver(r, c) && !isBridge(r, c)) return 'bg-blue-400';
-    if (isRiver(r, c) && isBridge(r, c)) return 'bg-amber-500';
-    const light = (r + c) % 2 === 0;
-    return light ? 'bg-emerald-200' : 'bg-emerald-400';
-  };
 
   const ProgressBar = () => (
     <div className="flex flex-wrap items-center gap-x-1 gap-y-3">
@@ -714,6 +595,7 @@ function App() {
                 { type: 'bishop' as PieceType, label: 'Bishop', desc: 'Diagonals' },
                 { type: 'knight' as PieceType, label: 'Knight', desc: 'L-shaped jumps' },
                 { type: 'pawn' as PieceType, label: 'Pawn', desc: 'One step forward!' },
+                { type: 'king' as PieceType, label: 'King', desc: 'One step, any direction' },
               ].map((p, i) => (
                 <motion.div
                   key={p.type}
@@ -791,233 +673,17 @@ function App() {
         </div>
       </motion.div>
 
-      <motion.div
-        className="relative rounded-2xl shadow-2xl overflow-hidden border-4 border-amber-700"
-        style={{ width: `${boardPixelSize}px`, height: `${boardPixelSize}px` }}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-        key={`board-${levelIndex}`}
-      >
-        <div className="grid grid-cols-5 absolute inset-0">
-          {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => {
-            const r = Math.floor(i / BOARD_SIZE);
-            const c = i % BOARD_SIZE;
-            const river = isRiver(r, c);
-            const bridge = isBridge(r, c);
-            const goal = isGoal(r, c);
-            const valid = isValid(r, c);
-            const suggested = suggestedMove?.row === r && suggestedMove?.col === c;
-            const piece = isPiece(r, c);
-            const inTrail = isTrail(r, c) && !piece;
-            const decoration = !river && !bridge && !goal && !piece ? getDecoration(r, c) : null;
-
-            return (
-              <motion.div
-                key={`${r}-${c}`}
-                className={`relative ${getSquareClasses(r, c)} ${valid ? 'cursor-pointer' : ''}`}
-                style={{ width: `${squareSize}px`, height: `${squareSize}px` }}
-                onClick={() => handleSquareClick(r, c)}
-                whileHover={valid ? { scale: 1.03 } : {}}
-              >
-                {!river && !bridge && (
-                  <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
-                )}
-
-                {river && !bridge && (
-                  <div className="absolute inset-0 overflow-hidden">
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                        backgroundImage:
-                          'repeating-linear-gradient(90deg, transparent, transparent 14px, rgba(255,255,255,0.25) 14px, rgba(255,255,255,0.25) 18px)',
-                      }}
-                      animate={{ x: [0, 18] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                    />
-                    <motion.div
-                      className="absolute inset-0 flex items-center justify-center text-xl opacity-30 pointer-events-none"
-                      animate={{ x: [-5, 5, -5] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      {(r + c) % 3 === 0 ? '🐟' : '〰️'}
-                    </motion.div>
-                  </div>
-                )}
-
-                {bridge && (
-                  <div className="absolute inset-0">
-                    <div className="absolute inset-2 rounded-md border-2 border-amber-900/30 bg-amber-600/20" />
-                    {[0, 1, 2, 3].map(j => (
-                      <div
-                        key={j}
-                        className="absolute bg-amber-900/20 rounded-sm"
-                        style={{ width: '76%', height: '3px', top: `${20 + j * 20}%`, left: '12%' }}
-                      />
-                    ))}
-                    <div className="absolute top-2 bottom-2 left-2 w-1 bg-amber-800/40 rounded-full" />
-                    <div className="absolute top-2 bottom-2 right-2 w-1 bg-amber-800/40 rounded-full" />
-                  </div>
-                )}
-
-                {decoration && !inTrail && (
-                  <div className="absolute inset-0 flex items-center justify-center text-sm opacity-30 pointer-events-none">{decoration}</div>
-                )}
-
-                {inTrail && !goal && (
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 0.3 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <div className="w-4 h-4 rounded-full bg-amber-600/40" />
-                  </motion.div>
-                )}
-
-                <AnimatePresence>
-                  {level.obstacles.food.some(f => f.row === r && f.col === c)
-                    && !isFoodConsumed({ row: r, col: c }, consumedFood)
-                    && !(level.goal.row === r && level.goal.col === c)
-                    && (
-                      <motion.span
-                        key={`food-${r}-${c}`}
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
-                        initial={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 1.8, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        style={{ fontSize: squareSize * 0.7 }}
-                      >
-                        🍎
-                      </motion.span>
-                    )}
-                </AnimatePresence>
-
-                {goal && !piece && (
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    <div className="absolute inset-1.5 rounded-xl bg-yellow-300/40 border-2 border-yellow-400/60" />
-                    <Flag className="w-9 h-9 text-red-500 drop-shadow-lg relative z-[1]" />
-                  </motion.div>
-                )}
-
-                {valid && (
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center z-[3] pointer-events-none"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                  >
-                    <motion.div
-                      className={`rounded-full border-2 ${
-                        goal
-                          ? 'w-10 h-10 bg-green-300/50 border-green-400'
-                          : isMobile
-                          ? 'w-7 h-7 bg-yellow-300/70 border-yellow-300'
-                          : 'w-5 h-5 bg-yellow-300/60 border-yellow-400/80'
-                      }`}
-                      animate={{
-                        boxShadow: goal
-                          ? [
-                              '0 0 10px rgba(74,222,128,0.4)',
-                              '0 0 20px rgba(74,222,128,0.7)',
-                              '0 0 10px rgba(74,222,128,0.4)',
-                            ]
-                          : [
-                              '0 0 6px rgba(250,204,21,0.3)',
-                              '0 0 14px rgba(250,204,21,0.6)',
-                              '0 0 6px rgba(250,204,21,0.3)',
-                            ],
-                        scale: suggested ? [1, 1.35, 1] : [1, 1.12, 1],
-                      }}
-                      transition={{ duration: 1.2, repeat: Infinity }}
-                    />
-                  </motion.div>
-                )}
-
-                {hasFence(r, c, 'top') && (
-                  <div className="absolute top-0 left-0 right-0 z-[5] flex items-center" style={{ height: '6px' }}>
-                    <div
-                      className="w-full h-full rounded-full"
-                      style={{
-                        background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                      }}
-                    />
-                  </div>
-                )}
-                {hasFence(r, c, 'bottom') && (
-                  <div className="absolute bottom-0 left-0 right-0 z-[5] flex items-center" style={{ height: '6px' }}>
-                    <div
-                      className="w-full h-full rounded-full"
-                      style={{
-                        background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                      }}
-                    />
-                  </div>
-                )}
-                {hasFence(r, c, 'left') && (
-                  <div className="absolute top-0 left-0 bottom-0 z-[5] flex items-center" style={{ width: '6px' }}>
-                    <div
-                      className="h-full w-full rounded-full"
-                      style={{
-                        background: 'repeating-linear-gradient(0deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)',
-                        boxShadow: '2px 0 4px rgba(0,0,0,0.3)',
-                      }}
-                    />
-                  </div>
-                )}
-                {hasFence(r, c, 'right') && (
-                  <div className="absolute top-0 right-0 bottom-0 z-[5] flex items-center" style={{ width: '6px' }}>
-                    <div
-                      className="h-full w-full rounded-full"
-                      style={{
-                        background: 'repeating-linear-gradient(0deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)',
-                        boxShadow: '-2px 0 4px rgba(0,0,0,0.3)',
-                      }}
-                    />
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-
-        <motion.div
-          className="absolute z-10 pointer-events-none"
-          style={{ width: `${squareSize}px`, height: `${squareSize}px` }}
-          animate={{ left: piecePos.col * squareSize, top: piecePos.row * squareSize }}
-          transition={
-            level.pieceType === 'knight'
-              ? { type: 'spring', stiffness: 160, damping: 16 }
-              : { type: 'spring', stiffness: 280, damping: 26 }
-          }
-        >
-          <motion.div
-            className="w-full h-full flex items-center justify-center"
-            key={animKey}
-            animate={level.pieceType === 'knight' ? { y: [0, -22, 0], rotate: [0, -5, 5, 0] } : { y: 0 }}
-            transition={{ duration: 0.45 }}
-          >
-            <motion.div
-              animate={{
-                filter: [
-                  'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
-                  'drop-shadow(0 6px 10px rgba(0,0,0,0.35))',
-                  'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
-                ],
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+      <BoardShell
+        key={`${levelIndex}-${resetCount}`}
+        level={level}
+        consumedFood={consumedFood}
+        trail={trail}
+        squareSize={squareSize}
+        isMobile={isMobile}
+        onMove={handleMove}
+        onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
+        onStuck={setIsStuck}
+      />
 
       <motion.div
         className="flex flex-wrap items-center justify-center gap-3 mt-5"
@@ -1090,19 +756,6 @@ function App() {
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
           >
             😬 Stuck! No moves left — hit Restart to try again.
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {mobileCoach && isMobile && (
-          <motion.div
-            className="mt-3 bg-sky-50 border-2 border-sky-200 rounded-xl py-2.5 px-4 max-w-sm text-sm text-sky-800 shadow-md"
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.97 }}
-          >
-            🤖 {mobileCoach}
           </motion.div>
         )}
       </AnimatePresence>

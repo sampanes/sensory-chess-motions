@@ -77,6 +77,24 @@ export const ChessPieceIcon = ({ type, size = 48 }: ChessPieceIconProps) => {
           </svg>
         );
 
+      case 'king':
+        return (
+          <svg width={size} height={size} viewBox="0 0 45 45">
+            <g fill="#fff" stroke="#222" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              {/* Base — same as queen/bishop */}
+              <path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.46 3-2 3-2z"/>
+              {/* Body dome — same as queen/bishop */}
+              <path d="M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z"/>
+              {/* Crown — symmetric three-tooth polygon, center tooth at (22.5,12), base at y=24 */}
+              <path d="M12.5 24 L15.5 16 L19 20 L22.5 12 L26 20 L29.5 16 L32.5 24 Z" strokeLinejoin="miter"/>
+              {/* Cross — vertical connects to center crown tooth (y=12), top at y=4 (tallest piece) */}
+              <path d="M22.5 4 V12 M19 7.5 H26" strokeWidth="2.5" fill="none" strokeLinejoin="miter"/>
+              {/* Detail lines */}
+              <path d="M17.5 26h10M15 30h15" fill="none" strokeLinejoin="miter"/>
+            </g>
+          </svg>
+        );
+
       default:
         return (
           <svg width={size} height={size} viewBox="0 0 45 45">

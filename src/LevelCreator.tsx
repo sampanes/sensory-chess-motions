@@ -542,7 +542,7 @@ export function LevelCreator() {
               Cell ({pieceCell.row}, {pieceCell.col})
             </p>
             <div className="flex flex-col gap-3 mb-6">
-              {(['queen', 'rook', 'bishop', 'knight', 'pawn'] as PieceType[]).map(pt => (
+              {(['queen', 'rook', 'bishop', 'knight', 'pawn', 'king'] as PieceType[]).map(pt => (
                 <label key={pt} className="flex items-center gap-3 cursor-pointer select-none">
                   <input
                     type="radio"

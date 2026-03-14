@@ -260,6 +260,24 @@ export const getValidMoves = (
       break;
     }
 
+    case 'king': {
+      const kingMoves = [
+        { dr: -1, dc: -1 }, { dr: -1, dc: 0 }, { dr: -1, dc: 1 },
+        { dr:  0, dc: -1 },                     { dr:  0, dc: 1 },
+        { dr:  1, dc: -1 }, { dr:  1, dc: 0 }, { dr:  1, dc: 1 },
+      ];
+      for (const { dr, dc } of kingMoves) {
+        const nr = row + dr;
+        const nc = col + dc;
+        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+          if (isFenceBlocking(row, col, nr, nc, obstacles)) continue;
+          if (isRiverWithoutBridge(nr, nc, obstacles)) continue;
+          validMoves.push({ row: nr, col: nc });
+        }
+      }
+      break;
+    }
+
     case 'pawn': {
       const forwardRow = row - 1;
 
