@@ -24,6 +24,11 @@ export type DuoLevel = {
   pieces: [DuoPiece, DuoPiece];
   obstacles: Obstacle;
   starThresholds: { three: number; two: number };
+  /**
+   * Adventure-mode only. Cells the queen's guards patrol — impassable for the
+   * king but ignored by the knight (which jumps over them).
+   */
+  watchedSquares?: import('../types').Position[];
   /** Scrolling world height (default 5). */
   boardHeight?: number;
   /** Scrolling world width (default 5). */

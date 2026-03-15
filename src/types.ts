@@ -55,6 +55,12 @@ export type Level = {
   boardHeight?: number;   // default 5
   boardWidth?: number;    // default 5
   scrollAxis?: 'vertical' | 'horizontal';
+  /**
+   * Adventure-mode only. Cells the queen's guards patrol — impassable for all
+   * pieces except the knight (which jumps and ignores them).
+   * Never touches moveCalculator.ts; handled in AdventureApp / board components.
+   */
+  watchedSquares?: Position[];
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

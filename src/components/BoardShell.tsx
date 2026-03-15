@@ -81,7 +81,12 @@ export function BoardShell({
   // Stuck detection fires only after at least one move (animKey > 0).
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const moves = getValidMoves(level.pieceType, piecePos, level.obstacles, consumedFood);
+    // Watched squares (queen world) are treated as impassable cells — merge them
+    // into obstacles.rivers so the existing slider/landing logic blocks them.
+    const effectiveObstacles = level.watchedSquares?.length
+      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...level.watchedSquares] }
+      : level.obstacles;
+    const moves = getValidMoves(level.pieceType, piecePos, effectiveObstacles, consumedFood);
     setValidMoves(moves);
 
     const atGoal = piecePos.row === level.goal.row && piecePos.col === level.goal.col;
@@ -169,6 +174,13 @@ export function BoardShell({
 
                 {!river && !bridge && showCheckerboard && (r + c) % 2 === 0 && (
                   <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
+                )}
+
+                {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
+                    style={{ background: 'rgba(239,68,68,0.22)' }}>
+                    <span className="text-xs opacity-40 select-none">👁</span>
+                  </div>
                 )}
 
                 {river && !bridge && (

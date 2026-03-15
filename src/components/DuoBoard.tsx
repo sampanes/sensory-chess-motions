@@ -142,10 +142,18 @@ export function DuoBoard({
     const currentPos = positions[selectedIdx];
     const otherPos   = positions[1 - selectedIdx as 0 | 1];
 
+    // Watched squares (queen world finale) block all pieces except the knight,
+    // which jumps over them. Merge into obstacles.rivers for non-knight pieces.
+    const pieceType = level.pieces[selectedIdx].pieceType;
+    const effectiveObstacles =
+      level.watchedSquares?.length && pieceType !== 'knight'
+        ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...level.watchedSquares] }
+        : level.obstacles;
+
     const raw = getValidMoves(
-      level.pieces[selectedIdx].pieceType,
+      pieceType,
       currentPos,
-      level.obstacles,
+      effectiveObstacles,
       consumedFood,
       boardRows,
       boardCols,
@@ -321,6 +329,13 @@ export function DuoBoard({
         >
           {!river && !bridge && (
             <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
+          )}
+
+          {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
+              style={{ background: 'rgba(239,68,68,0.22)' }}>
+              <span className="text-xs opacity-40 select-none">👁</span>
+            </div>
           )}
 
           {river && !bridge && (
