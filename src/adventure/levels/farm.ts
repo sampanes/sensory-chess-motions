@@ -152,6 +152,38 @@ export const farmLevels: Level[] = [
       ],
     },
   },
+//user added
+{
+  name: 'Delicious paths',
+  description: 'Choose the smart (and yummy) way to cross the river!',
+  pieceType: 'pawn',
+  start: { row: 4, col: 2 },
+  goal: { row: 0, col: 1 },
+  obstacles: {
+    fences: [],
+    rivers: [
+        { row: 2, col: 0 },
+        { row: 2, col: 1 },
+        { row: 2, col: 2 },
+        { row: 2, col: 3 },
+        { row: 2, col: 4 },
+      ],
+    bridges: [
+        { row: 2, col: 0 },
+        { row: 2, col: 4 },
+      ],
+    food: [
+        { row: 1, col: 1 },
+        { row: 1, col: 3 },
+        { row: 2, col: 0 },
+        { row: 2, col: 4 },
+        { row: 3, col: 1 },
+        { row: 3, col: 3 },
+      ],
+  },
+  starThresholds: { three: 4, two: 4 },
+  hint: 'Left lol',
+},
 
   // F8 — scrolling vertical world: long farm march with 2-step bonus
   // Optimal: 2-step (8,2)→(6,2), then forward ×6 = 7 moves.
