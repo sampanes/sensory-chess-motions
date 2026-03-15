@@ -28,6 +28,8 @@ export interface BoardShellProps {
   onStuck: (stuck: boolean) => void;
   /** Optional CSS custom properties for world theming, e.g. adventure mode palettes */
   worldTheme?: React.CSSProperties;
+  /** When true, adds a subtle violet tint to light squares (bishop world checkerboard) */
+  showCheckerboard?: boolean;
 }
 
 export function BoardShell({
@@ -40,6 +42,7 @@ export function BoardShell({
   onFoodConsumed,
   onStuck,
   worldTheme,
+  showCheckerboard,
 }: BoardShellProps) {
   const [piecePos, setPiecePos] = useState<Position>(level.start);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
@@ -162,6 +165,10 @@ export function BoardShell({
               >
                 {!river && !bridge && (
                   <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
+                )}
+
+                {!river && !bridge && showCheckerboard && (r + c) % 2 === 0 && (
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
                 )}
 
                 {river && !bridge && (

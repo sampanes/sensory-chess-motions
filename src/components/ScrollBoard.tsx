@@ -97,6 +97,8 @@ export interface ScrollBoardProps {
   onFoodConsumed: (food: Food) => void;
   onStuck: (stuck: boolean) => void;
   worldTheme?: React.CSSProperties;
+  /** When true, adds a subtle violet tint to light squares (bishop world checkerboard) */
+  showCheckerboard?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -111,6 +113,7 @@ export function ScrollBoard({
   onFoodConsumed,
   onStuck,
   worldTheme,
+  showCheckerboard,
 }: ScrollBoardProps) {
   const axis      = level.scrollAxis ?? 'vertical';
   const boardRows = level.boardHeight ?? VISIBLE;
@@ -307,6 +310,10 @@ export function ScrollBoard({
                 >
                   {!river && !bridge && (
                     <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
+                  )}
+
+                  {!river && !bridge && showCheckerboard && (r + c) % 2 === 0 && (
+                    <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
                   )}
 
                   {river && !bridge && (

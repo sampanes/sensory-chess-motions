@@ -304,6 +304,7 @@ function WorldPlay({
             onMove={handleMove}
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
             onStuck={() => {}}
+            showCheckerboard={worldId === 3}
           />
         ) : (
           <BoardShell
@@ -316,6 +317,7 @@ function WorldPlay({
             onMove={handleMove}
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
             onStuck={() => {}}
+            showCheckerboard={worldId === 3}
           />
         )}
 
