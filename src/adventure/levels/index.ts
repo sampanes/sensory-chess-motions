@@ -6,10 +6,13 @@
 import { WORLD_LEVELS } from '../worlds';
 import { act1KingLevels } from './king';
 import { farmLevels } from './farm';
+import { rookLevels } from './roads';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
+export { rookLevels } from './roads';
 
 // Register worlds
 WORLD_LEVELS[0] = act1KingLevels;
 WORLD_LEVELS[1] = farmLevels;
+WORLD_LEVELS[2] = rookLevels;
