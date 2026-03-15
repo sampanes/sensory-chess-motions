@@ -95,8 +95,8 @@ export const farmLevels: Level[] = [
     starThresholds: { three: 4, two: 6 },
     obstacles: {
       fences: [
-        { row: 3, col: 1, side: 'top' },  // blocks (3,1)→(2,1) forward
-        { row: 2, col: 2, side: 'top' },  // blocks (2,2)→(1,2) forward
+        { row: 2, col: 1, side: 'bottom' },  // blocks (3,1)→(2,1) forward
+        { row: 1, col: 2, side: 'bottom' },  // blocks (2,2)→(1,2) forward
       ],
       rivers: [],
       bridges: [],
