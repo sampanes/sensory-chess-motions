@@ -51,6 +51,10 @@ export type Level = {
     two: number;
   };
   hint?: string;
+  /** Scrolling world dimensions. Omit for classic 5×5. */
+  boardHeight?: number;   // default 5
+  boardWidth?: number;    // default 5
+  scrollAxis?: 'vertical' | 'horizontal';
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

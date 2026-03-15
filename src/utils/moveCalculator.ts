@@ -1,6 +1,8 @@
 import { Position, PieceType, Obstacle } from '../types';
 
-const BOARD_SIZE = 5;
+// Board size constants — overridable via getValidMoves params for scrolling worlds
+const DEFAULT_ROWS = 5;
+const DEFAULT_COLS = 5;
 
 // Check if a fence blocks movement from (r1,c1) to an adjacent cell in a given direction
 function isFenceBlocking(
@@ -86,7 +88,9 @@ export const getValidMoves = (
   pieceType: PieceType,
   position: Position,
   obstacles: Obstacle,
-  consumedFood: Position[] = []
+  consumedFood: Position[] = [],
+  boardRows = DEFAULT_ROWS,
+  boardCols = DEFAULT_COLS,
 ): Position[] => {
   const validMoves: Position[] = [];
   const { row, col } = position;
@@ -112,7 +116,7 @@ export const getValidMoves = (
         let prevR = row;
         let prevC = col;
 
-        while (cr >= 0 && cr < BOARD_SIZE && cc >= 0 && cc < BOARD_SIZE) {
+        while (cr >= 0 && cr < boardRows && cc >= 0 && cc < boardCols) {
           if (isFenceBlocking(prevR, prevC, cr, cc, obstacles)) break;
 
           if (isRiver(cr, cc, obstacles)) {
@@ -157,7 +161,7 @@ export const getValidMoves = (
         let prevR = row;
         let prevC = col;
 
-        while (cr >= 0 && cr < BOARD_SIZE && cc >= 0 && cc < BOARD_SIZE) {
+        while (cr >= 0 && cr < boardRows && cc >= 0 && cc < boardCols) {
           // Check fence between previous cell and current cell
           if (isFenceBlocking(prevR, prevC, cr, cc, obstacles)) break;
 
@@ -205,7 +209,7 @@ export const getValidMoves = (
         let prevR = row;
         let prevC = col;
 
-        while (cr >= 0 && cr < BOARD_SIZE && cc >= 0 && cc < BOARD_SIZE) {
+        while (cr >= 0 && cr < boardRows && cc >= 0 && cc < boardCols) {
           if (isFenceBlocking(prevR, prevC, cr, cc, obstacles)) break;
 
           if (isRiver(cr, cc, obstacles)) {
@@ -251,7 +255,7 @@ export const getValidMoves = (
       for (const { dr, dc } of knightMoves) {
         const nr = row + dr;
         const nc = col + dc;
-        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+        if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols) {
           // Knight can't land on a river cell (unless bridge)
           if (isRiverWithoutBridge(nr, nc, obstacles)) continue;
           validMoves.push({ row: nr, col: nc });
@@ -269,7 +273,7 @@ export const getValidMoves = (
       for (const { dr, dc } of kingMoves) {
         const nr = row + dr;
         const nc = col + dc;
-        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+        if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols) {
           if (isFenceBlocking(row, col, nr, nc, obstacles)) continue;
           if (isRiverWithoutBridge(nr, nc, obstacles)) continue;
           validMoves.push({ row: nr, col: nc });
@@ -289,7 +293,7 @@ export const getValidMoves = (
           validMoves.push({ row: forwardRow, col: col });
 
           // Two squares from back rank — only if one-square move was also clear
-          if (row === 4) {
+          if (row === boardRows - 1) {
             const twoForwardRow = row - 2;
             if (twoForwardRow >= 0
               && !isFenceBlocking(forwardRow, col, twoForwardRow, col, obstacles)
@@ -305,7 +309,7 @@ export const getValidMoves = (
       for (const dc of [-1, 1]) {
         const nr = row - 1;
         const nc = col + dc;
-        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+        if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols) {
           if (!isFenceBlocking(row, col, nr, nc, obstacles)
             && !isRiverWithoutBridge(nr, nc, obstacles)
             && isActiveFood(nr, nc, obstacles, consumedFood)) {
