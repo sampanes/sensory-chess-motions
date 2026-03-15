@@ -8,6 +8,30 @@ A visually engaging, interactive chess adventure designed to teach the fundament
 
 **[Level Creator](https://sampanes.github.io/sensory-chess-motions/?creator)** — build and export custom levels
 
+**[Adventure Mode](https://sampanes.github.io/sensory-chess-motions/?adventure)** — The Friendship Kingdom chess story
+
+---
+
+## 👨 Dad Cheat — Testing & Debug Routes
+
+All routes below unlock everything and skip the Trial mastery checks, so you can jump straight to any level for testing.
+
+| URL | What it does |
+|-----|-------------|
+| `/?adventure&dadcheat` | Adventure mode with all worlds unlocked, all trials skipped. Starts at the title screen. |
+| `/?adventure&dadcheat&world=0` | Jump straight into **World 0 — The King's Start** (level 1) |
+| `/?adventure&dadcheat&world=1` | Jump straight into **World 1 — Pawn's Farm** (level 1) |
+| `/?adventure&dadcheat&world=2` | Jump straight into **World 2 — Rook's Roads** (level 1) |
+| `/?adventure&dadcheat&world=3` | Jump straight into **World 3 — Bishop's Grove** (level 1) |
+| `/?adventure&dadcheat&world=4` | Jump straight into **World 4 — Knight's Mountains** (level 1) |
+| `/?adventure&dadcheat&world=5` | Jump straight into **World 5 — Queen's Realm** (level 1) |
+| `/?adventure&dadcheat&world=2&level=7` | Jump to **World 2, Level 7** (R7 — The Moat) |
+| `/?adventure&dadcheat&world=2&level=8` | Jump to **World 2, Level 8** (R8 — Road's End scroll level) |
+
+**Level numbers are 1-indexed** (level 1 = first level of that world).
+
+While in dad cheat mode, **◀ Prev level** and **Next level ▶** buttons appear on the intro card so you can step through levels without returning to the world map.
+
 ## 🧩 The Game
 Navigate your chess piece across a 5x5 grid to reach the red flag. Each level introduces different terrains and obstacles that test your understanding of how pieces move.
 

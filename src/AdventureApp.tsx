@@ -6,6 +6,7 @@ import { BoardShell } from './components/BoardShell';
 import { ScrollBoard } from './components/ScrollBoard';
 import { WorldMap } from './WorldMap';
 import { Roster } from './Roster';
+import { TrialMode } from './TrialMode';
 import { Food, Level, Position } from './types';
 import {
   WORLDS,
@@ -19,16 +20,35 @@ import {
 // Register all world levels (side-effect import)
 import './adventure/levels/index';
 
+// ─── Dad Cheat — URL param helpers ───────────────────────────────────────────
+// ?adventure&dadcheat               — all worlds unlocked, trials skipped
+// ?adventure&dadcheat&world=2       — jump straight into world 2
+// ?adventure&dadcheat&world=2&level=5 — jump to world 2, level 5 (1-indexed)
+
+const _params = new URLSearchParams(window.location.search);
+const IS_DAD_CHEAT    = _params.has('dadcheat');
+const DAD_CHEAT_WORLD = _params.has('world')  ? Math.max(0, parseInt(_params.get('world')!,  10)) : null;
+const DAD_CHEAT_LEVEL = _params.has('level')  ? Math.max(1, parseInt(_params.get('level')!,  10)) - 1 : 0;
+
 // ─── Top-level phase ──────────────────────────────────────────────────────────
 
 type AppPhase = 'title' | 'worldMap' | 'playWorld';
 
 export default function AdventureApp() {
-  const [phase, setPhase] = useState<AppPhase>('title');
-  const [selectedWorld, setSelectedWorld] = useState(0);
+  const [phase, setPhase] = useState<AppPhase>(() => {
+    if (IS_DAD_CHEAT && DAD_CHEAT_WORLD !== null) return 'playWorld';
+    return 'title';
+  });
+
+  const [selectedWorld, setSelectedWorld] = useState(() =>
+    IS_DAD_CHEAT && DAD_CHEAT_WORLD !== null ? DAD_CHEAT_WORLD : 0
+  );
+
   const [progress, setProgress] = useState<AdventureProgress>(loadProgress);
 
-  const unlockedWorlds = getUnlockedWorlds(progress.completedWorlds);
+  const unlockedWorlds = IS_DAD_CHEAT
+    ? WORLDS.map(w => w.id)
+    : getUnlockedWorlds(progress.completedWorlds);
 
   const handleSelectWorld = (worldId: number) => {
     setSelectedWorld(worldId);
@@ -56,51 +76,58 @@ export default function AdventureApp() {
     );
   }
 
-  // playWorld
   return (
     <WorldPlay
       worldId={selectedWorld}
       completedWorlds={progress.completedWorlds}
+      initialLevelIndex={IS_DAD_CHEAT ? DAD_CHEAT_LEVEL : 0}
+      skipTrial={IS_DAD_CHEAT}
       onComplete={() => handleWorldComplete(selectedWorld)}
       onBack={() => setPhase('worldMap')}
     />
   );
 }
 
-// ─── WorldPlay — plays any world's level sequence ─────────────────────────────
+// ─── WorldPlay ────────────────────────────────────────────────────────────────
 
-type PlayPhase = 'intro' | 'playing' | 'celebration' | 'story' | 'done';
+type PlayPhase = 'intro' | 'playing' | 'celebration' | 'trial' | 'story' | 'done';
 
 function getStars(thresholds: { three: number; two: number }, moves: number): number {
   if (moves <= thresholds.three) return 3;
-  if (moves <= thresholds.two) return 2;
+  if (moves <= thresholds.two)   return 2;
   return 1;
 }
 
 function WorldPlay({
   worldId,
   completedWorlds,
+  initialLevelIndex,
+  skipTrial,
   onComplete,
   onBack,
 }: {
   worldId: number;
   completedWorlds: number[];
+  initialLevelIndex: number;
+  skipTrial: boolean;
   onComplete: () => void;
   onBack: () => void;
 }) {
-  const world = WORLDS[worldId];
+  const world  = WORLDS[worldId];
   const levels: Level[] = WORLD_LEVELS[worldId] ?? [];
 
   const [playPhase, setPlayPhase] = useState<PlayPhase>('intro');
-  const [levelIndex, setLevelIndex] = useState(0);
+  const [levelIndex, setLevelIndex] = useState(() =>
+    Math.min(initialLevelIndex, Math.max(0, levels.length - 1))
+  );
   const [consumedFood, setConsumedFood] = useState<Food[]>([]);
-  const [trail, setTrail] = useState<Position[]>([levels[0]?.start ?? { row: 0, col: 0 }]);
-  const [moveCount, setMoveCount] = useState(0);
-  const [resetCount, setResetCount] = useState(0);
-  const [lastStars, setLastStars] = useState(0);
+  const [trail,        setTrail]        = useState<Position[]>([levels[levelIndex]?.start ?? { row: 0, col: 0 }]);
+  const [moveCount,    setMoveCount]    = useState(0);
+  const [resetCount,   setResetCount]   = useState(0);
+  const [lastStars,    setLastStars]    = useState(0);
 
   const level: Level = levels[levelIndex];
-  const isLastLevel = levelIndex === levels.length - 1;
+  const isLastLevel  = levelIndex === levels.length - 1;
 
   const startLevel = () => {
     setConsumedFood([]);
@@ -129,7 +156,8 @@ function WorldPlay({
 
   const handleNext = () => {
     if (isLastLevel) {
-      setPlayPhase('story');
+      // Last level done: skip trial for dad cheat, otherwise run it
+      setPlayPhase(skipTrial ? 'story' : 'trial');
     } else {
       const next = levelIndex + 1;
       setLevelIndex(next);
@@ -180,6 +208,43 @@ function WorldPlay({
             {' · '}
             <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
           </div>
+
+          {/* Dad cheat level-jump controls */}
+          {skipTrial && (
+            <div className="flex gap-2 justify-center mb-4">
+              <button
+                onClick={() => {
+                  const prev = Math.max(0, levelIndex - 1);
+                  setLevelIndex(prev);
+                  setConsumedFood([]);
+                  setTrail([levels[prev].start]);
+                  setMoveCount(0);
+                  setResetCount(c => c + 1);
+                }}
+                disabled={levelIndex === 0}
+                className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
+              >
+                ◀ Prev level
+              </button>
+              <span className="text-xs text-gray-400 self-center">
+                👨 {levelIndex + 1}/{levels.length}
+              </span>
+              <button
+                onClick={() => {
+                  const next = Math.min(levels.length - 1, levelIndex + 1);
+                  setLevelIndex(next);
+                  setConsumedFood([]);
+                  setTrail([levels[next].start]);
+                  setMoveCount(0);
+                  setResetCount(c => c + 1);
+                }}
+                disabled={levelIndex === levels.length - 1}
+                className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
+              >
+                Next level ▶
+              </button>
+            </div>
+          )}
 
           <motion.button
             onClick={startLevel}
@@ -344,6 +409,17 @@ function WorldPlay({
     );
   }
 
+  // ── Trial ──
+  if (playPhase === 'trial') {
+    return (
+      <TrialMode
+        worldId={worldId}
+        onPass={() => setPlayPhase('story')}
+        onSkip={() => setPlayPhase('story')}
+      />
+    );
+  }
+
   // ── Story beat ──
   if (playPhase === 'story') {
     const story = world.story;
@@ -408,7 +484,6 @@ function WorldPlay({
           You've explored <span className="font-semibold">{world.name}</span>. Well done!
         </p>
 
-        {/* Show roster with this world now counted as complete */}
         <div className="mb-2">
           <Roster completedWorlds={[...completedWorlds, worldId]} />
         </div>
