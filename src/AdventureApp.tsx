@@ -11,11 +11,14 @@ import { Food, Level, PieceType, Position } from './types';
 import {
   WORLDS,
   WORLD_LEVELS,
+  DUO_WORLD_LEVELS,
   loadProgress,
   markWorldComplete,
   getUnlockedWorlds,
   AdventureProgress,
 } from './adventure/worlds';
+import { DuoLevel } from './adventure/duoLevelDef';
+import { DuoBoard } from './components/DuoBoard';
 
 // Register all world levels (side-effect import)
 import './adventure/levels/index';
@@ -84,7 +87,7 @@ const REMIX_CONFIGS: Partial<Record<number, RemixConfig>> = {
     contrast: 'The knight jumped clean over every obstacle.',
     insight: "The rook can't jump. Every obstacle is a wall.",
   },
-  5: {
+  6: {
     levelIndex: 2,       // Q3 — Straight Power (queen; defined in Milestone 14)
     remixPiece: 'bishop',
     offer: 'Now try Straight Power as a Bishop!',
@@ -136,6 +139,19 @@ export default function AdventureApp() {
         unlockedWorlds={unlockedWorlds}
         onSelectWorld={handleSelectWorld}
         onBack={() => setPhase('title')}
+      />
+    );
+  }
+
+  // Duo worlds have two-piece levels — use the dedicated DuoWorldPlay component
+  if (DUO_WORLD_LEVELS[selectedWorld]) {
+    return (
+      <DuoWorldPlay
+        worldId={selectedWorld}
+        completedWorlds={progress.completedWorlds}
+        initialLevelIndex={IS_DAD_CHEAT ? DAD_CHEAT_LEVEL : 0}
+        onComplete={() => handleWorldComplete(selectedWorld)}
+        onBack={() => setPhase('worldMap')}
       />
     );
   }
@@ -841,6 +857,390 @@ function WorldPlay({
             whileTap={{ scale: 0.95 }}
           >
             Finish the Chapter 🏆
+          </motion.button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Done / chapter end ──
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-8 text-center"
+      style={{ background: world.palette.bg }}
+    >
+      <motion.div
+        className="max-w-sm"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 180 }}
+      >
+        <div className="text-7xl mb-4">🏆</div>
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-2">{world.name} Complete!</h2>
+        <p className="text-gray-600 mb-4">
+          You've explored <span className="font-semibold">{world.name}</span>. Well done!
+        </p>
+
+        <div className="mb-2">
+          <Roster completedWorlds={[...completedWorlds, worldId]} />
+        </div>
+
+        {world.story.nextTeaser && (
+          <div className="bg-white/60 border-2 border-white/40 rounded-2xl p-5 my-5 text-gray-800">
+            <div className="text-2xl mb-2">{world.story.nextTeaserEmoji}</div>
+            <p className="font-semibold">Coming next: {world.story.nextTeaser}</p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 mt-4">
+          <motion.button
+            onClick={onComplete}
+            className="text-white font-bold text-lg py-3 px-8 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Back to World Map 🗺️
+          </motion.button>
+
+          <button
+            onClick={() => {
+              setLevelIndex(0);
+              setPlayPhase('intro');
+            }}
+            className="text-sm text-gray-500 border border-gray-300 rounded-xl px-4 py-2 hover:bg-white cursor-pointer bg-white/60"
+          >
+            ↺ Play again
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── DuoWorldPlay ─────────────────────────────────────────────────────────────
+// Handles two-piece cooperative worlds (no trial, no remix).
+
+type DuoPlayPhase = 'intro' | 'playing' | 'celebration' | 'story' | 'done';
+
+function DuoWorldPlay({
+  worldId,
+  completedWorlds,
+  initialLevelIndex,
+  onComplete,
+  onBack,
+}: {
+  worldId: number;
+  completedWorlds: number[];
+  initialLevelIndex: number;
+  onComplete: () => void;
+  onBack: () => void;
+}) {
+  const world  = WORLDS[worldId];
+  const levels: DuoLevel[] = DUO_WORLD_LEVELS[worldId] ?? [];
+
+  const [playPhase,    setPlayPhase]    = useState<DuoPlayPhase>('intro');
+  const [levelIndex,   setLevelIndex]   = useState(() =>
+    Math.min(initialLevelIndex, Math.max(0, levels.length - 1))
+  );
+  const [consumedFood, setConsumedFood] = useState<Food[]>([]);
+  const [totalMoves,   setTotalMoves]   = useState(0);
+  const [resetCount,   setResetCount]   = useState(0);
+  const [lastStars,    setLastStars]    = useState(0);
+  const [isStuck,      setIsStuck]      = useState(false);
+
+  const level      = levels[levelIndex];
+  const isLastLevel = levelIndex === levels.length - 1;
+
+  const startLevel = () => {
+    setConsumedFood([]);
+    setTotalMoves(0);
+    setResetCount(c => c + 1);
+    setIsStuck(false);
+    setPlayPhase('playing');
+  };
+
+  const resetBoard = () => {
+    setConsumedFood([]);
+    setTotalMoves(0);
+    setResetCount(c => c + 1);
+    setIsStuck(false);
+  };
+
+  const handleNext = () => {
+    if (isLastLevel) {
+      setPlayPhase('story');
+    } else {
+      const next = levelIndex + 1;
+      setLevelIndex(next);
+      setConsumedFood([]);
+      setTotalMoves(0);
+      setResetCount(c => c + 1);
+      setIsStuck(false);
+      setPlayPhase('intro');
+    }
+  };
+
+  // ── Intro card ──
+  if (playPhase === 'intro') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          key={`duo-intro-${levelIndex}`}
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+          className="max-w-sm w-full"
+        >
+          {/* Show both pieces floating side-by-side */}
+          <div className="flex justify-center items-end gap-8 mb-5">
+            {level.pieces.map((p, i) => (
+              <motion.div
+                key={i}
+                className="flex flex-col items-center gap-1"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
+              >
+                <ChessPieceIcon type={p.pieceType} size={60} />
+                <span
+                  className="text-xs font-bold uppercase tracking-wider"
+                  style={{ color: i === 0 ? '#f59e0b' : '#38bdf8' }}
+                >
+                  {p.pieceType}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: world.palette.accent }}>
+            {world.name} · Level {levelIndex + 1} of {levels.length}
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-800 mb-2">{level.name}</h2>
+          <p className="text-base text-gray-600 mb-4">{level.description}</p>
+
+          {level.hint && (
+            <div className="bg-white/60 border-2 border-sky-200 rounded-xl p-3 mb-4 text-sm text-sky-800">
+              💡 {level.hint}
+            </div>
+          )}
+
+          <div className="bg-white/50 border border-amber-200 rounded-xl p-3 mb-6 text-sm text-amber-800">
+            <span className="font-semibold">3 ★</span> in {level.starThresholds.three} move{level.starThresholds.three !== 1 ? 's' : ''}
+            {' · '}
+            <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
+          </div>
+
+          <motion.button
+            onClick={startLevel}
+            className="w-full text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {levelIndex === 0 ? "Let's Go! 🌟" : 'Play! 🌟'}
+          </motion.button>
+
+          <button
+            onClick={onBack}
+            className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+          >
+            ← World Map
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Playing ──
+  if (playPhase === 'playing') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          className="text-center"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+        >
+          <div className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: world.palette.accent }}>
+            {level.name}
+          </div>
+          <motion.span
+            className="text-sm font-bold text-gray-700"
+            key={totalMoves}
+            animate={{ scale: [1.2, 1] }}
+            transition={{ duration: 0.15 }}
+          >
+            {totalMoves} move{totalMoves !== 1 ? 's' : ''}
+          </motion.span>
+        </motion.div>
+
+        <DuoBoard
+          key={`duo-${worldId}-${levelIndex}-${resetCount}`}
+          level={level}
+          consumedFood={consumedFood}
+          squareSize={72}
+          isMobile={false}
+          onMove={moves => setTotalMoves(moves)}
+          onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
+          onStuck={setIsStuck}
+          onComplete={moves => {
+            // DuoBoard already waited 600ms — just set stars and transition
+            setLastStars(getStars(level.starThresholds, moves));
+            setPlayPhase('celebration');
+          }}
+        />
+
+        {isStuck && (
+          <motion.div
+            className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-2 text-sm text-red-700 font-semibold text-center"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            No moves left! Press Restart ↺
+          </motion.div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={resetBoard}
+            className={`text-sm border rounded-xl px-4 py-2 cursor-pointer transition-colors ${
+              isStuck
+                ? 'text-red-600 border-red-300 bg-red-50 font-semibold hover:bg-red-100'
+                : 'text-gray-500 border-gray-300 hover:bg-white bg-white/60'
+            }`}
+          >
+            ↺ Restart
+          </button>
+          <button
+            onClick={() => setPlayPhase('intro')}
+            className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+          >
+            ← Level Info
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Celebration ──
+  if (playPhase === 'celebration') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-yellow-200 via-amber-100 to-orange-100 flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-2xl select-none pointer-events-none"
+            style={{ left: `${(i * 8.5) % 100}vw` }}
+            initial={{ y: -120, opacity: 1 }}
+            animate={{ y: '110vh', rotate: Math.random() * 720 - 360, opacity: [1, 1, 0] }}
+            transition={{ duration: 3 + Math.random() * 2, delay: Math.random() * 1.2, repeat: Infinity, ease: 'linear' }}
+          >
+            {['⭐', '🎉', '✨', '🌟', '🎊', '💛'][i % 6]}
+          </motion.div>
+        ))}
+
+        <motion.div
+          className="relative z-10 max-w-sm w-full"
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 16 }}
+        >
+          <div className="text-6xl mb-3">🎉</div>
+          <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
+            {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Both pieces home in <span className="font-bold text-amber-600">{totalMoves}</span> move{totalMoves !== 1 ? 's' : ''}.
+          </p>
+
+          <div className="flex justify-center gap-3 mb-6">
+            {[1, 2, 3].map(s => (
+              <motion.div
+                key={s}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: s <= lastStars ? 1 : 0.5, rotate: 0, opacity: s <= lastStars ? 1 : 0.25 }}
+                transition={{ delay: 0.3 + s * 0.15, type: 'spring', stiffness: 300 }}
+              >
+                <Star className={`w-12 h-12 ${s <= lastStars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <motion.button
+              onClick={handleNext}
+              className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              {isLastLevel ? 'Finish the Chapter ✨' : 'Next Level →'}
+            </motion.button>
+
+            {lastStars < 3 && (
+              <motion.button
+                onClick={startLevel}
+                className="text-sky-600 font-semibold hover:underline cursor-pointer bg-transparent border-none text-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+              >
+                ↺ Try for 3 stars
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Story beat ──
+  if (playPhase === 'story') {
+    const story = world.story;
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-8 text-center"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          className="max-w-md"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          <motion.div
+            className="text-6xl mb-6"
+            animate={{ rotate: [0, -5, 5, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+          >
+            {world.emoji}
+          </motion.div>
+
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-4">{story.title}</h2>
+
+          <div className="bg-white/70 rounded-2xl p-6 shadow-md text-gray-700 text-base leading-relaxed mb-6 text-left space-y-3">
+            {story.paragraphs.map((para, i) => (
+              <p key={i} className={i === story.paragraphs.length - 1 ? 'font-semibold italic' : ''}>
+                {para}
+              </p>
+            ))}
+          </div>
+
+          <motion.button
+            onClick={() => setPlayPhase('done')}
+            className="text-white font-bold text-xl py-4 px-10 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+          >
+            Continue →
           </motion.button>
         </motion.div>
       </div>

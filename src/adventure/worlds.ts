@@ -1,4 +1,5 @@
 import { Level } from '../types';
+import { DuoLevel } from './duoLevelDef';
 
 // ─── World definitions ────────────────────────────────────────────────────────
 
@@ -138,13 +139,35 @@ export const WORLDS: WorldDef[] = [
         '"Others could not follow. We respect that."',
         'The Knight joins your party.',
       ],
-      nextTeaser: "Queen's Realm",
-      nextTeaserEmoji: '👑',
+      nextTeaser: 'The Paired Path',
+      nextTeaserEmoji: '🤝',
     },
     mapPos: { x: 0.82, y: 0.56 },
   },
   {
     id: 5,
+    name: 'The Paired Path',
+    emoji: '🤝',
+    tagline: 'Two pieces. One journey.',
+    palette: {
+      bg: 'linear-gradient(to bottom, #fde68a, #fef3c7, #e0f2fe)',
+      accent: '#b45309',
+      nodeColor: '#f59e0b',
+    },
+    story: {
+      title: 'Stronger Together',
+      paragraphs: [
+        'Moving together, each piece helped the other in a way neither could manage alone.',
+        '"That is what friendship is," said the king. "Not doing everything for each other — just going together."',
+        'The whole party cheers.',
+      ],
+      nextTeaser: "Queen's Realm",
+      nextTeaserEmoji: '👑',
+    },
+    mapPos: { x: 0.88, y: 0.37 },
+  },
+  {
+    id: 6,
     name: "Queen's Realm",
     emoji: '👑',
     tagline: 'The last and greatest challenge.',
@@ -161,7 +184,7 @@ export const WORLDS: WorldDef[] = [
         '"I will join you. But know this: it was not power that reached me. It was understanding."',
       ],
     },
-    mapPos: { x: 0.90, y: 0.22 },
+    mapPos: { x: 0.93, y: 0.18 },
   },
 ];
 
@@ -213,10 +236,17 @@ export function markWorldComplete(worldId: number): AdventureProgress {
   return progress;
 }
 
-// ─── Level registry ───────────────────────────────────────────────────────────
+// ─── Level registries ─────────────────────────────────────────────────────────
 
 /**
- * Maps world id → level array. Populated by adventure/levels/index.ts.
- * WorldPlay uses this to load the correct levels for any world.
+ * Maps world id → single-piece level array.
+ * Populated by adventure/levels/index.ts.
  */
 export const WORLD_LEVELS: Record<number, Level[]> = {};
+
+/**
+ * Maps world id → two-piece (duo) level array.
+ * Populated by adventure/levels/index.ts.
+ * A world ID present here is rendered by DuoWorldPlay, not WorldPlay.
+ */
+export const DUO_WORLD_LEVELS: Record<number, DuoLevel[]> = {};
