@@ -1,27 +1,73 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
 import { BoardShell } from './components/BoardShell';
 import { ScrollBoard } from './components/ScrollBoard';
+import { WorldMap } from './WorldMap';
 import { Food, Level, Position } from './types';
-import { act1KingLevels } from './adventure/levels/king';
+import {
+  WORLDS,
+  WORLD_LEVELS,
+  loadProgress,
+  markWorldComplete,
+  getUnlockedWorlds,
+  AdventureProgress,
+} from './adventure/worlds';
 
-type AdventurePhase = 'title' | 'act1';
+// Register all world levels (side-effect import)
+import './adventure/levels/index';
+
+// ─── Top-level phase ──────────────────────────────────────────────────────────
+
+type AppPhase = 'title' | 'worldMap' | 'playWorld';
 
 export default function AdventureApp() {
-  const [phase, setPhase] = useState<AdventurePhase>('title');
+  const [phase, setPhase] = useState<AppPhase>('title');
+  const [selectedWorld, setSelectedWorld] = useState(0);
+  const [progress, setProgress] = useState<AdventureProgress>(loadProgress);
+
+  const unlockedWorlds = getUnlockedWorlds(progress.completedWorlds);
+
+  const handleSelectWorld = (worldId: number) => {
+    setSelectedWorld(worldId);
+    setPhase('playWorld');
+  };
+
+  const handleWorldComplete = (worldId: number) => {
+    const updated = markWorldComplete(worldId);
+    setProgress(updated);
+    setPhase('worldMap');
+  };
 
   if (phase === 'title') {
-    return <TitleScreen onBegin={() => setPhase('act1')} />;
+    return <TitleScreen onBegin={() => setPhase('worldMap')} />;
   }
-  return <Act1Flow onBack={() => setPhase('title')} />;
+
+  if (phase === 'worldMap') {
+    return (
+      <WorldMap
+        completedWorlds={progress.completedWorlds}
+        unlockedWorlds={unlockedWorlds}
+        onSelectWorld={handleSelectWorld}
+        onBack={() => setPhase('title')}
+      />
+    );
+  }
+
+  // playWorld
+  return (
+    <WorldPlay
+      worldId={selectedWorld}
+      onComplete={() => handleWorldComplete(selectedWorld)}
+      onBack={() => setPhase('worldMap')}
+    />
+  );
 }
 
-// ---------------------------------------------------------------------------
-// Act 1 — linear level sequence
-// ---------------------------------------------------------------------------
-type Act1Phase = 'intro' | 'playing' | 'celebration' | 'story' | 'done';
+// ─── WorldPlay — plays any world's level sequence ─────────────────────────────
+
+type PlayPhase = 'intro' | 'playing' | 'celebration' | 'story' | 'done';
 
 function getStars(thresholds: { three: number; two: number }, moves: number): number {
   if (moves <= thresholds.three) return 3;
@@ -29,24 +75,35 @@ function getStars(thresholds: { three: number; two: number }, moves: number): nu
   return 1;
 }
 
-function Act1Flow({ onBack }: { onBack: () => void }) {
-  const [act1Phase, setAct1Phase] = useState<Act1Phase>('intro');
+function WorldPlay({
+  worldId,
+  onComplete,
+  onBack,
+}: {
+  worldId: number;
+  onComplete: () => void;
+  onBack: () => void;
+}) {
+  const world = WORLDS[worldId];
+  const levels: Level[] = WORLD_LEVELS[worldId] ?? [];
+
+  const [playPhase, setPlayPhase] = useState<PlayPhase>('intro');
   const [levelIndex, setLevelIndex] = useState(0);
   const [consumedFood, setConsumedFood] = useState<Food[]>([]);
-  const [trail, setTrail] = useState<Position[]>([act1KingLevels[0].start]);
+  const [trail, setTrail] = useState<Position[]>([levels[0]?.start ?? { row: 0, col: 0 }]);
   const [moveCount, setMoveCount] = useState(0);
   const [resetCount, setResetCount] = useState(0);
   const [lastStars, setLastStars] = useState(0);
 
-  const level: Level = act1KingLevels[levelIndex];
-  const isLastLevel = levelIndex === act1KingLevels.length - 1;
+  const level: Level = levels[levelIndex];
+  const isLastLevel = levelIndex === levels.length - 1;
 
   const startLevel = () => {
     setConsumedFood([]);
     setTrail([level.start]);
     setMoveCount(0);
     setResetCount(c => c + 1);
-    setAct1Phase('playing');
+    setPlayPhase('playing');
   };
 
   const resetBoard = () => {
@@ -62,31 +119,33 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
     setMoveCount(next);
     if (newPos.row === level.goal.row && newPos.col === level.goal.col) {
       setLastStars(getStars(level.starThresholds, next));
-      setTimeout(() => setAct1Phase('celebration'), 600);
+      setTimeout(() => setPlayPhase('celebration'), 600);
     }
   };
 
   const handleNext = () => {
     if (isLastLevel) {
-      setAct1Phase('story');
+      setPlayPhase('story');
     } else {
       const next = levelIndex + 1;
       setLevelIndex(next);
       setConsumedFood([]);
-      setTrail([act1KingLevels[next].start]);
+      setTrail([levels[next].start]);
       setMoveCount(0);
       setResetCount(c => c + 1);
-      setAct1Phase('intro');
+      setPlayPhase('intro');
     }
   };
 
-  // ---- Intro ----
-  if (act1Phase === 'intro') {
-    const isFirst = levelIndex === 0;
+  // ── Intro card ──
+  if (playPhase === 'intro') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-sky-200 via-emerald-100 to-amber-50 flex flex-col items-center justify-center p-6 text-center">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: world.palette.bg }}
+      >
         <motion.div
-          key={levelIndex}
+          key={`intro-${levelIndex}`}
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
@@ -97,22 +156,22 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <ChessPieceIcon type="king" size={70} />
+            <ChessPieceIcon type={level.pieceType} size={70} />
           </motion.div>
 
-          <div className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-1">
-            Level {levelIndex + 1} of {act1KingLevels.length}
+          <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: world.palette.accent }}>
+            {world.name} · Level {levelIndex + 1} of {levels.length}
           </div>
           <h2 className="text-3xl font-extrabold text-gray-800 mb-2">{level.name}</h2>
           <p className="text-base text-gray-600 mb-4">{level.description}</p>
 
           {level.hint && (
-            <div className="bg-sky-50 border-2 border-sky-200 rounded-xl p-3 mb-6 text-sm text-sky-800">
+            <div className="bg-white/60 border-2 border-sky-200 rounded-xl p-3 mb-4 text-sm text-sky-800">
               💡 {level.hint}
             </div>
           )}
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-sm text-amber-800">
+          <div className="bg-white/50 border border-amber-200 rounded-xl p-3 mb-6 text-sm text-amber-800">
             <span className="font-semibold">3 ★</span> in {level.starThresholds.three} move{level.starThresholds.three !== 1 ? 's' : ''}
             {' · '}
             <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
@@ -120,35 +179,39 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
 
           <motion.button
             onClick={startLevel}
-            className="w-full bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
+            className="w-full text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.95 }}
           >
-            {isFirst ? "Let's Go! 🌟" : 'Play! 🌟'}
+            {levelIndex === 0 ? "Let's Go! 🌟" : 'Play! 🌟'}
           </motion.button>
 
           <button
             onClick={onBack}
             className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
           >
-            ← Back to Title
+            ← World Map
           </button>
         </motion.div>
       </div>
     );
   }
 
-  // ---- Playing ----
-  if (act1Phase === 'playing') {
+  // ── Playing ──
+  if (playPhase === 'playing') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-sky-200 via-emerald-100 to-amber-50 flex flex-col items-center justify-center gap-4 p-4 select-none">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
+        style={{ background: world.palette.bg }}
+      >
         <motion.div
           className="text-center"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          <div className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-0.5">
-            Level {levelIndex + 1} · {level.name}
+          <div className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: world.palette.accent }}>
+            {level.name}
           </div>
           <motion.span
             className="text-sm font-bold text-gray-700"
@@ -162,7 +225,7 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
 
         {level.scrollAxis ? (
           <ScrollBoard
-            key={`act1-${levelIndex}-${resetCount}`}
+            key={`world${worldId}-${levelIndex}-${resetCount}`}
             level={level}
             consumedFood={consumedFood}
             trail={trail}
@@ -174,7 +237,7 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
           />
         ) : (
           <BoardShell
-            key={`act1-${levelIndex}-${resetCount}`}
+            key={`world${worldId}-${levelIndex}-${resetCount}`}
             level={level}
             consumedFood={consumedFood}
             trail={trail}
@@ -194,7 +257,7 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
             ↺ Restart
           </button>
           <button
-            onClick={() => setAct1Phase('intro')}
+            onClick={() => setPlayPhase('intro')}
             className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
           >
             ← Level Info
@@ -204,8 +267,8 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
     );
   }
 
-  // ---- Celebration ----
-  if (act1Phase === 'celebration') {
+  // ── Celebration ──
+  if (playPhase === 'celebration') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-yellow-200 via-amber-100 to-orange-100 flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden">
         {[...Array(12)].map((_, i) => (
@@ -277,10 +340,14 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
     );
   }
 
-  // ---- Story beat after A5 ----
-  if (act1Phase === 'story') {
+  // ── Story beat ──
+  if (playPhase === 'story') {
+    const story = world.story;
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-100 via-orange-50 to-sky-100 flex flex-col items-center justify-center p-8 text-center">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-8 text-center"
+        style={{ background: world.palette.bg }}
+      >
         <motion.div
           className="max-w-md"
           initial={{ opacity: 0, y: 20 }}
@@ -292,26 +359,23 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
             animate={{ rotate: [0, -5, 5, -5, 0] }}
             transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
           >
-            👑
+            {world.emoji}
           </motion.div>
 
-          <h2 className="text-2xl font-extrabold text-gray-800 mb-4">The Kingdom Is Broken</h2>
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-4">{story.title}</h2>
 
           <div className="bg-white/70 rounded-2xl p-6 shadow-md text-gray-700 text-base leading-relaxed mb-6 text-left space-y-3">
-            <p>
-              The king walked through the quiet fields of his kingdom. The old stone walls stood, but so much else had crumbled.
-            </p>
-            <p>
-              He was alone — but not entirely. Beyond the meadow, he could hear them.
-            </p>
-            <p className="font-semibold text-amber-700 italic">
-              "The Pawn folk are out there," he thought. "And they need help."
-            </p>
+            {story.paragraphs.map((para, i) => (
+              <p key={i} className={i === story.paragraphs.length - 1 ? 'font-semibold italic' : ''}>
+                {para}
+              </p>
+            ))}
           </div>
 
           <motion.button
-            onClick={() => setAct1Phase('done')}
-            className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold text-xl py-4 px-10 rounded-2xl shadow-lg cursor-pointer"
+            onClick={() => setPlayPhase('done')}
+            className="text-white font-bold text-xl py-4 px-10 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
           >
@@ -322,9 +386,12 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
     );
   }
 
-  // ---- Done / Chapter End ----
+  // ── Done / chapter end ──
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-200 via-emerald-100 to-amber-50 flex flex-col items-center justify-center p-8 text-center">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-8 text-center"
+      style={{ background: world.palette.bg }}
+    >
       <motion.div
         className="max-w-sm"
         initial={{ scale: 0.8, opacity: 0 }}
@@ -332,30 +399,37 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
         transition={{ type: 'spring', stiffness: 180 }}
       >
         <div className="text-7xl mb-4">🏆</div>
-        <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Chapter 1 Complete!</h2>
-        <p className="text-gray-600 mb-2">You've explored the Little King's world.</p>
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-2">{world.name} Complete!</h2>
+        <p className="text-gray-600 mb-4">
+          You've explored <span className="font-semibold">{world.name}</span>. Well done!
+        </p>
 
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 my-6 text-amber-800">
-          <div className="text-2xl mb-2">🌾</div>
-          <p className="font-semibold">Coming next: Pawn's Farm</p>
-          <p className="text-sm mt-1 text-amber-600">Help the Pawns make their way across the fields.</p>
-        </div>
+        {world.story.nextTeaser && (
+          <div className="bg-white/60 border-2 border-white/40 rounded-2xl p-5 my-5 text-gray-800">
+            <div className="text-2xl mb-2">{world.story.nextTeaserEmoji}</div>
+            <p className="font-semibold">Coming next: {world.story.nextTeaser}</p>
+          </div>
+        )}
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 mt-4">
+          <motion.button
+            onClick={onComplete}
+            className="text-white font-bold text-lg py-3 px-8 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Back to World Map 🗺️
+          </motion.button>
+
           <button
             onClick={() => {
               setLevelIndex(0);
-              setAct1Phase('intro');
+              setPlayPhase('intro');
             }}
             className="text-sm text-gray-500 border border-gray-300 rounded-xl px-4 py-2 hover:bg-white cursor-pointer bg-white/60"
           >
-            ↺ Play Act 1 again
-          </button>
-          <button
-            onClick={onBack}
-            className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
-          >
-            ← Back to Title
+            ↺ Play again
           </button>
         </div>
       </motion.div>
@@ -363,40 +437,14 @@ function Act1Flow({ onBack }: { onBack: () => void }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Title screen
-// ---------------------------------------------------------------------------
+// ─── Title screen ─────────────────────────────────────────────────────────────
+
 const LANDSCAPE_ROWS = [
-  {
-    top: '26%',
-    size: 9,
-    opacity: 0.28,
-    emojis: ['🏔️', '🌲', '⛰️', '🌲', '🏔️', '🌲', '⛰️', '🌲', '🏔️'],
-  },
-  {
-    top: '38%',
-    size: 13,
-    opacity: 0.42,
-    emojis: ['🌲', '🌳', '🌲', '🌳', '🌲', '🌳', '🌲', '🌳', '🌲'],
-  },
-  {
-    top: '50%',
-    size: 19,
-    opacity: 0.60,
-    emojis: ['🌳', '🌾', '🌼', '🌳', '🌸', '🌾', '🌼', '🌳', '🌸'],
-  },
-  {
-    top: '63%',
-    size: 26,
-    opacity: 0.78,
-    emojis: ['🌿', '🍀', '🌺', '🌻', '🌺', '🍀', '🌿', '🌻', '🌺'],
-  },
-  {
-    top: '76%',
-    size: 36,
-    opacity: 1,
-    emojis: ['🌱', '🍄', '🌻', '🌼', '🌻', '🍄', '🌱', '🌼', '🍄'],
-  },
+  { top: '26%', size: 9,  opacity: 0.28, emojis: ['🏔️', '🌲', '⛰️', '🌲', '🏔️', '🌲', '⛰️', '🌲', '🏔️'] },
+  { top: '38%', size: 13, opacity: 0.42, emojis: ['🌲', '🌳', '🌲', '🌳', '🌲', '🌳', '🌲', '🌳', '🌲'] },
+  { top: '50%', size: 19, opacity: 0.60, emojis: ['🌳', '🌾', '🌼', '🌳', '🌸', '🌾', '🌼', '🌳', '🌸'] },
+  { top: '63%', size: 26, opacity: 0.78, emojis: ['🌿', '🍀', '🌺', '🌻', '🌺', '🍀', '🌿', '🌻', '🌺'] },
+  { top: '76%', size: 36, opacity: 1,    emojis: ['🌱', '🍄', '🌻', '🌼', '🌻', '🍄', '🌱', '🌼', '🍄'] },
 ] as const;
 
 function TitleScreen({ onBegin }: { onBegin: () => void }) {
@@ -408,7 +456,6 @@ function TitleScreen({ onBegin }: { onBegin: () => void }) {
           'linear-gradient(to bottom, #29b6f6 0%, #81d4fa 20%, #b3e5fc 40%, #c8e6c9 58%, #66bb6a 75%, #2e7d32 100%)',
       }}
     >
-      {/* Parallax emoji landscape */}
       {LANDSCAPE_ROWS.map((row, ri) => (
         <div
           key={ri}
@@ -416,21 +463,17 @@ function TitleScreen({ onBegin }: { onBegin: () => void }) {
           style={{ top: row.top, opacity: row.opacity }}
         >
           {row.emojis.map((e, i) => (
-            <span key={i} style={{ fontSize: row.size, lineHeight: 1 }}>
-              {e}
-            </span>
+            <span key={i} style={{ fontSize: row.size, lineHeight: 1 }}>{e}</span>
           ))}
         </div>
       ))}
 
-      {/* Title card */}
       <motion.div
         className="relative z-10 text-center px-6"
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        {/* King — gentle idle bob */}
         <motion.div
           className="mb-5 flex justify-center drop-shadow-2xl"
           animate={{ y: [0, -8, 0] }}
@@ -466,7 +509,6 @@ function TitleScreen({ onBegin }: { onBegin: () => void }) {
         </motion.button>
       </motion.div>
 
-      {/* Back to Classic */}
       <motion.a
         href="/"
         className="absolute bottom-6 left-6 text-sm font-medium"

@@ -197,7 +197,7 @@ function App() {
 
     const idleTimer = window.setTimeout(() => {
       setShowHint(true);
-      setMobileCoach('Need help? I popped open the hint for you 💡');
+
     }, 10000);
 
     return () => window.clearTimeout(idleTimer);

@@ -10,8 +10,8 @@
  *
  * Scroll trigger (user spec):
  *   When the piece is ON or 1 square from the frontier edge, the viewport
- *   scrolls so the piece is 3 squares from that edge — "opening up" the
- *   world in front of them.
+ *   scrolls so the piece is snapped to the center (TARGET=2) of the 5-square
+ *   viewport — "opening up" the world in front of them.
  *
  * Props: identical to BoardShellProps. Extra board metadata is read from
  *   level.boardHeight / level.boardWidth / level.scrollAxis.
@@ -47,7 +47,7 @@ function computeAnchor(
   frontier: 'low' | 'high',
 ): number {
   const TRIGGER = 1; // trigger when piece is this many squares from the frontier
-  const TARGET  = 3; // after scroll, piece is this many squares from the frontier
+  const TARGET  = 2; // after scroll, piece lands at center of the visible window
 
   let anchor = currentAnchor;
 
