@@ -30,6 +30,8 @@ export interface BoardShellProps {
   worldTheme?: React.CSSProperties;
   /** When true, adds a subtle violet tint to light squares (bishop world checkerboard) */
   showCheckerboard?: boolean;
+  /** Ghost replay position — translucent copy of the piece at this cell (null = hidden) */
+  ghostPos?: Position | null;
 }
 
 export function BoardShell({
@@ -43,6 +45,7 @@ export function BoardShell({
   onStuck,
   worldTheme,
   showCheckerboard,
+  ghostPos,
 }: BoardShellProps) {
   const [piecePos, setPiecePos] = useState<Position>(level.start);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
@@ -323,6 +326,24 @@ export function BoardShell({
             );
           })}
         </div>
+
+        {/* Ghost replay piece — translucent, advances on a timer set by the parent */}
+        {ghostPos && (
+          <div
+            className="absolute pointer-events-none flex items-center justify-center"
+            style={{
+              width: `${squareSize}px`,
+              height: `${squareSize}px`,
+              left: ghostPos.col * squareSize,
+              top: ghostPos.row * squareSize,
+              zIndex: 9,
+              opacity: 0.38,
+              transition: 'left 0.35s ease, top 0.35s ease',
+            }}
+          >
+            <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
+          </div>
+        )}
 
         {/* Floating animated piece */}
         <motion.div

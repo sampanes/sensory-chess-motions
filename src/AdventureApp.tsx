@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
@@ -22,6 +22,14 @@ import { DuoBoard } from './components/DuoBoard';
 
 // Register all world levels and pull the queen finale array
 import { queenFinale } from './adventure/levels/index';
+import {
+  encodeBuiltinChallenge,
+  decodeChallenge,
+  loadGhost,
+  saveGhostIfBest,
+  getAttempts,
+  incrementAttempts,
+} from './adventure/sharing';
 
 // ─── Dad Cheat — URL param helpers ───────────────────────────────────────────
 // ?adventure&dadcheat               — all worlds unlocked, trials skipped
@@ -32,6 +40,7 @@ const _params = new URLSearchParams(window.location.search);
 const IS_DAD_CHEAT    = _params.has('dadcheat');
 const DAD_CHEAT_WORLD = _params.has('world')  ? Math.max(0, parseInt(_params.get('world')!,  10)) : null;
 const DAD_CHEAT_LEVEL = _params.has('level')  ? Math.max(1, parseInt(_params.get('level')!,  10)) - 1 : 0;
+const CHALLENGE       = decodeChallenge(_params);
 
 // ─── Remix Mode — per-world config ───────────────────────────────────────────
 // After the story beat, a remix card offers the player the same board from a
@@ -104,12 +113,15 @@ export default function AdventureApp() {
   const [phase, setPhase] = useState<AppPhase>(() => {
     if (IS_DAD_CHEAT && DAD_CHEAT_WORLD !== null) return 'playWorld';
     if (IS_DAD_CHEAT) return 'worldMap'; // skip title, land on unlocked map
+    if (CHALLENGE) return 'playWorld';   // challenge URL → jump straight in
     return 'title';
   });
 
-  const [selectedWorld, setSelectedWorld] = useState(() =>
-    IS_DAD_CHEAT && DAD_CHEAT_WORLD !== null ? DAD_CHEAT_WORLD : 0
-  );
+  const [selectedWorld, setSelectedWorld] = useState(() => {
+    if (IS_DAD_CHEAT && DAD_CHEAT_WORLD !== null) return DAD_CHEAT_WORLD;
+    if (CHALLENGE) return CHALLENGE.worldId;
+    return 0;
+  });
 
   const [progress, setProgress] = useState<AdventureProgress>(loadProgress);
 
@@ -150,7 +162,11 @@ export default function AdventureApp() {
       <QueenWorldPlay
         worldId={selectedWorld}
         completedWorlds={progress.completedWorlds}
-        initialLevelIndex={IS_DAD_CHEAT ? DAD_CHEAT_LEVEL : 0}
+        initialLevelIndex={
+          IS_DAD_CHEAT ? DAD_CHEAT_LEVEL
+          : CHALLENGE?.worldId === selectedWorld ? CHALLENGE.levelIndex
+          : 0
+        }
         skipTrial={IS_DAD_CHEAT}
         onComplete={() => handleWorldComplete(selectedWorld)}
         onBack={() => setPhase('worldMap')}
@@ -164,7 +180,11 @@ export default function AdventureApp() {
       <DuoWorldPlay
         worldId={selectedWorld}
         completedWorlds={progress.completedWorlds}
-        initialLevelIndex={IS_DAD_CHEAT ? DAD_CHEAT_LEVEL : 0}
+        initialLevelIndex={
+          IS_DAD_CHEAT ? DAD_CHEAT_LEVEL
+          : CHALLENGE?.worldId === selectedWorld ? CHALLENGE.levelIndex
+          : 0
+        }
         onComplete={() => handleWorldComplete(selectedWorld)}
         onBack={() => setPhase('worldMap')}
       />
@@ -175,7 +195,11 @@ export default function AdventureApp() {
     <WorldPlay
       worldId={selectedWorld}
       completedWorlds={progress.completedWorlds}
-      initialLevelIndex={IS_DAD_CHEAT ? DAD_CHEAT_LEVEL : 0}
+      initialLevelIndex={
+        IS_DAD_CHEAT ? DAD_CHEAT_LEVEL
+        : CHALLENGE?.worldId === selectedWorld ? CHALLENGE.levelIndex
+        : 0
+      }
       skipTrial={IS_DAD_CHEAT}
       onComplete={() => handleWorldComplete(selectedWorld)}
       onBack={() => setPhase('worldMap')}
@@ -234,6 +258,18 @@ function WorldPlay({
   const level: Level = levels[levelIndex];
   const isLastLevel  = levelIndex === levels.length - 1;
 
+  // ── Ghost replay state ────────────────────────────────────────────────────
+  const [ghostRoute, setGhostRoute] = useState<Position[] | null>(null);
+  const [ghostStep,  setGhostStep]  = useState(0);
+  const ghostPos = ghostRoute ? (ghostRoute[ghostStep] ?? null) : null;
+
+  // Advance ghost one step at a time while playing
+  useEffect(() => {
+    if (!ghostRoute || playPhase !== 'playing' || ghostStep >= ghostRoute.length - 1) return;
+    const t = setTimeout(() => setGhostStep(s => s + 1), 700);
+    return () => clearTimeout(t);
+  }, [ghostRoute, ghostStep, playPhase]);
+
   // Remix config and derived level (null if this world has no remix or the level doesn't exist yet)
   const remixConfig = REMIX_CONFIGS[worldId] ?? null;
   const remixSourceLevel = remixConfig ? (levels[remixConfig.levelIndex] ?? null) : null;
@@ -247,6 +283,14 @@ function WorldPlay({
     setMoveCount(0);
     setResetCount(c => c + 1);
     setIsStuck(false);
+    // Ghost: show from attempt 3+ onward
+    incrementAttempts(worldId, levelIndex);
+    if (getAttempts(worldId, levelIndex) >= 3) {
+      setGhostRoute(loadGhost(worldId, levelIndex));
+    } else {
+      setGhostRoute(null);
+    }
+    setGhostStep(0);
     setPlayPhase('playing');
   };
 
@@ -256,6 +300,7 @@ function WorldPlay({
     setMoveCount(0);
     setResetCount(c => c + 1);
     setIsStuck(false);
+    setGhostStep(0);
   };
 
   const startRemix = () => {
@@ -278,10 +323,12 @@ function WorldPlay({
   };
 
   const handleMove = (newPos: Position) => {
-    setTrail(prev => [...prev, newPos]);
+    const newTrail = [...trail, newPos];
+    setTrail(newTrail);
     const next = moveCount + 1;
     setMoveCount(next);
     if (newPos.row === level.goal.row && newPos.col === level.goal.col) {
+      saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(level.starThresholds, next));
       setTimeout(() => setPlayPhase('celebration'), 600);
     }
@@ -298,6 +345,8 @@ function WorldPlay({
       setTrail([levels[next].start]);
       setMoveCount(0);
       setResetCount(c => c + 1);
+      setGhostRoute(null);
+      setGhostStep(0);
       setPlayPhase('intro');
     }
   };
@@ -448,6 +497,7 @@ function WorldPlay({
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
             onStuck={setIsStuck}
             showCheckerboard={worldId === 3}
+            ghostPos={ghostPos}
           />
         ) : (
           <BoardShell
@@ -461,6 +511,7 @@ function WorldPlay({
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
             onStuck={setIsStuck}
             showCheckerboard={worldId === 3}
+            ghostPos={ghostPos}
           />
         )}
 
@@ -564,6 +615,19 @@ function WorldPlay({
                 ↺ Try for 3 stars
               </motion.button>
             )}
+
+            <motion.button
+              onClick={() => {
+                const url = encodeBuiltinChallenge(worldId, levelIndex);
+                navigator.clipboard?.writeText(url).catch(() => {});
+              }}
+              className="text-sm text-sky-600 border border-sky-300 rounded-xl px-4 py-2 bg-sky-50 hover:bg-sky-100 cursor-pointer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              🔗 Copy challenge link
+            </motion.button>
           </div>
         </motion.div>
       </div>
@@ -1391,6 +1455,17 @@ function QueenWorldPlay({
     ? { ...remixSourceLevel, pieceType: remixConfig!.remixPiece }
     : null;
 
+  // ── Ghost replay state (solo levels only) ────────────────────────────────
+  const [ghostRoute, setGhostRoute] = useState<Position[] | null>(null);
+  const [ghostStep,  setGhostStep]  = useState(0);
+  const ghostPos = isSolo && ghostRoute ? (ghostRoute[ghostStep] ?? null) : null;
+
+  useEffect(() => {
+    if (!ghostRoute || !isSolo || playPhase !== 'playing' || ghostStep >= ghostRoute.length - 1) return;
+    const t = setTimeout(() => setGhostStep(s => s + 1), 700);
+    return () => clearTimeout(t);
+  }, [ghostRoute, ghostStep, playPhase, isSolo]);
+
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const startLevel = () => {
@@ -1400,6 +1475,14 @@ function QueenWorldPlay({
       setMoveCount(0);
       setResetCount(c => c + 1);
       setIsStuck(false);
+      // Ghost: show from attempt 3+ onward
+      incrementAttempts(worldId, levelIndex);
+      if (getAttempts(worldId, levelIndex) >= 3) {
+        setGhostRoute(loadGhost(worldId, levelIndex));
+      } else {
+        setGhostRoute(null);
+      }
+      setGhostStep(0);
     } else {
       setDuoConsumedFood([]);
       setTotalMoves(0);
@@ -1416,6 +1499,7 @@ function QueenWorldPlay({
       setMoveCount(0);
       setResetCount(c => c + 1);
       setIsStuck(false);
+      setGhostStep(0);
     } else {
       setDuoConsumedFood([]);
       setTotalMoves(0);
@@ -1444,10 +1528,12 @@ function QueenWorldPlay({
   };
 
   const handleSoloMove = (newPos: Position) => {
-    setTrail(prev => [...prev, newPos]);
+    const newTrail = [...trail, newPos];
+    setTrail(newTrail);
     const next = moveCount + 1;
     setMoveCount(next);
     if (newPos.row === soloLevel.goal.row && newPos.col === soloLevel.goal.col) {
+      saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(soloLevel.starThresholds, next));
       setLastMoveCount(next);
       setTimeout(() => setPlayPhase('celebration'), 600);
@@ -1492,6 +1578,8 @@ function QueenWorldPlay({
         setDuoResetCount(c => c + 1);
         setIsDuoStuck(false);
       }
+      setGhostRoute(null);
+      setGhostStep(0);
       setPlayPhase('intro');
     }
   };
@@ -1646,6 +1734,7 @@ function QueenWorldPlay({
               onMove={handleSoloMove}
               onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
               onStuck={setIsStuck}
+              ghostPos={ghostPos}
             />
           ) : (
             <BoardShell
@@ -1658,6 +1747,7 @@ function QueenWorldPlay({
               onMove={handleSoloMove}
               onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
               onStuck={setIsStuck}
+              ghostPos={ghostPos}
             />
           )
         ) : (
@@ -1777,6 +1867,21 @@ function QueenWorldPlay({
                 transition={{ delay: 1 }}
               >
                 ↺ Try for 3 stars
+              </motion.button>
+            )}
+
+            {isSolo && (
+              <motion.button
+                onClick={() => {
+                  const url = encodeBuiltinChallenge(worldId, levelIndex);
+                  navigator.clipboard?.writeText(url).catch(() => {});
+                }}
+                className="text-sm text-sky-600 border border-sky-300 rounded-xl px-4 py-2 bg-sky-50 hover:bg-sky-100 cursor-pointer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+              >
+                🔗 Copy challenge link
               </motion.button>
             )}
           </div>
