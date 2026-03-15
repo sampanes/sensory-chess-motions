@@ -37,6 +37,7 @@ type AppPhase = 'title' | 'worldMap' | 'playWorld';
 export default function AdventureApp() {
   const [phase, setPhase] = useState<AppPhase>(() => {
     if (IS_DAD_CHEAT && DAD_CHEAT_WORLD !== null) return 'playWorld';
+    if (IS_DAD_CHEAT) return 'worldMap'; // skip title, land on unlocked map
     return 'title';
   });
 
@@ -344,7 +345,8 @@ function WorldPlay({
           <motion.div
             key={i}
             className="absolute text-2xl select-none pointer-events-none"
-            initial={{ x: `${(i * 8.3) % 100}vw`, y: -60 }}
+            style={{ left: `${(i * 8.5) % 100}vw` }}
+            initial={{ y: -120, opacity: 1 }}
             animate={{ y: '110vh', rotate: Math.random() * 720 - 360, opacity: [1, 1, 0] }}
             transition={{ duration: 3 + Math.random() * 2, delay: Math.random() * 1.2, repeat: Infinity, ease: 'linear' }}
           >
