@@ -17,12 +17,12 @@
  *   level.boardHeight / level.boardWidth / level.scrollAxis.
  */
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Flag } from 'lucide-react';
 import { Level, Position, Food } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
+import { playCrunchSound, playWompSound, playMoveSound, playWhooshSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -85,6 +85,32 @@ function getDecoration(r: number, c: number): string | null {
   return null;
 }
 
+// ─── Parallax background decorations ─────────────────────────────────────────
+
+const PARALLAX_EMOJIS = ['🌲', '🌳', '🏔️', '⛰️', '🌲', '🌳'];
+
+function buildParallaxDecos(rows: number, cols: number, sqSize: number) {
+  const decos: Array<{ emoji: string; x: number; y: number; fontSize: number; opacity: number }> = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      // Sparse: ~1 deco per 5 cells
+      const h = Math.abs((r * 53) ^ (c * 79)) % 5;
+      if (h !== 0) continue;
+      const ei    = Math.abs((r * 17) ^ (c * 31)) % PARALLAX_EMOJIS.length;
+      const sz    = sqSize * (0.55 + (Math.abs((r * 11) ^ (c * 23)) % 20) / 100);
+      const alpha = 0.18 + (Math.abs((r * 7)  ^ (c * 13)) % 12) / 100;
+      decos.push({
+        emoji:    PARALLAX_EMOJIS[ei],
+        x:        c * sqSize + sqSize * 0.05,
+        y:        r * sqSize - sqSize * 0.15,
+        fontSize: sz,
+        opacity:  alpha,
+      });
+    }
+  }
+  return decos;
+}
+
 // ─── Props (mirror of BoardShellProps) ───────────────────────────────────────
 
 export interface ScrollBoardProps {
@@ -130,6 +156,14 @@ export function ScrollBoard({
   const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
   const [mobileCoach, setMobileCoach] = useState<string | null>(null);
 
+  // ── Peek pan state ────────────────────────────────────────────────────────
+  // peekOffset: extra px shift added to gridOffset while the user drags
+  const [peekOffset,  setPeekOffset]  = useState(0);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const isDragging  = useRef(false);
+  const hasDragged  = useRef(false);
+  const dragStartRef = useRef({ pointer: 0, peek: 0 });
+
   // ── Viewport ─────────────────────────────────────────────────────────────
   const boardSize    = axis === 'vertical' ? boardRows : boardCols;
   const pieceAxis    = axis === 'vertical' ? level.start.row : level.start.col;
@@ -148,9 +182,17 @@ export function ScrollBoard({
   const gridOffset = useMotionValue(PEEK * squareSize - initialAnchor * squareSize);
   const springGridOffset = useSpring(gridOffset, { stiffness: 180, damping: 28, restDelta: 0.5 });
 
+  // Background layer moves at 40% the speed of the grid — creates depth parallax
+  const parallaxOffset = useTransform(springGridOffset, (v) => v * 0.4);
+  const parallaxDecos  = useMemo(
+    () => buildParallaxDecos(boardRows, boardCols, squareSize),
+    [boardRows, boardCols, squareSize],
+  );
+
   useEffect(() => {
-    gridOffset.set(PEEK * squareSize - viewportAnchor * squareSize);
-  }, [viewportAnchor, squareSize]);
+    gridOffset.set(PEEK * squareSize - viewportAnchor * squareSize + peekOffset);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewportAnchor, squareSize, peekOffset]);
 
   // ── Valid moves ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -180,7 +222,13 @@ export function ScrollBoard({
   useEffect(() => {
     const pa = axis === 'vertical' ? piecePos.row : piecePos.col;
     const newAnchor = computeAnchor(pa, viewportAnchor, boardSize, frontier);
-    if (newAnchor !== viewportAnchor) setViewportAnchor(newAnchor);
+    if (newAnchor !== viewportAnchor) {
+      setViewportAnchor(newAnchor);
+      if (!hasScrolled) {
+        setHasScrolled(true);
+        playWhooshSound();
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [piecePos]);
 
@@ -199,6 +247,11 @@ export function ScrollBoard({
       }
       return;
     }
+
+    // Valid move — spring the viewport back to auto-follow
+    if (peekOffset !== 0) setPeekOffset(0);
+    isDragging.current = false;
+    hasDragged.current = false;
 
     const newPos = { row, col };
     setSuggestedMove(null);
@@ -237,6 +290,45 @@ export function ScrollBoard({
     return (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
   };
 
+  // ── Peek pan handlers ─────────────────────────────────────────────────────
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDragging.current = true;
+    hasDragged.current = false;
+    dragStartRef.current = {
+      pointer: axis === 'vertical' ? e.clientY : e.clientX,
+      peek: peekOffset,
+    };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    const current = axis === 'vertical' ? e.clientY : e.clientX;
+    const rawDelta = current - dragStartRef.current.pointer;
+
+    if (!hasDragged.current) {
+      if (Math.abs(rawDelta) < 6) return; // below drag threshold
+      hasDragged.current = true;
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    }
+
+    // For vertical (piece goes up / frontier=low): dragging UP (neg delta) peeks toward top
+    // For horizontal (piece goes right / frontier=high): dragging LEFT (neg delta) peeks toward right
+    const rawPeekDelta = axis === 'vertical' ? -rawDelta : rawDelta;
+    const newPeek = dragStartRef.current.peek + rawPeekDelta;
+
+    // Clamp so the total grid offset stays within world boundaries
+    const baseOffset = PEEK * squareSize - viewportAnchor * squareSize;
+    const totalMax = PEEK * squareSize;
+    const totalMin = PEEK * squareSize - (boardSize - VISIBLE) * squareSize;
+    const clampedTotal = Math.max(totalMin, Math.min(totalMax, baseOffset + newPeek));
+    setPeekOffset(clampedTotal - baseOffset);
+  };
+
+  const handlePointerUp = () => {
+    isDragging.current = false;
+    hasDragged.current = false;
+  };
+
   // ── Dimensions ────────────────────────────────────────────────────────────
   // Container: 5 squares on the fixed axis, (5 + 2*PEEK) on the scroll axis
   const fixedPx    = VISIBLE * squareSize;
@@ -258,6 +350,9 @@ export function ScrollBoard({
 
   return (
     <>
+      {/* Wrapper provides positioning context for the "more ahead" arrow */}
+      <div style={{ position: 'relative', width: `${containerW}px`, height: `${containerH}px` }}>
+
       {/* Outer shell: same border styling as BoardShell */}
       <div
         className="rounded-2xl shadow-2xl overflow-hidden border-4 border-amber-700"
@@ -267,9 +362,48 @@ export function ScrollBoard({
           position: 'relative',
           maskImage,
           WebkitMaskImage: maskImage,
+          touchAction: 'none',
+          cursor: hasDragged.current ? 'grabbing' : 'grab',
           ...worldTheme,
         }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
       >
+        {/* Parallax background — drifts at 40% speed to create depth */}
+        <motion.div
+          aria-hidden="true"
+          style={{
+            width:    `${gridW}px`,
+            height:   `${gridH}px`,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            pointerEvents: 'none',
+            zIndex: 0,
+            ...(axis === 'vertical'   ? { y: parallaxOffset } : {}),
+            ...(axis === 'horizontal' ? { x: parallaxOffset } : {}),
+          }}
+        >
+          {parallaxDecos.map((d, i) => (
+            <span
+              key={i}
+              style={{
+                position: 'absolute',
+                left: d.x,
+                top:  d.y,
+                fontSize: d.fontSize,
+                opacity:  d.opacity,
+                lineHeight: 1,
+                userSelect: 'none',
+              }}
+            >
+              {d.emoji}
+            </span>
+          ))}
+        </motion.div>
+
         {/* Scrolling grid — moves along the scroll axis */}
         <motion.div
           style={{
@@ -515,6 +649,26 @@ export function ScrollBoard({
           </motion.div>
         </motion.div>
       </div>
+
+      {/* "More ahead" arrow — pulsing hint at the frontier edge before first scroll */}
+      {!hasScrolled && (
+        <motion.div
+          className="absolute pointer-events-none z-20 flex items-center justify-center"
+          style={
+            axis === 'vertical'
+              ? { top: 6, left: 0, right: 0 }
+              : { right: 6, top: 0, bottom: 0 }
+          }
+          animate={{ opacity: [0.45, 1, 0.45] }}
+          transition={{ duration: 1.4, repeat: Infinity }}
+        >
+          <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 5px rgba(0,0,0,0.7)', lineHeight: 1 }}>
+            {axis === 'vertical' ? '↑' : '→'}
+          </span>
+        </motion.div>
+      )}
+
+      </div>{/* end wrapper */}
 
       {/* Mobile coach tip */}
       <AnimatePresence>

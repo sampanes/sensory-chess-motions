@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
 import { BoardShell } from './components/BoardShell';
+import { StarfieldCanvas } from './components/StarfieldCanvas';
 import { ScrollBoard } from './components/ScrollBoard';
 import { WorldMap } from './WorldMap';
 import { Roster } from './Roster';
@@ -30,6 +31,7 @@ import {
   getAttempts,
   incrementAttempts,
 } from './adventure/sharing';
+import { playCelebrationSound } from './utils/sounds';
 
 // ─── Dad Cheat — URL param helpers ───────────────────────────────────────────
 // ?adventure&dadcheat               — all worlds unlocked, trials skipped
@@ -123,7 +125,8 @@ export default function AdventureApp() {
     return 0;
   });
 
-  const [progress, setProgress] = useState<AdventureProgress>(loadProgress);
+  const [progress, setProgress]         = useState<AdventureProgress>(loadProgress);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   const unlockedWorlds = IS_DAD_CHEAT
     ? WORLDS.map(w => w.id)
@@ -138,6 +141,17 @@ export default function AdventureApp() {
     const updated = markWorldComplete(worldId);
     setProgress(updated);
     setPhase('worldMap');
+    // After completing Act 1, offer "Add to home screen" if PWA prompt is available
+    if (worldId === 0) {
+      const a2hs = (window as unknown as Record<string, unknown>).__tbkA2HS;
+      if (a2hs) setShowInstallBanner(true);
+    }
+  };
+
+  const handleInstallClick = () => {
+    const a2hs = (window as unknown as Record<string, unknown>).__tbkA2HS as { prompt: () => void } | undefined;
+    if (a2hs) { a2hs.prompt(); }
+    setShowInstallBanner(false);
   };
 
   if (phase === 'title') {
@@ -146,12 +160,40 @@ export default function AdventureApp() {
 
   if (phase === 'worldMap') {
     return (
-      <WorldMap
-        completedWorlds={progress.completedWorlds}
-        unlockedWorlds={unlockedWorlds}
-        onSelectWorld={handleSelectWorld}
-        onBack={() => setPhase('title')}
-      />
+      <div style={{ position: 'relative' }}>
+        <WorldMap
+          completedWorlds={progress.completedWorlds}
+          unlockedWorlds={unlockedWorlds}
+          onSelectWorld={handleSelectWorld}
+          onBack={() => setPhase('title')}
+        />
+        <AnimatePresence>
+          {showInstallBanner && (
+            <motion.div
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl px-5 py-3 shadow-2xl text-sm font-semibold text-gray-800 whitespace-nowrap"
+              initial={{ y: 32, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 24, opacity: 0 }}
+              transition={{ type: 'spring', damping: 18, stiffness: 260 }}
+            >
+              <span>📱 Play offline — add to home screen!</span>
+              <button
+                onClick={handleInstallClick}
+                className="bg-amber-400 hover:bg-amber-500 text-white font-bold px-3 py-1 rounded-xl cursor-pointer text-xs"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => setShowInstallBanner(false)}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none text-base leading-none"
+                aria-label="Dismiss install prompt"
+              >
+                ×
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     );
   }
 
@@ -258,6 +300,13 @@ function WorldPlay({
   const level: Level = levels[levelIndex];
   const isLastLevel  = levelIndex === levels.length - 1;
 
+  // ── Piece Selector (space world) ─────────────────────────────────────────
+  // Lets the player choose which piece to play before each level starts.
+  const [selectedPieceType, setSelectedPieceType] = useState<PieceType | null>(null);
+  const effectiveLevel: Level = selectedPieceType
+    ? { ...level, pieceType: selectedPieceType }
+    : level;
+
   // ── Ghost replay state ────────────────────────────────────────────────────
   const [ghostRoute, setGhostRoute] = useState<Position[] | null>(null);
   const [ghostStep,  setGhostStep]  = useState(0);
@@ -330,11 +379,16 @@ function WorldPlay({
     if (newPos.row === level.goal.row && newPos.col === level.goal.col) {
       saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(level.starThresholds, next));
-      setTimeout(() => setPlayPhase('celebration'), 600);
+      const pieceType = effectiveLevel.pieceType;
+      setTimeout(() => {
+        playCelebrationSound(pieceType);
+        setPlayPhase('celebration');
+      }, 600);
     }
   };
 
   const handleNext = () => {
+    setSelectedPieceType(null);
     if (isLastLevel) {
       // Last level done: skip trial for dad cheat, otherwise run it
       setPlayPhase(skipTrial ? 'story' : 'trial');
@@ -364,24 +418,28 @@ function WorldPlay({
 
   // ── Intro card ──
   if (playPhase === 'intro') {
+    const ALL_PIECES: PieceType[] = ['king', 'pawn', 'rook', 'bishop', 'knight', 'queen'];
+    const activePiece = selectedPieceType ?? level.pieceType;
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
-        style={{ background: world.palette.bg }}
+        style={{ background: world.spaceTheme ? undefined : world.palette.bg, position: 'relative' }}
       >
+        {world.spaceTheme && <StarfieldCanvas />}
         <motion.div
           key={`intro-${levelIndex}`}
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
           className="max-w-sm w-full"
+          style={{ position: 'relative', zIndex: 1 }}
         >
           <motion.div
             className="mb-5 flex justify-center"
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <ChessPieceIcon type={level.pieceType} size={70} />
+            <ChessPieceIcon type={activePiece} size={70} />
           </motion.div>
 
           <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: world.palette.accent }}>
@@ -393,6 +451,32 @@ function WorldPlay({
           {level.hint && (
             <div className="bg-white/60 border-2 border-sky-200 rounded-xl p-3 mb-4 text-sm text-sky-800">
               💡 {level.hint}
+            </div>
+          )}
+
+          {/* Piece Selector — shown only in space worlds */}
+          {world.spaceTheme && (
+            <div className="mb-5">
+              <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#818cf8' }}>
+                Choose Your Piece
+              </div>
+              <div className="flex justify-center gap-2">
+                {ALL_PIECES.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setSelectedPieceType(p)}
+                    aria-label={`Play as ${p}`}
+                    className="rounded-xl border-2 p-1.5 cursor-pointer transition-all"
+                    style={{
+                      borderColor: activePiece === p ? '#818cf8' : 'transparent',
+                      background:  activePiece === p ? 'rgba(129,140,248,0.18)' : 'rgba(255,255,255,0.08)',
+                      transform:   activePiece === p ? 'scale(1.15)' : 'scale(1)',
+                    }}
+                  >
+                    <ChessPieceIcon type={p} size={34} />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -465,18 +549,20 @@ function WorldPlay({
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
-        style={{ background: world.palette.bg }}
+        style={{ background: world.spaceTheme ? undefined : world.palette.bg, position: 'relative', zIndex: 1 }}
       >
+        {world.spaceTheme && <StarfieldCanvas />}
         <motion.div
           className="text-center"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
           <div className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: world.palette.accent }}>
-            {level.name}
+            {effectiveLevel.name}
           </div>
           <motion.span
-            className="text-sm font-bold text-gray-700"
+            className="text-sm font-bold"
+            style={{ color: world.spaceTheme ? '#c7d2fe' : '#374151' }}
             key={moveCount}
             animate={{ scale: [1.2, 1] }}
             transition={{ duration: 0.15 }}
@@ -485,10 +571,10 @@ function WorldPlay({
           </motion.span>
         </motion.div>
 
-        {level.scrollAxis ? (
+        {effectiveLevel.scrollAxis ? (
           <ScrollBoard
             key={`world${worldId}-${levelIndex}-${resetCount}`}
-            level={level}
+            level={effectiveLevel}
             consumedFood={consumedFood}
             trail={trail}
             squareSize={72}
@@ -502,7 +588,7 @@ function WorldPlay({
         ) : (
           <BoardShell
             key={`world${worldId}-${levelIndex}-${resetCount}`}
-            level={level}
+            level={effectiveLevel}
             consumedFood={consumedFood}
             trail={trail}
             squareSize={72}
@@ -551,6 +637,7 @@ function WorldPlay({
   if (playPhase === 'celebration') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-yellow-200 via-amber-100 to-orange-100 flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden">
+        {/* Falling emoji stream */}
         {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
@@ -560,9 +647,29 @@ function WorldPlay({
             animate={{ y: '110vh', rotate: Math.random() * 720 - 360, opacity: [1, 1, 0] }}
             transition={{ duration: 3 + Math.random() * 2, delay: Math.random() * 1.2, repeat: Infinity, ease: 'linear' }}
           >
-            {['⭐', '🎉', '✨', '🌟', '🎊', '💛'][i % 6]}
+            {[world.emoji, '⭐', '✨', '🌟', '🎊', '💛'][i % 6]}
           </motion.div>
         ))}
+
+        {/* Confetti burst from screen center */}
+        {Array.from({ length: 22 }, (_, i) => {
+          const angle = (i / 22) * Math.PI * 2;
+          const r = 90 + (i % 4) * 35;
+          return (
+            <motion.div
+              key={`cf-${i}`}
+              className="fixed pointer-events-none"
+              style={{
+                width: `${5 + i % 4}px`, height: `${3 + i % 3}px`,
+                background: ['#fbbf24','#f87171','#34d399','#60a5fa','#a78bfa','#fb7185'][i % 6],
+                borderRadius: '1px', top: '50%', left: '50%', zIndex: 50,
+              }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+              animate={{ x: Math.cos(angle) * r, y: Math.sin(angle) * r - 30, opacity: 0, scale: 1, rotate: (i % 2 === 0 ? 1 : -1) * (80 + i * 14) }}
+              transition={{ duration: 0.65 + (i % 3) * 0.15, ease: 'easeOut', delay: i * 0.018 }}
+            />
+          );
+        })}
 
         <motion.div
           className="relative z-10 max-w-sm w-full"
@@ -570,7 +677,16 @@ function WorldPlay({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 16 }}
         >
-          <div className="text-6xl mb-3">🎉</div>
+          {/* World emoji pop */}
+          <motion.div
+            className="text-4xl mb-1"
+            initial={{ scale: 0, y: 12 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 14, delay: 0.3 }}
+          >
+            {world.emoji}
+          </motion.div>
+          <div className="text-5xl mb-2">🎉</div>
           <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
             {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}
           </h2>
@@ -1536,7 +1652,11 @@ function QueenWorldPlay({
       saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(soloLevel.starThresholds, next));
       setLastMoveCount(next);
-      setTimeout(() => setPlayPhase('celebration'), 600);
+      const pieceType = soloLevel.pieceType;
+      setTimeout(() => {
+        playCelebrationSound(pieceType);
+        setPlayPhase('celebration');
+      }, 600);
     }
   };
 
@@ -1544,6 +1664,7 @@ function QueenWorldPlay({
     // DuoBoard already waited 600ms internally
     setLastStars(getStars(duoLevel.starThresholds, moves));
     setLastMoveCount(moves);
+    playCelebrationSound('queen');
     setPlayPhase('celebration');
   };
 
@@ -1800,6 +1921,7 @@ function QueenWorldPlay({
   if (playPhase === 'celebration') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-200 via-violet-100 to-yellow-100 flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden">
+        {/* Falling emoji stream */}
         {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
@@ -1813,13 +1935,42 @@ function QueenWorldPlay({
           </motion.div>
         ))}
 
+        {/* Confetti burst from screen center */}
+        {Array.from({ length: 22 }, (_, i) => {
+          const angle = (i / 22) * Math.PI * 2;
+          const r = 90 + (i % 4) * 35;
+          return (
+            <motion.div
+              key={`qcf-${i}`}
+              className="fixed pointer-events-none"
+              style={{
+                width: `${5 + i % 4}px`, height: `${3 + i % 3}px`,
+                background: ['#fbbf24','#c084fc','#f0abfc','#818cf8','#a78bfa','#fb7185'][i % 6],
+                borderRadius: '1px', top: '50%', left: '50%', zIndex: 50,
+              }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+              animate={{ x: Math.cos(angle) * r, y: Math.sin(angle) * r - 30, opacity: 0, scale: 1, rotate: (i % 2 === 0 ? 1 : -1) * (80 + i * 14) }}
+              transition={{ duration: 0.65 + (i % 3) * 0.15, ease: 'easeOut', delay: i * 0.018 }}
+            />
+          );
+        })}
+
         <motion.div
           className="relative z-10 max-w-sm w-full"
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 16 }}
         >
-          <div className="text-6xl mb-3">👑</div>
+          {/* World emoji pop */}
+          <motion.div
+            className="text-4xl mb-1"
+            initial={{ scale: 0, y: 12 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 14, delay: 0.3 }}
+          >
+            {world.emoji}
+          </motion.div>
+          <div className="text-5xl mb-2">👑</div>
           <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
             {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}
           </h2>
@@ -2254,12 +2405,25 @@ function TitleScreen({ onBegin }: { onBegin: () => void }) {
           <ChessPieceIcon type="king" size={80} />
         </motion.div>
 
-        <h1
-          className="text-5xl font-extrabold text-white mb-2 leading-tight"
-          style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
-        >
-          The Friendship Kingdom
-        </h1>
+        <div className="relative inline-block mb-2">
+          <h1
+            className="text-5xl font-extrabold text-white leading-tight"
+            style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+          >
+            The Friendship Kingdom
+          </h1>
+          {/* Shimmer streak that sweeps the title periodically */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none rounded-lg"
+            style={{
+              background: 'linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.45) 50%, transparent 80%)',
+              mixBlendMode: 'overlay',
+            }}
+            initial={{ x: '-110%' }}
+            animate={{ x: '110%' }}
+            transition={{ duration: 1.1, ease: 'easeInOut', delay: 1.2, repeat: Infinity, repeatDelay: 4.5 }}
+          />
+        </div>
 
         <p
           className="text-lg font-semibold mb-10"

@@ -125,6 +125,20 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
               strokeWidth={4}
               strokeLinecap="round"
             />
+            {/* Animated draw-in: bright line sweeps the path on mount, then fades */}
+            <motion.path
+              d={PATH_D}
+              fill="none"
+              stroke="rgba(255,255,255,0.75)"
+              strokeWidth={6}
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0.75 }}
+              animate={{ pathLength: 1, opacity: 0 }}
+              transition={{
+                pathLength: { duration: 1.8, ease: 'easeInOut', delay: 0.3 },
+                opacity:    { duration: 0.6, delay: 2.0 },
+              }}
+            />
 
             {/* World nodes */}
             {WORLDS.map(world => {
@@ -132,9 +146,22 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
               const completed = completedWorlds.includes(world.id);
               const unlocked = unlockedWorlds.includes(world.id);
               const locked = !unlocked;
+              const ariaLabel = locked
+                ? `${world.name} — locked`
+                : completed
+                  ? `${world.name} — completed`
+                  : `Play ${world.name}`;
 
               return (
-                <g key={world.id} onClick={() => handleNodeClick(world)} style={{ cursor: locked ? 'default' : 'pointer' }}>
+                <g
+                  key={world.id}
+                  onClick={() => handleNodeClick(world)}
+                  style={{ cursor: locked ? 'default' : 'pointer' }}
+                  role="button"
+                  aria-label={ariaLabel}
+                  tabIndex={locked ? -1 : 0}
+                  onKeyDown={e => e.key === 'Enter' && handleNodeClick(world)}
+                >
                   {/* Pulse ring for available worlds */}
                   {unlocked && !completed && (
                     <motion.circle
@@ -149,17 +176,37 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
                     />
                   )}
 
-                  {/* Completed ring */}
+                  {/* Completed ring — springs in on mount */}
                   {completed && (
-                    <circle
+                    <motion.circle
                       cx={pos.x}
                       cy={pos.y}
                       r={27}
                       fill="none"
                       stroke="#fbbf24"
                       strokeWidth={4}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', damping: 8, stiffness: 220, delay: world.id * 0.12 }}
                     />
                   )}
+
+                  {/* Sparkle burst for completed nodes */}
+                  {completed && [0, 60, 120, 180, 240, 300].map((angle, i) => {
+                    const rad = (angle * Math.PI) / 180;
+                    return (
+                      <motion.circle
+                        key={i}
+                        cx={pos.x}
+                        cy={pos.y}
+                        r={3}
+                        fill="#fbbf24"
+                        initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                        animate={{ x: Math.cos(rad) * 22, y: Math.sin(rad) * 22, opacity: 0, scale: 0 }}
+                        transition={{ duration: 0.55, delay: world.id * 0.12 + i * 0.04, ease: 'easeOut' }}
+                      />
+                    );
+                  })}
 
                   {/* Node circle */}
                   <circle

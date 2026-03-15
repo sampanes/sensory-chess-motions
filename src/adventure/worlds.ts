@@ -29,6 +29,8 @@ export type WorldDef = {
   story: WorldStoryBeat;
   /** Position on the world map as a fraction of the SVG viewBox (0–1). */
   mapPos: { x: number; y: number };
+  /** When true, the board floats over a parallax starfield and the Piece Selector appears on every intro card. */
+  spaceTheme?: boolean;
 };
 
 // ─── All worlds ───────────────────────────────────────────────────────────────
@@ -182,9 +184,34 @@ export const WORLDS: WorldDef[] = [
         '"Your knight," she says quietly, "moves like no other. Not even I can watch all the corners at once."',
         'She stands. She bows — just slightly — and turns to face you.',
         '"I will join you. But know this: it was not power that reached me. It was understanding."',
+        'One more world has appeared on the horizon...',
       ],
+      nextTeaser: 'The Starfield Frontier',
+      nextTeaserEmoji: '🌌',
     },
     mapPos: { x: 0.93, y: 0.18 },
+  },
+  {
+    id: 7,
+    name: 'Starfield Frontier',
+    emoji: '🌌',
+    tagline: 'Every piece has a terrain it was made for.',
+    spaceTheme: true,
+    palette: {
+      bg: 'linear-gradient(to bottom, #020617, #0f172a, #1e1b4b)',
+      accent: '#818cf8',
+      nodeColor: '#6366f1',
+    },
+    story: {
+      title: 'Out in the Stars',
+      paragraphs: [
+        'Out here, there are no roads, no farms, no forests, no mountains.',
+        'Just the void — and the pieces you earned.',
+        'You learned something the stars already knew: no one piece is best everywhere. Each one is powerful when the world fits its motion.',
+        'Together, they can cross anything.',
+      ],
+    },
+    mapPos: { x: 0.5, y: 0.06 },
   },
 ];
 
