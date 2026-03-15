@@ -1,0 +1,20 @@
+{
+  "name": "The Borrowed Kingdom",
+  "short_name": "Borrowed Kingdom",
+  "description": "A chess adventure game for young learners. Guide the king, recruit allies, and restore the kingdom.",
+  "start_url": "/?adventure",
+  "display": "standalone",
+  "background_color": "#fef9c3",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "education"],
+  "lang": "en"
+}
