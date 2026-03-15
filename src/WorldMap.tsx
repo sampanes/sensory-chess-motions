@@ -65,7 +65,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
 
   return (
     <div
-      className="relative min-h-screen flex flex-col select-none overflow-hidden"
+      className="relative h-screen flex flex-col select-none overflow-hidden"
       style={{
         background:
           'linear-gradient(to bottom, #29b6f6 0%, #81d4fa 22%, #b3e5fc 42%, #c8e6c9 62%, #66bb6a 80%, #2e7d32 100%)',
@@ -83,7 +83,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
       ))}
 
       {/* Title bar */}
-      <div className="relative z-10 pt-6 px-6 flex items-center justify-between">
+      <div className="relative z-10 pt-3 sm:pt-6 px-4 sm:px-6 flex items-center justify-between">
         <button
           onClick={onBack}
           className="text-white/80 hover:text-white text-sm font-medium bg-transparent border-none cursor-pointer"
@@ -100,8 +100,8 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
       </div>
 
       {/* Map SVG */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-2 pb-6">
-        <div className="w-full max-w-lg relative" style={{ aspectRatio: `${VW}/${VH}` }}>
+      <div className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-2 py-1 sm:py-4">
+        <div className="w-full max-w-lg relative" style={{ aspectRatio: `${VW}/${VH}`, maxHeight: '55vh' }}>
           <svg
             viewBox={`0 0 ${VW} ${VH}`}
             className="w-full h-full"
@@ -244,7 +244,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
       </AnimatePresence>
 
       {/* Roster bar */}
-      <div className="relative z-10 pb-4 px-4 flex justify-center">
+      <div className="relative z-10 pb-2 sm:pb-4 px-4 flex justify-center">
         <Roster completedWorlds={completedWorlds} />
       </div>
 

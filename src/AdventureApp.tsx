@@ -191,6 +191,9 @@ function WorldPlay({
   const [lastStars,    setLastStars]    = useState(0);
 
   // ── Remix state ──────────────────────────────────────────────────────────
+  const [isStuck,           setIsStuck]           = useState(false);
+  const [isRemixStuck,      setIsRemixStuck]      = useState(false);
+
   const [remixMoveCount,    setRemixMoveCount]    = useState(0);
   const [remixLastStars,    setRemixLastStars]    = useState(0);
   const [remixResetCount,   setRemixResetCount]   = useState(0);
@@ -212,6 +215,7 @@ function WorldPlay({
     setTrail([level.start]);
     setMoveCount(0);
     setResetCount(c => c + 1);
+    setIsStuck(false);
     setPlayPhase('playing');
   };
 
@@ -220,6 +224,7 @@ function WorldPlay({
     setTrail([level.start]);
     setMoveCount(0);
     setResetCount(c => c + 1);
+    setIsStuck(false);
   };
 
   const startRemix = () => {
@@ -228,6 +233,7 @@ function WorldPlay({
     setRemixTrail([remixLevel.start]);
     setRemixMoveCount(0);
     setRemixResetCount(c => c + 1);
+    setIsRemixStuck(false);
     setPlayPhase('remix-playing');
   };
 
@@ -237,6 +243,7 @@ function WorldPlay({
     setRemixTrail([remixLevel.start]);
     setRemixMoveCount(0);
     setRemixResetCount(c => c + 1);
+    setIsRemixStuck(false);
   };
 
   const handleMove = (newPos: Position) => {
@@ -408,7 +415,7 @@ function WorldPlay({
             isMobile={false}
             onMove={handleMove}
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
-            onStuck={() => {}}
+            onStuck={setIsStuck}
             showCheckerboard={worldId === 3}
           />
         ) : (
@@ -421,15 +428,29 @@ function WorldPlay({
             isMobile={false}
             onMove={handleMove}
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
-            onStuck={() => {}}
+            onStuck={setIsStuck}
             showCheckerboard={worldId === 3}
           />
+        )}
+
+        {isStuck && (
+          <motion.div
+            className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-2 text-sm text-red-700 font-semibold text-center"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            No moves left! Press Restart ↺
+          </motion.div>
         )}
 
         <div className="flex gap-3">
           <button
             onClick={resetBoard}
-            className="text-sm text-gray-500 border border-gray-300 rounded-xl px-4 py-2 hover:bg-white cursor-pointer bg-white/60"
+            className={`text-sm border rounded-xl px-4 py-2 cursor-pointer transition-colors ${
+              isStuck
+                ? 'text-red-600 border-red-300 bg-red-50 font-semibold hover:bg-red-100'
+                : 'text-gray-500 border-gray-300 hover:bg-white bg-white/60'
+            }`}
           >
             ↺ Restart
           </button>
@@ -700,7 +721,7 @@ function WorldPlay({
             isMobile={false}
             onMove={handleRemixMove}
             onFoodConsumed={f => setRemixConsumedFood(prev => [...prev, f])}
-            onStuck={() => {}}
+            onStuck={setIsRemixStuck}
             showCheckerboard={worldId === 3}
           />
         ) : (
@@ -713,15 +734,29 @@ function WorldPlay({
             isMobile={false}
             onMove={handleRemixMove}
             onFoodConsumed={f => setRemixConsumedFood(prev => [...prev, f])}
-            onStuck={() => {}}
+            onStuck={setIsRemixStuck}
             showCheckerboard={worldId === 3}
           />
+        )}
+
+        {isRemixStuck && (
+          <motion.div
+            className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-2 text-sm text-red-700 font-semibold text-center"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            No moves left! Press Restart ↺
+          </motion.div>
         )}
 
         <div className="flex gap-3">
           <button
             onClick={resetRemix}
-            className="text-sm text-gray-500 border border-gray-300 rounded-xl px-4 py-2 hover:bg-white cursor-pointer bg-white/60"
+            className={`text-sm border rounded-xl px-4 py-2 cursor-pointer transition-colors ${
+              isRemixStuck
+                ? 'text-red-600 border-red-300 bg-red-50 font-semibold hover:bg-red-100'
+                : 'text-gray-500 border-gray-300 hover:bg-white bg-white/60'
+            }`}
           >
             ↺ Restart
           </button>

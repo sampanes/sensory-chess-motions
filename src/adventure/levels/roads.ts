@@ -25,6 +25,26 @@ export const rookLevels: Level[] = [
     obstacles: { fences: [], rivers: [], bridges: [], food: [] },
   },
 
+  /*
+   * ─── compileScrollLevel cell shorthands ──────────────────────────────────
+   *  0          empty square
+   *  'S'        piece start position
+   *  'G'        goal (flag)
+   *  'R'        river (impassable)
+   *  'B'        bridge (river square that CAN be crossed)
+   *  'F'        food / apple
+   *  { ... }    CellObj — fences + optional content:
+   *               fT / fB / fL / fR : fence on top / bottom / left / right edge
+   *               is: 'S'|'G'|'R'|'B'|'F'  — combine fence with content
+   *
+   *  axis: 'vertical'   → strips[i] = row i,  each strip = [col0, col1, col2, col3, col4]
+   *  axis: 'horizontal' → strips[i] = col i,  each strip = [row0, row1, row2, row3, row4]
+   *
+   *  Future work: Long Level Creator — a visual tool to author strip arrays with
+   *  more than 9 rows/cols; documented in PART2_STEPS.md Milestone 16.
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+
   // R2 — [↔ scroll] open 11-column corridor: the rook fires all the way across
   // Optimal: 1 move — slide right from col 0 to col 10.
   compileScrollLevel({

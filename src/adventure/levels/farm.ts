@@ -185,6 +185,26 @@ export const farmLevels: Level[] = [
   hint: 'Left lol',
 },
 
+  /*
+   * ─── compileScrollLevel cell shorthands ──────────────────────────────────
+   *  0          empty square
+   *  'S'        piece start position
+   *  'G'        goal (flag)
+   *  'R'        river (impassable)
+   *  'B'        bridge (river square that CAN be crossed)
+   *  'F'        food / apple
+   *  { ... }    CellObj — fences + optional content:
+   *               fT / fB / fL / fR : fence on top / bottom / left / right edge
+   *               is: 'S'|'G'|'R'|'B'|'F'  — combine fence with content
+   *
+   *  axis: 'vertical'   → strips[i] = row i,  each strip = [col0, col1, col2, col3, col4]
+   *  axis: 'horizontal' → strips[i] = col i,  each strip = [row0, row1, row2, row3, row4]
+   *
+   *  Future work: Long Level Creator — a visual tool to author strip arrays with
+   *  more than 9 rows/cols; documented in PART2_STEPS.md Milestone 16.
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+
   // F8 — scrolling vertical world: long farm march with 2-step bonus
   // Optimal: 2-step (8,2)→(6,2), then forward ×6 = 7 moves.
   compileScrollLevel({

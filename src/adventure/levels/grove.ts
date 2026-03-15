@@ -133,6 +133,29 @@ export const bishopLevels: Level[] = [
     },
   },
 
+  /*
+   * ─── compileScrollLevel cell shorthands ──────────────────────────────────
+   *  0          empty square
+   *  'S'        piece start position
+   *  'G'        goal (flag)
+   *  'R'        river (impassable)
+   *  'B'        bridge (river square that CAN be crossed)
+   *  'F'        food / apple
+   *  { ... }    CellObj — fences + optional content:
+   *               fT / fB / fL / fR : fence on top / bottom / left / right edge
+   *               is: 'S'|'G'|'R'|'B'|'F'  — combine fence with content
+   *
+   *  axis: 'vertical'   → strips[i] = row i,  each strip = [col0, col1, col2, col3, col4]
+   *  axis: 'horizontal' → strips[i] = col i,  each strip = [row0, row1, row2, row3, row4]
+   *
+   *  NOTE: fences do NOT block bishop diagonal moves (isFenceBlocking only checks
+   *  cardinal directions). Use rivers as the only obstacle type for bishop worlds.
+   *
+   *  Future work: Long Level Creator — a visual tool to author strip arrays with
+   *  more than 9 rows/cols; documented in PART2_STEPS.md Milestone 16.
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+
   // B8 — [↕ scroll] 11-row grove with 4 rivers — 5-move forced zigzag
   // Rivers: (7,1), (6,4), (4,0), (2,4)
   // Optimal path (5 moves):
