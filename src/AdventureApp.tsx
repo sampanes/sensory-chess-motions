@@ -7,7 +7,7 @@ import { ScrollBoard } from './components/ScrollBoard';
 import { WorldMap } from './WorldMap';
 import { Roster } from './Roster';
 import { TrialMode } from './TrialMode';
-import { Food, Level, Position } from './types';
+import { Food, Level, PieceType, Position } from './types';
 import {
   WORLDS,
   WORLD_LEVELS,
@@ -29,6 +29,69 @@ const _params = new URLSearchParams(window.location.search);
 const IS_DAD_CHEAT    = _params.has('dadcheat');
 const DAD_CHEAT_WORLD = _params.has('world')  ? Math.max(0, parseInt(_params.get('world')!,  10)) : null;
 const DAD_CHEAT_LEVEL = _params.has('level')  ? Math.max(1, parseInt(_params.get('level')!,  10)) - 1 : 0;
+
+// ─── Remix Mode — per-world config ───────────────────────────────────────────
+// After the story beat, a remix card offers the player the same board from a
+// specific level re-played as a different piece. No new level design needed.
+// The contrast between the two piece performances is the entire teaching moment.
+
+type RemixConfig = {
+  /** 0-indexed level within this world to use as the remix board. */
+  levelIndex: number;
+  /** The piece the player swaps to. */
+  remixPiece: PieceType;
+  /** Short invitation shown on the offer card. */
+  offer: string;
+  /** One sentence describing what the original piece did. */
+  contrast: string;
+  /** One sentence takeaway shown on the result card. */
+  insight: string;
+};
+
+const REMIX_CONFIGS: Partial<Record<number, RemixConfig>> = {
+  0: {
+    levelIndex: 3,       // A4 — The Meadow Path (king, 4 moves)
+    remixPiece: 'rook',
+    offer: 'Now try The Meadow Path as a Rook!',
+    contrast: 'The king crossed in 4 careful steps.',
+    insight: 'The rook slides all the way in one move. Same meadow — no footsteps needed.',
+  },
+  1: {
+    levelIndex: 7,       // F8 — The Long Field (pawn, 7 moves)
+    remixPiece: 'rook',
+    offer: 'Now run The Long Field as a Rook!',
+    contrast: 'The pawn marched the whole field — 7 careful steps.',
+    insight: 'The rook just went. No stops, no turns. One slide from end to end.',
+  },
+  2: {
+    levelIndex: 1,       // R2 — The Corridor (rook, 1 move)
+    remixPiece: 'bishop',
+    offer: 'Now try The Corridor as a Bishop!',
+    contrast: 'The rook crossed the whole corridor in one move.',
+    insight: "The bishop can't go straight — every square is a diagonal away.",
+  },
+  3: {
+    levelIndex: 5,       // B6 — Mossy Trail (bishop, 4 moves)
+    remixPiece: 'rook',
+    offer: 'Now try the Mossy Trail as a Rook!',
+    contrast: 'The bishop wound through 4 careful bends to get there.',
+    insight: "The rook doesn't bend. It just goes straight up.",
+  },
+  4: {
+    levelIndex: 5,       // K6 — The Ambush (knight; defined in Milestone 12)
+    remixPiece: 'rook',
+    offer: 'Now try The Ambush as a Rook!',
+    contrast: 'The knight jumped clean over every obstacle.',
+    insight: "The rook can't jump. Every obstacle is a wall.",
+  },
+  5: {
+    levelIndex: 2,       // Q3 — Straight Power (queen; defined in Milestone 14)
+    remixPiece: 'bishop',
+    offer: 'Now try Straight Power as a Bishop!',
+    contrast: 'The queen fired straight down the line.',
+    insight: 'The bishop only moves diagonally — same board, completely different route.',
+  },
+};
 
 // ─── Top-level phase ──────────────────────────────────────────────────────────
 
@@ -91,7 +154,7 @@ export default function AdventureApp() {
 
 // ─── WorldPlay ────────────────────────────────────────────────────────────────
 
-type PlayPhase = 'intro' | 'playing' | 'celebration' | 'trial' | 'story' | 'done';
+type PlayPhase = 'intro' | 'playing' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
 
 function getStars(thresholds: { three: number; two: number }, moves: number): number {
   if (moves <= thresholds.three) return 3;
@@ -127,8 +190,22 @@ function WorldPlay({
   const [resetCount,   setResetCount]   = useState(0);
   const [lastStars,    setLastStars]    = useState(0);
 
+  // ── Remix state ──────────────────────────────────────────────────────────
+  const [remixMoveCount,    setRemixMoveCount]    = useState(0);
+  const [remixLastStars,    setRemixLastStars]    = useState(0);
+  const [remixResetCount,   setRemixResetCount]   = useState(0);
+  const [remixConsumedFood, setRemixConsumedFood] = useState<Food[]>([]);
+  const [remixTrail,        setRemixTrail]        = useState<Position[]>([]);
+
   const level: Level = levels[levelIndex];
   const isLastLevel  = levelIndex === levels.length - 1;
+
+  // Remix config and derived level (null if this world has no remix or the level doesn't exist yet)
+  const remixConfig = REMIX_CONFIGS[worldId] ?? null;
+  const remixSourceLevel = remixConfig ? (levels[remixConfig.levelIndex] ?? null) : null;
+  const remixLevel: Level | null = remixSourceLevel
+    ? { ...remixSourceLevel, pieceType: remixConfig!.remixPiece }
+    : null;
 
   const startLevel = () => {
     setConsumedFood([]);
@@ -143,6 +220,23 @@ function WorldPlay({
     setTrail([level.start]);
     setMoveCount(0);
     setResetCount(c => c + 1);
+  };
+
+  const startRemix = () => {
+    if (!remixLevel) return;
+    setRemixConsumedFood([]);
+    setRemixTrail([remixLevel.start]);
+    setRemixMoveCount(0);
+    setRemixResetCount(c => c + 1);
+    setPlayPhase('remix-playing');
+  };
+
+  const resetRemix = () => {
+    if (!remixLevel) return;
+    setRemixConsumedFood([]);
+    setRemixTrail([remixLevel.start]);
+    setRemixMoveCount(0);
+    setRemixResetCount(c => c + 1);
   };
 
   const handleMove = (newPos: Position) => {
@@ -167,6 +261,17 @@ function WorldPlay({
       setMoveCount(0);
       setResetCount(c => c + 1);
       setPlayPhase('intro');
+    }
+  };
+
+  const handleRemixMove = (newPos: Position) => {
+    if (!remixLevel) return;
+    setRemixTrail(prev => [...prev, newPos]);
+    const next = remixMoveCount + 1;
+    setRemixMoveCount(next);
+    if (newPos.row === remixLevel.goal.row && newPos.col === remixLevel.goal.col) {
+      setRemixLastStars(getStars(remixLevel.starThresholds, next));
+      setTimeout(() => setPlayPhase('remix-result'), 600);
     }
   };
 
@@ -457,13 +562,250 @@ function WorldPlay({
           </div>
 
           <motion.button
-            onClick={() => setPlayPhase('done')}
+            onClick={() => setPlayPhase(remixLevel ? 'remix-offer' : 'done')}
             className="text-white font-bold text-xl py-4 px-10 rounded-2xl shadow-lg cursor-pointer"
             style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
           >
             Continue →
+          </motion.button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Remix offer ──
+  if (playPhase === 'remix-offer' && remixConfig && remixLevel && remixSourceLevel) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          className="max-w-sm w-full"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+        >
+          {/* Piece swap visual */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="flex flex-col items-center gap-1">
+              <ChessPieceIcon type={remixSourceLevel.pieceType} size={56} />
+              <span className="text-xs text-gray-500 font-medium capitalize">{remixSourceLevel.pieceType}</span>
+            </div>
+            <motion.div
+              className="text-3xl"
+              animate={{ x: [0, 6, 0] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            >
+              →
+            </motion.div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="relative">
+                <ChessPieceIcon type={remixConfig.remixPiece} size={56} />
+                <div
+                  className="absolute -top-1 -right-1 text-xs font-bold px-1.5 py-0.5 rounded-full text-white"
+                  style={{ background: world.palette.accent, fontSize: '9px' }}
+                >
+                  NEW
+                </div>
+              </div>
+              <span className="text-xs text-gray-500 font-medium capitalize">{remixConfig.remixPiece}</span>
+            </div>
+          </div>
+
+          <div
+            className="text-xs font-bold uppercase tracking-widest mb-1"
+            style={{ color: world.palette.accent }}
+          >
+            Remix Challenge
+          </div>
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-2">
+            Same Board. Different Piece.
+          </h2>
+
+          <div className="bg-white/60 border border-amber-200 rounded-xl p-3 mb-3 text-sm text-gray-700">
+            <span className="font-semibold">"{remixSourceLevel.name}"</span>
+            <br />
+            <span className="text-gray-500 italic mt-1 block">{remixConfig.contrast}</span>
+          </div>
+
+          <p className="text-gray-600 text-sm mb-6">
+            Can the <span className="font-semibold capitalize">{remixConfig.remixPiece}</span> do better?
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <motion.button
+              onClick={startRemix}
+              className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
+              style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Try it! ✨
+            </motion.button>
+
+            <button
+              onClick={() => setPlayPhase('done')}
+              className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+            >
+              Skip →
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Remix playing ──
+  if (playPhase === 'remix-playing' && remixLevel && remixConfig) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          className="text-center"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+        >
+          <div className="flex items-center justify-center gap-2 mb-0.5">
+            <span
+              className="text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full text-white"
+              style={{ background: world.palette.accent }}
+            >
+              Remix
+            </span>
+            <span className="text-xs font-bold text-gray-500 capitalize">{remixConfig.remixPiece}</span>
+          </div>
+          <div className="text-xs text-gray-500 mb-0.5">{remixLevel.name}</div>
+          <motion.span
+            className="text-sm font-bold text-gray-700"
+            key={remixMoveCount}
+            animate={{ scale: [1.2, 1] }}
+            transition={{ duration: 0.15 }}
+          >
+            {remixMoveCount} move{remixMoveCount !== 1 ? 's' : ''}
+          </motion.span>
+        </motion.div>
+
+        {remixLevel.scrollAxis ? (
+          <ScrollBoard
+            key={`remix-${worldId}-${remixResetCount}`}
+            level={remixLevel}
+            consumedFood={remixConsumedFood}
+            trail={remixTrail}
+            squareSize={72}
+            isMobile={false}
+            onMove={handleRemixMove}
+            onFoodConsumed={f => setRemixConsumedFood(prev => [...prev, f])}
+            onStuck={() => {}}
+            showCheckerboard={worldId === 3}
+          />
+        ) : (
+          <BoardShell
+            key={`remix-${worldId}-${remixResetCount}`}
+            level={remixLevel}
+            consumedFood={remixConsumedFood}
+            trail={remixTrail}
+            squareSize={72}
+            isMobile={false}
+            onMove={handleRemixMove}
+            onFoodConsumed={f => setRemixConsumedFood(prev => [...prev, f])}
+            onStuck={() => {}}
+            showCheckerboard={worldId === 3}
+          />
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={resetRemix}
+            className="text-sm text-gray-500 border border-gray-300 rounded-xl px-4 py-2 hover:bg-white cursor-pointer bg-white/60"
+          >
+            ↺ Restart
+          </button>
+          <button
+            onClick={() => setPlayPhase('remix-offer')}
+            className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Remix result ──
+  if (playPhase === 'remix-result' && remixLevel && remixConfig && remixSourceLevel) {
+    const originalOptimal = remixSourceLevel.starThresholds.three;
+    const remixStarCount  = remixLastStars;
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          className="max-w-sm w-full"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+        >
+          <div className="text-4xl mb-3">🔄</div>
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-4">Same Board. Two Pieces.</h2>
+
+          {/* Side-by-side comparison */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            {/* Original piece */}
+            <div className="bg-white/60 border-2 border-white/40 rounded-2xl p-4 flex flex-col items-center gap-2">
+              <ChessPieceIcon type={remixSourceLevel.pieceType} size={42} />
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wide capitalize">
+                {remixSourceLevel.pieceType}
+              </div>
+              <div className="text-xl font-extrabold text-gray-700">{originalOptimal}</div>
+              <div className="text-xs text-gray-500">moves (best possible)</div>
+              <div className="flex gap-0.5">
+                {[1, 2, 3].map(s => (
+                  <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                ))}
+              </div>
+            </div>
+
+            {/* Remix piece */}
+            <div
+              className="border-2 rounded-2xl p-4 flex flex-col items-center gap-2"
+              style={{ background: `${world.palette.nodeColor}18`, borderColor: `${world.palette.nodeColor}60` }}
+            >
+              <ChessPieceIcon type={remixConfig.remixPiece} size={42} />
+              <div className="text-xs font-bold uppercase tracking-wide capitalize" style={{ color: world.palette.accent }}>
+                {remixConfig.remixPiece} · you!
+              </div>
+              <div className="text-xl font-extrabold text-gray-700">{remixMoveCount}</div>
+              <div className="text-xs text-gray-500">moves</div>
+              <div className="flex gap-0.5">
+                {[1, 2, 3].map(s => (
+                  <Star
+                    key={s}
+                    className={`w-4 h-4 ${s <= remixStarCount ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Insight */}
+          <div className="bg-white/70 rounded-xl p-4 mb-6 text-sm text-gray-700 italic leading-relaxed">
+            💡 "{remixConfig.insight}"
+          </div>
+
+          <motion.button
+            onClick={() => setPlayPhase('done')}
+            className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Finish the Chapter 🏆
           </motion.button>
         </motion.div>
       </div>
