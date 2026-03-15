@@ -22,7 +22,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motio
 import { Flag } from 'lucide-react';
 import { Level, Position, Food } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { playCrunchSound, playWompSound } from '../utils/sounds';
+import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -201,6 +201,8 @@ export function ScrollBoard({
     if (eatenFood) {
       onFoodConsumed(eatenFood);
       playCrunchSound();
+    } else {
+      playMoveSound(level.pieceType);
     }
 
     onMove(newPos);

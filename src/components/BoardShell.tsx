@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
 import { Level, Position, Food } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { playCrunchSound, playWompSound } from '../utils/sounds';
+import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
 const BOARD_SIZE = 5;
@@ -120,6 +120,8 @@ export function BoardShell({
     if (eatenFood) {
       onFoodConsumed(eatenFood);
       playCrunchSound();
+    } else {
+      playMoveSound(level.pieceType);
     }
 
     onMove(newPos);

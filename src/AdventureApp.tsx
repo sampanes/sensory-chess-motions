@@ -5,6 +5,7 @@ import { ChessPieceIcon } from './components/ChessPieceIcon';
 import { BoardShell } from './components/BoardShell';
 import { ScrollBoard } from './components/ScrollBoard';
 import { WorldMap } from './WorldMap';
+import { Roster } from './Roster';
 import { Food, Level, Position } from './types';
 import {
   WORLDS,
@@ -59,6 +60,7 @@ export default function AdventureApp() {
   return (
     <WorldPlay
       worldId={selectedWorld}
+      completedWorlds={progress.completedWorlds}
       onComplete={() => handleWorldComplete(selectedWorld)}
       onBack={() => setPhase('worldMap')}
     />
@@ -77,10 +79,12 @@ function getStars(thresholds: { three: number; two: number }, moves: number): nu
 
 function WorldPlay({
   worldId,
+  completedWorlds,
   onComplete,
   onBack,
 }: {
   worldId: number;
+  completedWorlds: number[];
   onComplete: () => void;
   onBack: () => void;
 }) {
@@ -403,6 +407,11 @@ function WorldPlay({
         <p className="text-gray-600 mb-4">
           You've explored <span className="font-semibold">{world.name}</span>. Well done!
         </p>
+
+        {/* Show roster with this world now counted as complete */}
+        <div className="mb-2">
+          <Roster completedWorlds={[...completedWorlds, worldId]} />
+        </div>
 
         {world.story.nextTeaser && (
           <div className="bg-white/60 border-2 border-white/40 rounded-2xl p-5 my-5 text-gray-800">

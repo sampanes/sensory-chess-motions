@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WORLDS, WorldDef } from './adventure/worlds';
+import { Roster } from './Roster';
 
 // ─── SVG coordinate helpers ───────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ interface WorldMapProps {
   onSelectWorld: (worldId: number) => void;
   onBack: () => void;
 }
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -240,6 +242,11 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Roster bar */}
+      <div className="relative z-10 pb-4 px-4 flex justify-center">
+        <Roster completedWorlds={completedWorlds} />
+      </div>
 
       {/* Ground decoration */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-around items-end pb-1 pointer-events-none opacity-70 text-3xl">
