@@ -288,6 +288,9 @@ function WorldPlay({
   const [levelIndex, setLevelIndex] = useState(() =>
     Math.min(initialLevelIndex, Math.max(0, levels.length - 1))
   );
+  // 3-beat staged intro: 0=meet piece, 1=lesson, 2=ready to play
+  const [introStep, setIntroStep] = useState<0 | 1 | 2>(0);
+  const [introBtnVisible, setIntroBtnVisible] = useState(skipTrial); // dad cheat: always visible
   const [consumedFood, setConsumedFood] = useState<Food[]>([]);
   const [trail,        setTrail]        = useState<Position[]>([levels[levelIndex]?.start ?? { row: 0, col: 0 }]);
   const [moveCount,    setMoveCount]    = useState(0);
@@ -325,6 +328,17 @@ function WorldPlay({
     const t = setTimeout(() => setGhostStep(s => s + 1), 700);
     return () => clearTimeout(t);
   }, [ghostRoute, ghostStep, playPhase]);
+
+  // Fade-in timer for intro beat buttons. Dad cheat skips all delays.
+  const INTRO_DELAYS: [number, number, number] = skipTrial ? [0, 0, 0] : [1200, 1500, 1000];
+  useEffect(() => {
+    if (playPhase !== 'intro') return;
+    if (skipTrial) { setIntroBtnVisible(true); return; }
+    setIntroBtnVisible(false);
+    const t = setTimeout(() => setIntroBtnVisible(true), INTRO_DELAYS[introStep]);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [introStep, playPhase]);
 
   // Remix config and derived level (null if this world has no remix or the level doesn't exist yet)
   const remixConfig = REMIX_CONFIGS[worldId] ?? null;
@@ -408,6 +422,7 @@ function WorldPlay({
       setResetCount(c => c + 1);
       setGhostRoute(null);
       setGhostStep(0);
+      setIntroStep(0);
       setPlayPhase('intro');
     }
   };
@@ -423,130 +438,298 @@ function WorldPlay({
     }
   };
 
-  // ── Intro card ──
+  // ── Intro card (3-beat staged read) ──
   if (playPhase === 'intro') {
     const ALL_PIECES: PieceType[] = ['king', 'pawn', 'rook', 'bishop', 'knight', 'queen'];
     const activePiece = selectedPieceType ?? level.pieceType;
+
+    const advanceIntro = () => {
+      if (introStep < 2) {
+        setIntroStep((introStep + 1) as 0 | 1 | 2);
+      }
+    };
+
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
         style={{ background: world.spaceTheme ? undefined : world.palette.bg, position: 'relative' }}
       >
         {world.spaceTheme && <StarfieldCanvas />}
-        <motion.div
-          key={`intro-${levelIndex}`}
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-          className="max-w-sm w-full"
-          style={{ position: 'relative', zIndex: 1 }}
-        >
-          <motion.div
-            className="mb-5 flex justify-center"
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <ChessPieceIcon type={activePiece} size={70} />
-          </motion.div>
 
-          <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: world.palette.accent }}>
-            {world.name} · Level {levelIndex + 1} of {levels.length}
-          </div>
-          <h2 className="text-3xl font-extrabold text-gray-800 mb-2">{level.name}</h2>
-          <p className="text-base text-gray-600 mb-4">{level.description}</p>
-
-          {level.hint && (
-            <div className="bg-white/60 border-2 border-sky-200 rounded-xl p-3 mb-4 text-sm text-sky-800">
-              💡 {level.hint}
-            </div>
-          )}
-
-          {/* Piece Selector — shown only in space worlds */}
-          {world.spaceTheme && (
-            <div className="mb-5">
-              <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#818cf8' }}>
-                Choose Your Piece
+        <AnimatePresence mode="wait">
+          {/* ── Beat 0: Meet the piece ── */}
+          {introStep === 0 && (
+            <motion.div
+              key={`intro-${levelIndex}-0`}
+              initial={{ x: 40, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -40, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+              className="max-w-sm w-full flex flex-col items-center"
+              style={{ position: 'relative', zIndex: 1 }}
+            >
+              <div className="text-xs font-bold uppercase tracking-widest mb-6 opacity-60" style={{ color: world.palette.accent }}>
+                {world.name} · Level {levelIndex + 1} of {levels.length}
               </div>
-              <div className="flex justify-center gap-2">
-                {ALL_PIECES.map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setSelectedPieceType(p)}
-                    aria-label={`Play as ${p}`}
-                    className="rounded-xl border-2 p-1.5 cursor-pointer transition-all"
-                    style={{
-                      borderColor: activePiece === p ? '#818cf8' : 'transparent',
-                      background:  activePiece === p ? 'rgba(129,140,248,0.18)' : 'rgba(255,255,255,0.08)',
-                      transform:   activePiece === p ? 'scale(1.15)' : 'scale(1)',
-                    }}
+
+              <motion.div
+                className="mb-6"
+                animate={{ y: [0, -12, 0] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ChessPieceIcon type={activePiece} size={100} />
+              </motion.div>
+
+              <motion.h2
+                className="text-4xl font-extrabold mb-2 capitalize"
+                style={{ color: world.palette.accent }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                {activePiece === level.pieceType ? `The ${activePiece.charAt(0).toUpperCase() + activePiece.slice(1)}` : level.name}
+              </motion.h2>
+
+              <motion.p
+                className="text-lg font-semibold text-gray-500 mb-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                {world.tagline}
+              </motion.p>
+
+              <AnimatePresence>
+                {introBtnVisible && (
+                  <motion.button
+                    onClick={advanceIntro}
+                    className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
+                    style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <ChessPieceIcon type={p} size={34} />
+                    Let's see the level →
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              <button
+                onClick={onBack}
+                className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+              >
+                ← World Map
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── Beat 1: Here's the lesson ── */}
+          {introStep === 1 && (
+            <motion.div
+              key={`intro-${levelIndex}-1`}
+              initial={{ x: 40, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -40, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+              className="max-w-sm w-full flex flex-col items-center"
+              style={{ position: 'relative', zIndex: 1 }}
+            >
+              {/* World emoji drifts in decoratively */}
+              <motion.div
+                className="text-5xl mb-4 select-none pointer-events-none"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
+              >
+                {world.emoji}
+              </motion.div>
+
+              <motion.h2
+                className="text-3xl font-extrabold text-gray-800 mb-3"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                {level.name}
+              </motion.h2>
+
+              <motion.p
+                className="text-lg text-gray-600 leading-relaxed mb-5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.35 }}
+              >
+                {level.description}
+              </motion.p>
+
+              {level.hint && (
+                <motion.div
+                  className="bg-white/70 border-2 border-sky-200 rounded-2xl p-4 mb-5 text-base text-sky-800 w-full"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  💡 {level.hint}
+                </motion.div>
+              )}
+
+              <AnimatePresence>
+                {introBtnVisible && (
+                  <motion.button
+                    onClick={advanceIntro}
+                    className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
+                    style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    I'm ready →
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              <button
+                onClick={() => setIntroStep(0)}
+                className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+              >
+                ← Back
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── Beat 2: Ready to play ── */}
+          {introStep === 2 && (
+            <motion.div
+              key={`intro-${levelIndex}-2`}
+              initial={{ x: 40, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -40, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+              className="max-w-sm w-full flex flex-col items-center"
+              style={{ position: 'relative', zIndex: 1 }}
+            >
+              <motion.div
+                className="mb-4"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ChessPieceIcon type={activePiece} size={70} />
+              </motion.div>
+
+              {/* Piece Selector — space worlds */}
+              {world.spaceTheme && (
+                <motion.div
+                  className="mb-5 w-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#818cf8' }}>
+                    Choose Your Piece
+                  </div>
+                  <div className="flex justify-center gap-2">
+                    {ALL_PIECES.map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setSelectedPieceType(p)}
+                        aria-label={`Play as ${p}`}
+                        className="rounded-xl border-2 p-1.5 cursor-pointer transition-all"
+                        style={{
+                          borderColor: activePiece === p ? '#818cf8' : 'transparent',
+                          background:  activePiece === p ? 'rgba(129,140,248,0.18)' : 'rgba(255,255,255,0.08)',
+                          transform:   activePiece === p ? 'scale(1.15)' : 'scale(1)',
+                        }}
+                      >
+                        <ChessPieceIcon type={p} size={34} />
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              <motion.div
+                className="bg-white/50 border border-amber-200 rounded-xl p-3 mb-6 text-sm text-amber-800 w-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <span className="font-semibold">3 ★</span> in {level.starThresholds.three} move{level.starThresholds.three !== 1 ? 's' : ''}
+                {' · '}
+                <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
+              </motion.div>
+
+              {/* Dad cheat level-jump controls */}
+              {skipTrial && (
+                <div className="flex gap-2 justify-center mb-4">
+                  <button
+                    onClick={() => {
+                      const prev = Math.max(0, levelIndex - 1);
+                      setLevelIndex(prev);
+                      setConsumedFood([]);
+                      setTrail([levels[prev].start]);
+                      setMoveCount(0);
+                      setResetCount(c => c + 1);
+                      setIntroStep(0);
+                    }}
+                    disabled={levelIndex === 0}
+                    className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
+                  >
+                    ◀ Prev level
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
+                  <span className="text-xs text-gray-400 self-center">
+                    👨 {levelIndex + 1}/{levels.length}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const next = Math.min(levels.length - 1, levelIndex + 1);
+                      setLevelIndex(next);
+                      setConsumedFood([]);
+                      setTrail([levels[next].start]);
+                      setMoveCount(0);
+                      setResetCount(c => c + 1);
+                      setIntroStep(0);
+                    }}
+                    disabled={levelIndex === levels.length - 1}
+                    className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
+                  >
+                    Next level ▶
+                  </button>
+                </div>
+              )}
 
-          <div className="bg-white/50 border border-amber-200 rounded-xl p-3 mb-6 text-sm text-amber-800">
-            <span className="font-semibold">3 ★</span> in {level.starThresholds.three} move{level.starThresholds.three !== 1 ? 's' : ''}
-            {' · '}
-            <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
-          </div>
+              <AnimatePresence>
+                {introBtnVisible && (
+                  <motion.button
+                    onClick={startLevel}
+                    className="w-full text-white font-bold text-2xl py-5 rounded-2xl shadow-xl cursor-pointer"
+                    style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {levelIndex === 0 ? "Let's Go! 🌟" : 'Play! 🌟'}
+                  </motion.button>
+                )}
+              </AnimatePresence>
 
-          {/* Dad cheat level-jump controls */}
-          {skipTrial && (
-            <div className="flex gap-2 justify-center mb-4">
               <button
-                onClick={() => {
-                  const prev = Math.max(0, levelIndex - 1);
-                  setLevelIndex(prev);
-                  setConsumedFood([]);
-                  setTrail([levels[prev].start]);
-                  setMoveCount(0);
-                  setResetCount(c => c + 1);
-                }}
-                disabled={levelIndex === 0}
-                className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
+                onClick={() => setIntroStep(1)}
+                className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
               >
-                ◀ Prev level
+                ← Back
               </button>
-              <span className="text-xs text-gray-400 self-center">
-                👨 {levelIndex + 1}/{levels.length}
-              </span>
-              <button
-                onClick={() => {
-                  const next = Math.min(levels.length - 1, levelIndex + 1);
-                  setLevelIndex(next);
-                  setConsumedFood([]);
-                  setTrail([levels[next].start]);
-                  setMoveCount(0);
-                  setResetCount(c => c + 1);
-                }}
-                disabled={levelIndex === levels.length - 1}
-                className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
-              >
-                Next level ▶
-              </button>
-            </div>
+            </motion.div>
           )}
-
-          <motion.button
-            onClick={startLevel}
-            className="w-full text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
-            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {levelIndex === 0 ? "Let's Go! 🌟" : 'Play! 🌟'}
-          </motion.button>
-
-          <button
-            onClick={onBack}
-            className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
-          >
-            ← World Map
-          </button>
-        </motion.div>
+        </AnimatePresence>
       </div>
     );
   }
@@ -632,7 +815,7 @@ function WorldPlay({
             ↺ Restart
           </button>
           <button
-            onClick={() => setPlayPhase('intro')}
+            onClick={() => { setIntroStep(0); setPlayPhase('intro'); }}
             className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
           >
             ← Level Info
