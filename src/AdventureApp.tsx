@@ -34,6 +34,7 @@ import {
 } from './adventure/sharing';
 import { playCelebrationSound } from './utils/sounds';
 import { GalleryBoard } from './components/GalleryBoard';
+import { OracleMode } from './adventure/OracleMode';
 
 // ─── Dad Cheat — URL param helpers ───────────────────────────────────────────
 // ?adventure&dadcheat               — all worlds unlocked, trials skipped
@@ -118,7 +119,7 @@ const REMIX_CONFIGS: Partial<Record<number, RemixConfig>> = {
 
 // ─── Top-level phase ──────────────────────────────────────────────────────────
 
-type AppPhase = 'title' | 'worldMap' | 'playWorld' | 'challenge';
+type AppPhase = 'title' | 'worldMap' | 'playWorld' | 'challenge' | 'oracle';
 
 export default function AdventureApp() {
   const [phase, setPhase] = useState<AppPhase>(() => {
@@ -180,6 +181,10 @@ export default function AdventureApp() {
     );
   }
 
+  if (phase === 'oracle') {
+    return <OracleMode onBack={() => setPhase('worldMap')} />;
+  }
+
   if (phase === 'worldMap') {
     return (
       <div style={{ position: 'relative' }}>
@@ -192,6 +197,7 @@ export default function AdventureApp() {
             setChallengeWorldId(worldId);
             setPhase('challenge');
           }}
+          onSelectOracle={() => setPhase('oracle')}
         />
         <AnimatePresence>
           {showInstallBanner && (

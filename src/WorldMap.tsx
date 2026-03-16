@@ -48,12 +48,14 @@ interface WorldMapProps {
   onBack: () => void;
   /** Called when the player taps a "?" challenge node. Only shown for worlds 0–5 when completed. */
   onSelectChallenge?: (worldId: number) => void;
+  /** Called when the player taps the Oracle node. Only shown when world 8 is complete. */
+  onSelectOracle?: () => void;
 }
 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack, onSelectChallenge }: WorldMapProps) {
+export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack, onSelectChallenge, onSelectOracle }: WorldMapProps) {
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
 
   const handleNodeClick = (world: WorldDef) => {
@@ -314,6 +316,40 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
                 </g>
               );
             })}
+            {/* Oracle node — ⭐ glowing star, visible when world 8 complete */}
+            {onSelectOracle && completedWorlds.includes(8) && (() => {
+              const ox = 0.50 * VW; // center of map
+              const oy = 0.28 * VH;
+              return (
+                <g
+                  key="oracle"
+                  onClick={onSelectOracle}
+                  style={{ cursor: 'pointer' }}
+                  role="button"
+                  aria-label="The Oracle — judgment quiz"
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && onSelectOracle()}
+                >
+                  {/* Outer glow ring */}
+                  <motion.circle
+                    cx={ox} cy={oy} r={16}
+                    fill="none" stroke="#a78bfa" strokeWidth={2.5}
+                    animate={{ r: [16, 21, 16], opacity: [0.8, 0.15, 0.8] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                  {/* Node circle */}
+                  <circle cx={ox} cy={oy} r={13} fill="#4c1d95"
+                    style={{ filter: 'drop-shadow(0 3px 8px rgba(167,139,250,0.6))' }}
+                  />
+                  <text x={ox} y={oy + 1} textAnchor="middle" dominantBaseline="middle" fontSize={14}>⭐</text>
+                  <text x={ox} y={oy + 23} textAnchor="middle" dominantBaseline="hanging"
+                    fontSize={8} fontWeight="700" fill="rgba(196,181,253,0.95)"
+                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                    The Oracle
+                  </text>
+                </g>
+              );
+            })()}
           </svg>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
-import { Level, Position, Food, Enemy } from '../types';
+import { Level, PieceType, Position, Food, Enemy } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
@@ -47,6 +47,12 @@ export interface BoardShellProps {
   boardRows?: number;
   /** Override board col count (default: level.boardWidth ?? 5) */
   boardCols?: number;
+  /** When false, suppresses click handling and valid-move circles (display-only mode). */
+  interactive?: boolean;
+  /** When set, overrides internal piecePos for rendering (used by Oracle auto-play). */
+  externalPiecePos?: Position;
+  /** When set, overrides level.pieceType for the displayed piece icon. */
+  displayPieceType?: PieceType;
 }
 
 export function BoardShell({
@@ -66,6 +72,9 @@ export function BoardShell({
   capturedEnemies = [],
   boardRows: boardRowsProp,
   boardCols: boardColsProp,
+  interactive = true,
+  externalPiecePos,
+  displayPieceType,
 }: BoardShellProps) {
   const numRows = boardRowsProp ?? level.boardHeight ?? 5;
   const numCols = boardColsProp ?? level.boardWidth ?? 5;
@@ -92,8 +101,9 @@ export function BoardShell({
   const isTrail  = (r: number, c: number) => trail.some(t => t.row === r && t.col === c);
   const hasFence = (r: number, c: number, side: string) =>
     level.obstacles.fences.some(f => f.row === r && f.col === c && f.side === side);
-  const isValid  = (r: number, c: number) => validMoves.some(m => m.row === r && m.col === c);
-  const isPiece  = (r: number, c: number) => piecePos.row === r && piecePos.col === c;
+  const isValid  = (r: number, c: number) => interactive && validMoves.some(m => m.row === r && m.col === c);
+  const displayPos = externalPiecePos ?? piecePos;
+  const isPiece  = (r: number, c: number) => displayPos.row === r && displayPos.col === c;
   const isFoodConsumed = (pos: Position) =>
     consumedFood.some(f => f.row === pos.row && f.col === pos.col);
 
@@ -174,6 +184,7 @@ export function BoardShell({
   // Click handler
   // ---------------------------------------------------------------------------
   const handleSquareClick = (row: number, col: number) => {
+    if (!interactive) return;
     if (!isValidMove(validMoves, row, col)) {
       if (isMobile && validMoves.length > 0) {
         const nearest = validMoves.reduce((best, candidate) => {
@@ -507,9 +518,9 @@ export function BoardShell({
         <motion.div
           className="absolute z-10 pointer-events-none"
           style={{ width: `${squareSize}px`, height: `${squareSize}px` }}
-          animate={{ left: piecePos.col * squareSize, top: piecePos.row * squareSize }}
+          animate={{ left: displayPos.col * squareSize, top: displayPos.row * squareSize }}
           transition={
-            level.pieceType === 'knight'
+            (displayPieceType ?? level.pieceType) === 'knight'
               ? { type: 'spring', stiffness: 160, damping: 16 }
               : { type: 'spring', stiffness: 280, damping: 26 }
           }
@@ -517,7 +528,7 @@ export function BoardShell({
           <motion.div
             className="w-full h-full flex items-center justify-center"
             key={animKey}
-            animate={level.pieceType === 'knight' ? { y: [0, -22, 0], rotate: [0, -5, 5, 0] } : { y: 0 }}
+            animate={(displayPieceType ?? level.pieceType) === 'knight' ? { y: [0, -22, 0], rotate: [0, -5, 5, 0] } : { y: 0 }}
             transition={{ duration: 0.45 }}
           >
             <motion.div
@@ -530,7 +541,7 @@ export function BoardShell({
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
+              <ChessPieceIcon type={displayPieceType ?? level.pieceType} size={squareSize * 0.7} />
             </motion.div>
           </motion.div>
         </motion.div>
