@@ -85,6 +85,12 @@ export type Level = {
    * Set goal to { row: -1, col: -1 } for captureAll levels (no flag shown on board).
    */
   captureAll?: boolean;
+  /**
+   * Cells that permanently seal into rivers on a specific move number.
+   * Triggers an ice-blue flash animation, then joins obstacles.rivers for all
+   * future valid-move computation. Move numbers are 1-indexed (move 1 = first move made).
+   */
+  dynamicRivers?: Array<{ row: number; col: number; appearsOnMove: number }>;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

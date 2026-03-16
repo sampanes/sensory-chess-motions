@@ -23,6 +23,7 @@ import { DuoBoard } from './components/DuoBoard';
 
 // Register all world levels and pull the queen finale array
 import { queenFinale } from './adventure/levels/index';
+import { CHALLENGE_LEVELS } from './adventure/levels/shifting';
 import {
   encodeBuiltinChallenge,
   decodeChallenge,
@@ -116,7 +117,7 @@ const REMIX_CONFIGS: Partial<Record<number, RemixConfig>> = {
 
 // ─── Top-level phase ──────────────────────────────────────────────────────────
 
-type AppPhase = 'title' | 'worldMap' | 'playWorld';
+type AppPhase = 'title' | 'worldMap' | 'playWorld' | 'challenge';
 
 export default function AdventureApp() {
   const [phase, setPhase] = useState<AppPhase>(() => {
@@ -132,8 +133,9 @@ export default function AdventureApp() {
     return 0;
   });
 
-  const [progress, setProgress]         = useState<AdventureProgress>(loadProgress);
+  const [progress, setProgress]             = useState<AdventureProgress>(loadProgress);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [challengeWorldId, setChallengeWorldId]   = useState<number | null>(null);
 
   const unlockedWorlds = IS_DAD_CHEAT
     ? WORLDS.map(w => w.id)
@@ -165,6 +167,16 @@ export default function AdventureApp() {
     return <TitleScreen onBegin={() => setPhase('worldMap')} />;
   }
 
+  if (phase === 'challenge' && challengeWorldId !== null) {
+    return (
+      <ChallengePlay
+        worldId={challengeWorldId}
+        onComplete={() => setPhase('worldMap')}
+        onBack={() => setPhase('worldMap')}
+      />
+    );
+  }
+
   if (phase === 'worldMap') {
     return (
       <div style={{ position: 'relative' }}>
@@ -173,6 +185,10 @@ export default function AdventureApp() {
           unlockedWorlds={unlockedWorlds}
           onSelectWorld={handleSelectWorld}
           onBack={() => setPhase('title')}
+          onSelectChallenge={(worldId) => {
+            setChallengeWorldId(worldId);
+            setPhase('challenge');
+          }}
         />
         <AnimatePresence>
           {showInstallBanner && (
@@ -2627,6 +2643,227 @@ const LANDSCAPE_ROWS = [
   { top: '63%', size: 26, opacity: 0.78, emojis: ['🌿', '🍀', '🌺', '🌻', '🌺', '🍀', '🌿', '🌻', '🌺'] },
   { top: '76%', size: 36, opacity: 1,    emojis: ['🌱', '🍄', '🌻', '🌼', '🌻', '🍄', '🌱', '🌼', '🍄'] },
 ] as const;
+
+// ─── ChallengePlay ────────────────────────────────────────────────────────────
+// Streamlined single-level player for Shifting Grounds challenge levels.
+// No trial, no story beat, no remix — just the level, a celebration, and back.
+
+function ChallengePlay({
+  worldId,
+  onComplete,
+  onBack,
+}: {
+  worldId: number;
+  onComplete: () => void;
+  onBack: () => void;
+}) {
+  const world = WORLDS[worldId];
+  const level = CHALLENGE_LEVELS[worldId];
+
+  type CPhase = 'intro' | 'playing' | 'celebration';
+  const [cPhase,         setCPhase]         = useState<CPhase>('intro');
+  const [consumedFood,   setConsumedFood]   = useState<Food[]>([]);
+  const [capturedEnemies,setCapturedEnemies]= useState<Enemy[]>([]);
+  const [trail,          setTrail]          = useState<Position[]>([level.start]);
+  const [moveCount,      setMoveCount]      = useState(0);
+  const [resetCount,     setResetCount]     = useState(0);
+  const [isStuck,        setIsStuck]        = useState(false);
+  const [lastStars,      setLastStars]      = useState(0);
+
+  const startChallenge = () => {
+    setConsumedFood([]);
+    setCapturedEnemies([]);
+    setTrail([level.start]);
+    setMoveCount(0);
+    setResetCount(c => c + 1);
+    setIsStuck(false);
+    setCPhase('playing');
+  };
+
+  const resetChallenge = () => {
+    setConsumedFood([]);
+    setCapturedEnemies([]);
+    setTrail([level.start]);
+    setMoveCount(0);
+    setResetCount(c => c + 1);
+    setIsStuck(false);
+  };
+
+  const handleMove = (newPos: Position, capturedEnemy?: Enemy) => {
+    const newTrail = [...trail, newPos];
+    setTrail(newTrail);
+    const next = moveCount + 1;
+    setMoveCount(next);
+    if (capturedEnemy) {
+      setCapturedEnemies(prev => [...prev, capturedEnemy]);
+      return;
+    }
+    if (newPos.row === level.goal.row && newPos.col === level.goal.col) {
+      setLastStars(getStars(level.starThresholds, next));
+      setTimeout(() => {
+        playCelebrationSound(level.pieceType);
+        setCPhase('celebration');
+      }, 600);
+    }
+  };
+
+  // ── Intro ──
+  if (cPhase === 'intro') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div
+          className="max-w-sm w-full flex flex-col items-center"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
+          <div className="text-3xl mb-1 select-none">❄️</div>
+          <div className="text-xs font-bold uppercase tracking-widest mb-4 opacity-60" style={{ color: world.palette.accent }}>
+            Shifting Grounds · {world.name}
+          </div>
+          <motion.div className="mb-5" animate={{ y: [0, -10, 0] }} transition={{ duration: 2.5, repeat: Infinity }}>
+            <ChessPieceIcon type={level.pieceType} size={80} />
+          </motion.div>
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-2">{level.name}</h2>
+          <p className="text-base text-gray-600 leading-relaxed mb-4">{level.description}</p>
+          {level.hint && (
+            <div className="bg-white/70 border-2 border-sky-200 rounded-2xl p-3 mb-5 text-sm text-sky-800 w-full">
+              💡 {level.hint}
+            </div>
+          )}
+          <div className="text-xs text-amber-700 bg-white/50 rounded-xl px-3 py-2 mb-6">
+            <span className="font-semibold">3 ★</span> in {level.starThresholds.three} moves
+            {' · '}
+            <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
+          </div>
+          <motion.button
+            onClick={startChallenge}
+            className="w-full text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
+          >
+            Accept the Challenge ❄️
+          </motion.button>
+          <button onClick={onBack} className="mt-4 text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none">
+            ← World Map
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Playing ──
+  if (cPhase === 'playing') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
+        style={{ background: world.palette.bg }}
+      >
+        <motion.div className="text-center" initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <div className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: world.palette.accent }}>
+            {level.name}
+          </div>
+          <motion.span className="text-sm font-bold text-gray-700" key={moveCount} animate={{ scale: [1.2, 1] }} transition={{ duration: 0.15 }}>
+            {moveCount} move{moveCount !== 1 ? 's' : ''}
+          </motion.span>
+        </motion.div>
+
+        <BoardShell
+          key={`challenge-${worldId}-${resetCount}`}
+          level={level}
+          consumedFood={consumedFood}
+          trail={trail}
+          squareSize={72}
+          isMobile={false}
+          onMove={handleMove}
+          onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
+          onStuck={setIsStuck}
+          capturedEnemies={capturedEnemies}
+        />
+
+        {isStuck && (
+          <motion.div
+            className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-2 text-sm text-red-700 font-semibold"
+            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          >
+            Sealed in! Press Restart ↺
+          </motion.div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={resetChallenge}
+            className={`text-sm border rounded-xl px-4 py-2 cursor-pointer transition-colors ${isStuck ? 'bg-red-100 border-red-300 text-red-700 font-bold' : 'bg-white/60 border-gray-200 text-gray-600 hover:bg-white'}`}
+          >
+            ↺ Restart
+          </button>
+          <button onClick={onBack} className="text-sm bg-white/60 border border-gray-200 text-gray-600 rounded-xl px-4 py-2 hover:bg-white cursor-pointer">
+            ← Map
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Celebration ──
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 via-sky-50 to-indigo-100 flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden">
+      {[...Array(10)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-2xl select-none pointer-events-none"
+          style={{ left: `${(i * 10.5) % 100}vw` }}
+          initial={{ y: -80, opacity: 1 }}
+          animate={{ y: '110vh', opacity: [1, 1, 0] }}
+          transition={{ duration: 2.5 + Math.random(), delay: Math.random() * 0.8, repeat: Infinity, ease: 'linear' }}
+        >
+          {['❄️', '⭐', '✨', '❄️', '🌟', '⭐'][i % 6]}
+        </motion.div>
+      ))}
+      <motion.div
+        className="relative z-10 max-w-sm w-full"
+        initial={{ scale: 0.75, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 16 }}
+      >
+        <div className="text-5xl mb-3">❄️</div>
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
+          {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Cleared!' : 'You made it!'}
+        </h2>
+        <p className="text-gray-600 mb-4">
+          Challenge cleared in <span className="font-bold text-sky-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.
+        </p>
+        <div className="flex justify-center gap-2 mb-6">
+          {[1, 2, 3].map(s => (
+            <motion.div key={s} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.3 + s * 0.12 }}>
+              <Star className={`w-10 h-10 ${s <= lastStars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+            </motion.div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onComplete}
+            className="text-white font-bold text-lg py-3 rounded-2xl shadow-lg cursor-pointer"
+            style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
+          >
+            Back to World Map 🗺️
+          </button>
+          {lastStars < 3 && (
+            <button onClick={startChallenge} className="text-sky-600 font-semibold text-sm hover:underline cursor-pointer bg-transparent border-none">
+              ↺ Try for 3 stars
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── TitleScreen ──────────────────────────────────────────────────────────────
 
 function TitleScreen({ onBegin }: { onBegin: () => void }) {
   return (

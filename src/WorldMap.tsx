@@ -46,12 +46,14 @@ interface WorldMapProps {
   unlockedWorlds: number[];
   onSelectWorld: (worldId: number) => void;
   onBack: () => void;
+  /** Called when the player taps a "?" challenge node. Only shown for worlds 0–5 when completed. */
+  onSelectChallenge?: (worldId: number) => void;
 }
 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack }: WorldMapProps) {
+export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack, onSelectChallenge }: WorldMapProps) {
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
 
   const handleNodeClick = (world: WorldDef) => {
@@ -268,6 +270,46 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
                     style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
                   >
                     {world.name}
+                  </text>
+                </g>
+              );
+            })}
+            {/* Shifting Grounds challenge nodes — "?" bubble near each completed world 0–5 */}
+            {onSelectChallenge && WORLDS.filter(w => w.id <= 5).map(world => {
+              if (!completedWorlds.includes(world.id)) return null;
+              const pos = worldSVGPos(world);
+              const nx = pos.x + 26;
+              const ny = pos.y - 20;
+              return (
+                <g
+                  key={`challenge-${world.id}`}
+                  onClick={() => onSelectChallenge(world.id)}
+                  style={{ cursor: 'pointer' }}
+                  role="button"
+                  aria-label={`Shifting Grounds challenge for ${world.name}`}
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && onSelectChallenge(world.id)}
+                >
+                  <motion.circle
+                    cx={nx} cy={ny} r={11}
+                    fill="#f59e0b"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 280, damping: 16, delay: world.id * 0.08 }}
+                    style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                  />
+                  <motion.circle
+                    cx={nx} cy={ny} r={13}
+                    fill="none" stroke="#fbbf24" strokeWidth={2}
+                    animate={{ r: [13, 16, 13], opacity: [0.7, 0.1, 0.7] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: world.id * 0.15 }}
+                  />
+                  <text
+                    x={nx} y={ny + 1}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fontSize={10} fontWeight="900" fill="white"
+                  >
+                    ?
                   </text>
                 </g>
               );

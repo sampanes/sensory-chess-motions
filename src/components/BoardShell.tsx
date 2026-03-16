@@ -67,12 +67,20 @@ export function BoardShell({
   const [animKey, setAnimKey] = useState(0);
   const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
   const [mobileCoach, setMobileCoach] = useState<string | null>(null);
+  // Dynamic river sealing state
+  const [sealedRivers, setSealedRivers] = useState<Position[]>([]);
+  const [sealingCells, setSealingCells] = useState<Position[]>([]); // currently flashing ice-blue
 
   // ---------------------------------------------------------------------------
   // Derived cell queries
   // ---------------------------------------------------------------------------
-  const isRiver  = (r: number, c: number) => level.obstacles.rivers.some(rv => rv.row === r && rv.col === c);
-  const isBridge = (r: number, c: number) => level.obstacles.bridges.some(b => b.row === r && b.col === c);
+  const isRiver  = (r: number, c: number) =>
+    level.obstacles.rivers.some(rv => rv.row === r && rv.col === c) ||
+    sealedRivers.some(sr => sr.row === r && sr.col === c);
+  const isBridge = (r: number, c: number) =>
+    level.obstacles.bridges.some(b => b.row === r && b.col === c) &&
+    !sealedRivers.some(sr => sr.row === r && sr.col === c);
+  const isSealing = (r: number, c: number) => sealingCells.some(s => s.row === r && s.col === c);
   const isGoal   = (r: number, c: number) => level.goal.row === r && level.goal.col === c;
   const isTrail  = (r: number, c: number) => trail.some(t => t.row === r && t.col === c);
   const hasFence = (r: number, c: number, side: string) =>
@@ -108,9 +116,15 @@ export function BoardShell({
   useEffect(() => {
     // Watched squares (queen world) are treated as impassable cells — merge them
     // into obstacles.rivers so the existing slider/landing logic blocks them.
-    const baseObstacles = level.watchedSquares?.length
-      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...level.watchedSquares] }
-      : level.obstacles;
+    const baseRivers = [
+      ...level.obstacles.rivers,
+      ...(level.watchedSquares ?? []),
+      ...sealedRivers,
+    ];
+    const baseBridges = level.obstacles.bridges.filter(
+      b => !sealedRivers.some(sr => sr.row === b.row && sr.col === b.col)
+    );
+    const baseObstacles = { ...level.obstacles, rivers: baseRivers, bridges: baseBridges };
     // Merge live enemies into food so the move calculator treats them correctly
     const effectiveObstacles = liveEnemies.length
       ? { ...baseObstacles, food: [...baseObstacles.food, ...liveEnemies] }
@@ -130,7 +144,24 @@ export function BoardShell({
       triggerHaptic([80, 60, 120]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [piecePos, consumedFood, capturedEnemies]);
+  }, [piecePos, consumedFood, capturedEnemies, sealedRivers]);
+
+  // ---------------------------------------------------------------------------
+  // Dynamic river sealing — check on each move whether new cells should freeze.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!level.dynamicRivers?.length || animKey === 0) return;
+    const newCells = level.dynamicRivers.filter(dr => dr.appearsOnMove === animKey);
+    if (!newCells.length) return;
+    const positions = newCells.map(({ row, col }) => ({ row, col }));
+    setSealingCells(prev => [...prev, ...positions]);
+    const t = setTimeout(() => {
+      setSealedRivers(prev => [...prev, ...positions]);
+      setSealingCells(prev => prev.filter(sc => !positions.some(p => p.row === sc.row && p.col === sc.col)));
+    }, 400);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animKey]);
 
   // ---------------------------------------------------------------------------
   // Click handler
@@ -294,6 +325,30 @@ export function BoardShell({
                     <div className="w-4 h-4 rounded-full bg-amber-600/40" />
                   </motion.div>
                 )}
+
+                {/* Dynamic river seal flash — ice-blue pulse as cell freezes */}
+                <AnimatePresence>
+                  {isSealing(r, c) && (
+                    <motion.div
+                      key={`seal-${r}-${c}`}
+                      className="absolute inset-0 pointer-events-none z-[7] flex items-center justify-center"
+                      initial={{ opacity: 0.9 }}
+                      animate={{ opacity: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                      style={{ background: 'rgba(147,197,253,0.82)' }}
+                    >
+                      <motion.span
+                        className="text-sm select-none"
+                        initial={{ y: 0, opacity: 1 }}
+                        animate={{ y: -18, opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        ❄️
+                      </motion.span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <AnimatePresence>
                   {level.obstacles.food.some(f => f.row === r && f.col === c)
