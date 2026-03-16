@@ -33,6 +33,7 @@ import {
   incrementAttempts,
 } from './adventure/sharing';
 import { playCelebrationSound } from './utils/sounds';
+import { GalleryBoard } from './components/GalleryBoard';
 
 // ─── Dad Cheat — URL param helpers ───────────────────────────────────────────
 // ?adventure&dadcheat               — all worlds unlocked, trials skipped
@@ -136,6 +137,8 @@ export default function AdventureApp() {
   const [progress, setProgress]             = useState<AdventureProgress>(loadProgress);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [challengeWorldId, setChallengeWorldId]   = useState<number | null>(null);
+  // World 9 shows a gallery interstitial before the regular level sequence
+  const [firstBoardGalleryDone, setFirstBoardGalleryDone] = useState(false);
 
   const unlockedWorlds = IS_DAD_CHEAT
     ? WORLDS.map(w => w.id)
@@ -239,6 +242,16 @@ export default function AdventureApp() {
     );
   }
 
+  // World 9 "The First Board" — gallery interstitial before regular levels
+  if (selectedWorld === 9 && !firstBoardGalleryDone && !IS_DAD_CHEAT) {
+    return (
+      <FirstBoardGallery
+        onDone={() => setFirstBoardGalleryDone(true)}
+        onBack={() => setPhase('worldMap')}
+      />
+    );
+  }
+
   // Duo worlds have two-piece levels — use the dedicated DuoWorldPlay component
   if (DUO_WORLD_LEVELS[selectedWorld]) {
     return (
@@ -333,6 +346,12 @@ function WorldPlay({
   const effectiveLevel: Level = selectedPieceType
     ? { ...level, pieceType: selectedPieceType }
     : level;
+
+  // Dynamic squareSize: shrink for boards wider than 5 columns
+  const _boardCols = effectiveLevel?.boardWidth ?? 5;
+  const squareSize = _boardCols > 5
+    ? Math.min(56, Math.floor((Math.min(window.innerWidth, 600) - 48) / _boardCols))
+    : 72;
 
   // ── Ghost replay state ────────────────────────────────────────────────────
   const [ghostRoute, setGhostRoute] = useState<Position[] | null>(null);
@@ -807,7 +826,7 @@ function WorldPlay({
             level={effectiveLevel}
             consumedFood={consumedFood}
             trail={trail}
-            squareSize={72}
+            squareSize={squareSize}
             isMobile={false}
             onMove={handleMove}
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
@@ -822,7 +841,7 @@ function WorldPlay({
             level={effectiveLevel}
             consumedFood={consumedFood}
             trail={trail}
-            squareSize={72}
+            squareSize={squareSize}
             isMobile={false}
             onMove={handleMove}
             onFoodConsumed={f => setConsumedFood(prev => [...prev, f])}
@@ -2859,6 +2878,78 @@ function ChallengePlay({
           )}
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+// ─── FirstBoardGallery ────────────────────────────────────────────────────────
+
+function FirstBoardGallery({
+  onDone,
+  onBack,
+}: {
+  onDone: () => void;
+  onBack: () => void;
+}) {
+  const [galPhase, setGalPhase] = useState<'story' | 'gallery'>('story');
+  const squareSize = Math.min(42, Math.floor((Math.min(window.innerWidth, 600) - 48) / 8));
+
+  if (galPhase === 'story') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 select-none"
+        style={{ background: 'linear-gradient(to bottom, #fef3c7, #fde68a, #d97706)' }}
+      >
+        <motion.div
+          className="w-full max-w-sm bg-white/90 rounded-3xl shadow-2xl p-7 flex flex-col items-center gap-5 text-center"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 22 }}
+        >
+          <div className="text-5xl">♟️</div>
+          <h2 className="text-2xl font-extrabold text-amber-900">The First Board</h2>
+          <p className="text-gray-700 leading-relaxed">
+            You have met every piece — King, Pawn, Rook, Bishop, Knight, and Queen.
+          </p>
+          <p className="text-gray-700 leading-relaxed">
+            Now you stand before the board they all share: the great 8×8 that chess was born on.
+          </p>
+          <p className="text-gray-600 text-sm">
+            Explore how each piece moves here, then play.
+          </p>
+          <motion.button
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-lg py-3 rounded-2xl shadow-lg cursor-pointer"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setGalPhase('gallery')}
+          >
+            Explore the Board →
+          </motion.button>
+          <button
+            onClick={onBack}
+            className="text-sm text-amber-700/60 hover:text-amber-800 bg-transparent border-none cursor-pointer"
+          >
+            ← World Map
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-start gap-4 p-4 pt-8 select-none overflow-auto"
+      style={{ background: 'linear-gradient(to bottom, #fef3c7, #fde68a, #d97706)' }}
+    >
+      <motion.div
+        className="text-center mb-1"
+        initial={{ y: -12, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+      >
+        <h2 className="text-xl font-extrabold text-amber-900">Meet the Pieces</h2>
+        <p className="text-xs text-amber-700 mt-0.5">Tap each piece to see where it can go</p>
+      </motion.div>
+      <GalleryBoard squareSize={squareSize} onDone={onDone} />
     </div>
   );
 }

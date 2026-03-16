@@ -6,7 +6,6 @@ import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
-const BOARD_SIZE = 5;
 
 function getDecoration(r: number, c: number, spaceTheme?: boolean): string | null {
   const hash = Math.abs((r * 31) ^ (c * 37)) % 14;
@@ -44,6 +43,10 @@ export interface BoardShellProps {
   enemies?: Enemy[];
   /** Enemies already captured this run — excluded from rendering and obstacles. */
   capturedEnemies?: Enemy[];
+  /** Override board row count (default: level.boardHeight ?? 5) */
+  boardRows?: number;
+  /** Override board col count (default: level.boardWidth ?? 5) */
+  boardCols?: number;
 }
 
 export function BoardShell({
@@ -61,7 +64,11 @@ export function BoardShell({
   spaceTheme,
   enemies = [],
   capturedEnemies = [],
+  boardRows: boardRowsProp,
+  boardCols: boardColsProp,
 }: BoardShellProps) {
+  const numRows = boardRowsProp ?? level.boardHeight ?? 5;
+  const numCols = boardColsProp ?? level.boardWidth ?? 5;
   const [piecePos, setPiecePos] = useState<Position>(level.start);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [animKey, setAnimKey] = useState(0);
@@ -131,7 +138,7 @@ export function BoardShell({
       : baseObstacles;
     // Captured enemies count as consumed food so sliders can pass through vacated squares
     const effectiveConsumedFood = [...consumedFood, ...capturedEnemies];
-    const moves = getValidMoves(level.pieceType, piecePos, effectiveObstacles, effectiveConsumedFood);
+    const moves = getValidMoves(level.pieceType, piecePos, effectiveObstacles, effectiveConsumedFood, numRows, numCols);
     setValidMoves(moves);
 
     const allCaptured = level.captureAll
@@ -203,22 +210,26 @@ export function BoardShell({
     onMove(newPos, capturedEnemy);
   };
 
-  const boardPx = squareSize * BOARD_SIZE;
+  const boardW = squareSize * numCols;
+  const boardH = squareSize * numRows;
 
   return (
     <>
       <motion.div
         className="relative rounded-2xl shadow-2xl overflow-hidden border-4 border-amber-700"
-        style={{ width: `${boardPx}px`, height: `${boardPx}px`, ...worldTheme }}
+        style={{ width: `${boardW}px`, height: `${boardH}px`, ...worldTheme }}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
       >
-        {/* 5×5 cell grid */}
-        <div className="grid grid-cols-5 absolute inset-0">
-          {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => {
-            const r = Math.floor(i / BOARD_SIZE);
-            const c = i % BOARD_SIZE;
+        {/* grid */}
+        <div
+          className="grid absolute inset-0"
+          style={{ gridTemplateColumns: `repeat(${numCols}, 1fr)` }}
+        >
+          {Array.from({ length: numRows * numCols }, (_, i) => {
+            const r = Math.floor(i / numCols);
+            const c = i % numCols;
             const river      = isRiver(r, c);
             const bridge     = isBridge(r, c);
             const goal       = isGoal(r, c);

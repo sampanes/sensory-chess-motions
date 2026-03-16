@@ -133,10 +133,10 @@ const sg5: Level = {
 const sg6: Level = {
   name: 'The Shrinking Court',
   description: 'Collect both apples and reach the corner. But your starting square seals after your first move.',
-  hint: 'Go up for the apple, cut diagonally to the second, then sweep to the goal.',
+  hint: 'Go up for the apple, cut diagonally to the second, then slide straight down to the flag.',
   pieceType: 'queen',
   start: { row: 2, col: 2 },
-  goal:  { row: 4, col: 4 },
+  goal:  { row: 4, col: 0 },
   starThresholds: { three: 3, two: 5 },
   obstacles: {
     fences: [], rivers: [], bridges: [],

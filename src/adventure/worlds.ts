@@ -233,8 +233,31 @@ export const WORLDS: WorldDef[] = [
         '"But now you know — to take a piece, you must move like one."',
         'You have learned to capture. The board is yours.',
       ],
+      nextTeaser: 'The First Board',
+      nextTeaserEmoji: '♟️',
     },
     mapPos: { x: 0.25, y: 0.08 },
+  },
+  {
+    id: 9,
+    name: 'The First Board',
+    emoji: '♟️',
+    tagline: 'The real 8×8. All six pieces. One board.',
+    palette: {
+      bg: 'linear-gradient(to bottom, #fef3c7, #fde68a, #d97706)',
+      accent: '#92400e',
+      nodeColor: '#d97706',
+    },
+    story: {
+      title: 'The Board You Were Made For',
+      paragraphs: [
+        'You have learned each piece. King, Pawn, Rook, Bishop, Knight, Queen.',
+        'Now you stand before the board they all share — the great 8×8 that chess was made on.',
+        'Everything you learned still works here. The pieces move the same way. The world is just bigger.',
+        'Welcome to the first board.',
+      ],
+    },
+    mapPos: { x: 0.08, y: 0.12 },
   },
 ];
 

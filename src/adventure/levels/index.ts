@@ -13,6 +13,7 @@ import { duoLevels } from './duo';
 import { queenSoloLevels } from './queen';
 import { frontierLevels } from './frontier';
 import { shadowLevels } from './shadows';
+import { revealLevels } from './reveal';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
@@ -23,6 +24,7 @@ export { duoLevels } from './duo';
 export { queenSoloLevels, queenFinale } from './queen';
 export { frontierLevels } from './frontier';
 export { shadowLevels } from './shadows';
+export { revealLevels } from './reveal';
 
 // Register single-piece worlds
 WORLD_LEVELS[0] = act1KingLevels;
@@ -36,6 +38,8 @@ WORLD_LEVELS[6] = queenSoloLevels;
 WORLD_LEVELS[7] = frontierLevels;
 // World 8 — The Shadow Pieces (captures)
 WORLD_LEVELS[8] = shadowLevels;
+// World 9 — The First Board (8×8 levels)
+WORLD_LEVELS[9] = revealLevels;
 
 // Register two-piece worlds
 DUO_WORLD_LEVELS[5] = duoLevels;
