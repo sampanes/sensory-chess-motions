@@ -8,7 +8,7 @@ import { ScrollBoard } from './components/ScrollBoard';
 import { WorldMap } from './WorldMap';
 import { Roster } from './Roster';
 import { TrialMode } from './TrialMode';
-import { Food, Level, PieceType, Position } from './types';
+import { Enemy, Food, Level, PieceType, Position } from './types';
 import {
   WORLDS,
   WORLD_LEVELS,
@@ -291,11 +291,12 @@ function WorldPlay({
   // 3-beat staged intro: 0=meet piece, 1=lesson, 2=ready to play
   const [introStep, setIntroStep] = useState<0 | 1 | 2>(0);
   const [introBtnVisible, setIntroBtnVisible] = useState(skipTrial); // dad cheat: always visible
-  const [consumedFood, setConsumedFood] = useState<Food[]>([]);
-  const [trail,        setTrail]        = useState<Position[]>([levels[levelIndex]?.start ?? { row: 0, col: 0 }]);
-  const [moveCount,    setMoveCount]    = useState(0);
-  const [resetCount,   setResetCount]   = useState(0);
-  const [lastStars,    setLastStars]    = useState(0);
+  const [consumedFood,    setConsumedFood]    = useState<Food[]>([]);
+  const [capturedEnemies, setCapturedEnemies] = useState<Enemy[]>([]);
+  const [trail,           setTrail]           = useState<Position[]>([levels[levelIndex]?.start ?? { row: 0, col: 0 }]);
+  const [moveCount,       setMoveCount]       = useState(0);
+  const [resetCount,      setResetCount]      = useState(0);
+  const [lastStars,       setLastStars]       = useState(0);
 
   // ── Remix state ──────────────────────────────────────────────────────────
   const [isStuck,           setIsStuck]           = useState(false);
@@ -349,6 +350,7 @@ function WorldPlay({
 
   const startLevel = () => {
     setConsumedFood([]);
+    setCapturedEnemies([]);
     setTrail([level.start]);
     setMoveCount(0);
     setResetCount(c => c + 1);
@@ -366,6 +368,7 @@ function WorldPlay({
 
   const resetBoard = () => {
     setConsumedFood([]);
+    setCapturedEnemies([]);
     setTrail([level.start]);
     setMoveCount(0);
     setResetCount(c => c + 1);
@@ -392,15 +395,30 @@ function WorldPlay({
     setIsRemixStuck(false);
   };
 
-  const handleMove = (newPos: Position) => {
+  const handleMove = (newPos: Position, capturedEnemy?: Enemy) => {
     const newTrail = [...trail, newPos];
     setTrail(newTrail);
     const next = moveCount + 1;
     setMoveCount(next);
-    if (newPos.row === level.goal.row && newPos.col === level.goal.col) {
+    const pieceType = effectiveLevel.pieceType;
+
+    if (capturedEnemy) {
+      const newCaptured = [...capturedEnemies, capturedEnemy];
+      setCapturedEnemies(newCaptured);
+      // captureAll win: all enemies cleared
+      if (level.captureAll && newCaptured.length >= (level.enemies?.length ?? 0)) {
+        setLastStars(getStars(level.starThresholds, next));
+        setTimeout(() => {
+          playCelebrationSound(pieceType);
+          setPlayPhase('celebration');
+        }, 600);
+      }
+      return; // capture move done — skip goal check
+    }
+
+    if (!level.captureAll && newPos.row === level.goal.row && newPos.col === level.goal.col) {
       saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(level.starThresholds, next));
-      const pieceType = effectiveLevel.pieceType;
       setTimeout(() => {
         playCelebrationSound(pieceType);
         setPlayPhase('celebration');
@@ -417,6 +435,7 @@ function WorldPlay({
       const next = levelIndex + 1;
       setLevelIndex(next);
       setConsumedFood([]);
+      setCapturedEnemies([]);
       setTrail([levels[next].start]);
       setMoveCount(0);
       setResetCount(c => c + 1);
@@ -758,6 +777,11 @@ function WorldPlay({
             transition={{ duration: 0.15 }}
           >
             {moveCount} move{moveCount !== 1 ? 's' : ''}
+            {level.captureAll && level.enemies && (
+              <span className="ml-2 opacity-70">
+                · {capturedEnemies.length}/{level.enemies.length} captured
+              </span>
+            )}
           </motion.span>
         </motion.div>
 
@@ -790,6 +814,8 @@ function WorldPlay({
             showCheckerboard={worldId === 3}
             ghostPos={ghostPos}
             spaceTheme={world.spaceTheme}
+            enemies={level.enemies}
+            capturedEnemies={capturedEnemies}
           />
         )}
 
@@ -883,7 +909,10 @@ function WorldPlay({
             {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}
           </h2>
           <p className="text-gray-600 mb-4">
-            Reached the flag in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.
+            {level.captureAll
+              ? <>Captured all shadows in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
+              : <>Reached the flag in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
+            }
           </p>
 
           {/* Contrast card — space worlds only */}

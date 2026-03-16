@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
-import { Level, Position, Food } from '../types';
+import { Level, Position, Food, Enemy } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
@@ -29,7 +29,7 @@ export interface BoardShellProps {
   trail: Position[];
   squareSize: number;
   isMobile: boolean;
-  onMove: (newPos: Position) => void;
+  onMove: (newPos: Position, capturedEnemy?: Enemy) => void;
   onFoodConsumed: (food: Food) => void;
   onStuck: (stuck: boolean) => void;
   /** Optional CSS custom properties for world theming, e.g. adventure mode palettes */
@@ -40,6 +40,10 @@ export interface BoardShellProps {
   ghostPos?: Position | null;
   /** When true, applies space visual theme: void rifts, fuel cells, cyan move rings */
   spaceTheme?: boolean;
+  /** Enemy pieces on the board (shadow world). Treated as capturable food. */
+  enemies?: Enemy[];
+  /** Enemies already captured this run — excluded from rendering and obstacles. */
+  capturedEnemies?: Enemy[];
 }
 
 export function BoardShell({
@@ -55,6 +59,8 @@ export function BoardShell({
   showCheckerboard,
   ghostPos,
   spaceTheme,
+  enemies = [],
+  capturedEnemies = [],
 }: BoardShellProps) {
   const [piecePos, setPiecePos] = useState<Position>(level.start);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
@@ -93,23 +99,38 @@ export function BoardShell({
   // Recompute valid moves whenever piece position or consumed food changes.
   // Stuck detection fires only after at least one move (animKey > 0).
   // ---------------------------------------------------------------------------
+  // Live enemies are treated as food for move calculation: sliders stop on them,
+  // pawns can diagonal-capture them. Captured enemies are removed.
+  const liveEnemies = enemies.filter(
+    e => !capturedEnemies.some(ce => ce.row === e.row && ce.col === e.col)
+  );
+
   useEffect(() => {
     // Watched squares (queen world) are treated as impassable cells — merge them
     // into obstacles.rivers so the existing slider/landing logic blocks them.
-    const effectiveObstacles = level.watchedSquares?.length
+    const baseObstacles = level.watchedSquares?.length
       ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...level.watchedSquares] }
       : level.obstacles;
-    const moves = getValidMoves(level.pieceType, piecePos, effectiveObstacles, consumedFood);
+    // Merge live enemies into food so the move calculator treats them correctly
+    const effectiveObstacles = liveEnemies.length
+      ? { ...baseObstacles, food: [...baseObstacles.food, ...liveEnemies] }
+      : baseObstacles;
+    // Captured enemies count as consumed food so sliders can pass through vacated squares
+    const effectiveConsumedFood = [...consumedFood, ...capturedEnemies];
+    const moves = getValidMoves(level.pieceType, piecePos, effectiveObstacles, effectiveConsumedFood);
     setValidMoves(moves);
 
-    const atGoal = piecePos.row === level.goal.row && piecePos.col === level.goal.col;
+    const allCaptured = level.captureAll
+      ? capturedEnemies.length >= (level.enemies?.length ?? 0)
+      : false;
+    const atGoal = allCaptured || (!level.captureAll && piecePos.row === level.goal.row && piecePos.col === level.goal.col);
     if (moves.length === 0 && animKey > 0 && !atGoal) {
       onStuck(true);
       playWompSound();
       triggerHaptic([80, 60, 120]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [piecePos, consumedFood]);
+  }, [piecePos, consumedFood, capturedEnemies]);
 
   // ---------------------------------------------------------------------------
   // Click handler
@@ -137,15 +158,18 @@ export function BoardShell({
     setAnimKey(prev => prev + 1);
     onStuck(false);
 
+    const capturedEnemy = liveEnemies.find(e => e.row === row && e.col === col);
     const eatenFood = level.obstacles.food.find(f => f.row === row && f.col === col);
-    if (eatenFood) {
+    if (capturedEnemy) {
+      playCrunchSound();
+    } else if (eatenFood) {
       onFoodConsumed(eatenFood);
       playCrunchSound();
     } else {
       playMoveSound(level.pieceType);
     }
 
-    onMove(newPos);
+    onMove(newPos, capturedEnemy);
   };
 
   const boardPx = squareSize * BOARD_SIZE;
@@ -366,6 +390,34 @@ export function BoardShell({
             );
           })}
         </div>
+
+        {/* Enemy pieces — shadow copies; exit-animate when captured */}
+        <AnimatePresence>
+          {liveEnemies.map(enemy => (
+            <motion.div
+              key={`enemy-${enemy.row}-${enemy.col}`}
+              className="absolute pointer-events-none flex items-center justify-center z-[8]"
+              style={{
+                width: `${squareSize}px`,
+                height: `${squareSize}px`,
+                left: enemy.col * squareSize,
+                top: enemy.row * squareSize,
+              }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 0.72 }}
+              exit={{ scale: 1.6, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            >
+              <motion.div
+                animate={{ filter: ['drop-shadow(0 0 6px rgba(139,92,246,0.6))', 'drop-shadow(0 0 14px rgba(139,92,246,0.9))', 'drop-shadow(0 0 6px rgba(139,92,246,0.6))'] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ filter: 'grayscale(0.6) brightness(0.55) saturate(0.5)' }}
+              >
+                <ChessPieceIcon type={enemy.pieceType} size={squareSize * 0.7} />
+              </motion.div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {/* Ghost replay piece — translucent, advances on a timer set by the parent */}
         {ghostPos && (

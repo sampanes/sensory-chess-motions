@@ -12,6 +12,7 @@ import { knightLevels } from './mountains';
 import { duoLevels } from './duo';
 import { queenSoloLevels } from './queen';
 import { frontierLevels } from './frontier';
+import { shadowLevels } from './shadows';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
@@ -21,6 +22,7 @@ export { knightLevels } from './mountains';
 export { duoLevels } from './duo';
 export { queenSoloLevels, queenFinale } from './queen';
 export { frontierLevels } from './frontier';
+export { shadowLevels } from './shadows';
 
 // Register single-piece worlds
 WORLD_LEVELS[0] = act1KingLevels;
@@ -32,6 +34,8 @@ WORLD_LEVELS[4] = knightLevels;
 WORLD_LEVELS[6] = queenSoloLevels;
 // World 7 — Starfield Frontier (piece selector + space theme)
 WORLD_LEVELS[7] = frontierLevels;
+// World 8 — The Shadow Pieces (captures)
+WORLD_LEVELS[8] = shadowLevels;
 
 // Register two-piece worlds
 DUO_WORLD_LEVELS[5] = duoLevels;

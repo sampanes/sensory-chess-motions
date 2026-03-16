@@ -32,6 +32,13 @@ export type Food = {
   col: number;
 };
 
+// An enemy piece — acts as capturable food; landing on it removes it from the board
+export type Enemy = {
+  row: number;
+  col: number;
+  pieceType: PieceType;
+};
+
 export type Obstacle = {
   fences: Fence[];
   rivers: RiverCell[];
@@ -68,6 +75,16 @@ export type Level = {
   contrastData?: Array<{ piece: PieceType; moves: number }>;
   /** One-line lesson shown at the bottom of the contrast card. */
   contrastTakeaway?: string;
+  /**
+   * Enemy pieces on the board — rendered as shadowy opponents.
+   * Mechanically treated as food: sliders stop on capture, pawns capture diagonally.
+   */
+  enemies?: Enemy[];
+  /**
+   * When true, the win condition is capturing ALL enemies instead of reaching the goal.
+   * Set goal to { row: -1, col: -1 } for captureAll levels (no flag shown on board).
+   */
+  captureAll?: boolean;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

@@ -20,7 +20,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Flag } from 'lucide-react';
-import { Level, Position, Food } from '../types';
+import { Enemy, Level, Position, Food } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { playCrunchSound, playWompSound, playMoveSound, playWhooshSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
@@ -125,7 +125,7 @@ export interface ScrollBoardProps {
   trail: Position[];
   squareSize: number;
   isMobile: boolean;
-  onMove: (newPos: Position) => void;
+  onMove: (newPos: Position, capturedEnemy?: Enemy) => void;
   onFoodConsumed: (food: Food) => void;
   onStuck: (stuck: boolean) => void;
   worldTheme?: React.CSSProperties;

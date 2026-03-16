@@ -210,8 +210,31 @@ export const WORLDS: WorldDef[] = [
         'You learned something the stars already knew: no one piece is best everywhere. Each one is powerful when the world fits its motion.',
         'Together, they can cross anything.',
       ],
+      nextTeaser: 'The Shadow Pieces',
+      nextTeaserEmoji: '👥',
     },
     mapPos: { x: 0.5, y: 0.06 },
+  },
+  {
+    id: 8,
+    name: 'The Shadow Pieces',
+    emoji: '👥',
+    tagline: 'Capture the shadows — take back the board.',
+    palette: {
+      bg: 'linear-gradient(to bottom, #1c1c2e, #16213e, #0f3460)',
+      accent: '#a78bfa',
+      nodeColor: '#7c3aed',
+    },
+    story: {
+      title: 'The Board is Clear',
+      paragraphs: [
+        'The last shadow dissolved with a quiet crack.',
+        '"They were never real," said the king. "Just echoes of what a piece could do."',
+        '"But now you know — to take a piece, you must move like one."',
+        'You have learned to capture. The board is yours.',
+      ],
+    },
+    mapPos: { x: 0.25, y: 0.08 },
   },
 ];
 
