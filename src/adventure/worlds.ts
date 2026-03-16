@@ -256,8 +256,31 @@ export const WORLDS: WorldDef[] = [
         'Everything you learned still works here. The pieces move the same way. The world is just bigger.',
         'Welcome to the first board.',
       ],
+      nextTeaser: "The Pawn's Crown",
+      nextTeaserEmoji: '👑',
     },
     mapPos: { x: 0.08, y: 0.12 },
+  },
+  {
+    id: 10,
+    name: "The Pawn's Crown",
+    emoji: '👑',
+    tagline: 'The humblest piece becomes the greatest.',
+    palette: {
+      bg: 'linear-gradient(to bottom, #fef9c3, #fde68a, #d1fae5)',
+      accent: '#15803d',
+      nodeColor: '#22c55e',
+    },
+    story: {
+      title: 'The Pawn Stood at the Edge',
+      paragraphs: [
+        'It had taken every step. It hadn\'t leaped, hadn\'t slid, hadn\'t jumped.',
+        'Just walked — forward, always forward — until there was no more forward left.',
+        'And then it became anything it wanted.',
+        'That\'s what the edge of the board does. That\'s been true forever.',
+      ],
+    },
+    mapPos: { x: 0.22, y: 0.3 },
   },
 ];
 

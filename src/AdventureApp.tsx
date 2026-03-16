@@ -287,7 +287,7 @@ export default function AdventureApp() {
 
 // ─── WorldPlay ────────────────────────────────────────────────────────────────
 
-type PlayPhase = 'intro' | 'playing' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
+type PlayPhase = 'intro' | 'playing' | 'promotion' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
 
 function getStars(thresholds: { three: number; two: number }, moves: number): number {
   if (moves <= thresholds.three) return 3;
@@ -326,6 +326,7 @@ function WorldPlay({
   const [moveCount,       setMoveCount]       = useState(0);
   const [resetCount,      setResetCount]      = useState(0);
   const [lastStars,       setLastStars]       = useState(0);
+  const [promotedPiece,   setPromotedPiece]   = useState<PieceType | null>(null);
 
   // ── Remix state ──────────────────────────────────────────────────────────
   const [isStuck,           setIsStuck]           = useState(false);
@@ -390,6 +391,7 @@ function WorldPlay({
     setMoveCount(0);
     setResetCount(c => c + 1);
     setIsStuck(false);
+    setPromotedPiece(null);
     // Ghost: show from attempt 3+ onward
     incrementAttempts(worldId, levelIndex);
     if (getAttempts(worldId, levelIndex) >= 3) {
@@ -454,15 +456,21 @@ function WorldPlay({
     if (!level.captureAll && newPos.row === level.goal.row && newPos.col === level.goal.col) {
       saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(level.starThresholds, next));
-      setTimeout(() => {
-        playCelebrationSound(pieceType);
-        setPlayPhase('celebration');
-      }, 600);
+      if (level.allowPromotion) {
+        // Show promotion picker instead of immediate celebration
+        setTimeout(() => setPlayPhase('promotion'), 600);
+      } else {
+        setTimeout(() => {
+          playCelebrationSound(pieceType);
+          setPlayPhase('celebration');
+        }, 600);
+      }
     }
   };
 
   const handleNext = () => {
     setSelectedPieceType(null);
+    setPromotedPiece(null);
     if (isLastLevel) {
       // Last level done: skip trial for dad cheat, otherwise run it
       setPlayPhase(skipTrial ? 'story' : 'trial');
@@ -886,6 +894,65 @@ function WorldPlay({
     );
   }
 
+  // ── Promotion Picker ──
+  if (playPhase === 'promotion') {
+    const PROMO_PIECES: PieceType[] = ['queen', 'rook', 'bishop', 'knight'];
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center"
+        style={{ background: 'linear-gradient(to bottom, #fef3c7, #fde68a, #d1fae5)' }}
+      >
+        {/* Crown descends */}
+        <motion.div
+          className="text-6xl select-none"
+          initial={{ y: -60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+        >
+          👑
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+        >
+          <h2 className="text-2xl font-extrabold text-amber-900 mb-1">
+            Your pawn reached the end!
+          </h2>
+          <p className="text-amber-700 text-base">Choose its new form.</p>
+        </motion.div>
+
+        {/* Piece choice grid */}
+        <motion.div
+          className="grid grid-cols-4 gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          {PROMO_PIECES.map((piece, i) => (
+            <motion.button
+              key={piece}
+              onClick={() => {
+                setPromotedPiece(piece);
+                playCelebrationSound(piece);
+                setPlayPhase('celebration');
+              }}
+              className="flex flex-col items-center gap-2 bg-white/80 rounded-2xl p-3 shadow-md cursor-pointer border-2 border-white hover:border-amber-400"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.65 + i * 0.08, type: 'spring', stiffness: 400, damping: 20 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+            >
+              <ChessPieceIcon type={piece} size={56} />
+              <span className="capitalize text-sm font-bold text-gray-700">{piece}</span>
+            </motion.button>
+          ))}
+        </motion.div>
+      </div>
+    );
+  }
+
   // ── Celebration ──
   if (playPhase === 'celebration') {
     return (
@@ -930,15 +997,31 @@ function WorldPlay({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 16 }}
         >
-          {/* World emoji pop */}
-          <motion.div
-            className="text-4xl mb-1"
-            initial={{ scale: 0, y: 12 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 14, delay: 0.3 }}
-          >
-            {world.emoji}
-          </motion.div>
+          {/* Promoted piece banner — shown when promotion just happened */}
+          {promotedPiece ? (
+            <motion.div
+              className="flex flex-col items-center mb-3"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 14, delay: 0.2 }}
+            >
+              <div className="text-2xl mb-1">👑</div>
+              <ChessPieceIcon type={promotedPiece} size={64} />
+              <p className="text-amber-700 font-bold mt-1 capitalize">
+                The pawn became a {promotedPiece}!
+              </p>
+            </motion.div>
+          ) : (
+            /* World emoji pop */
+            <motion.div
+              className="text-4xl mb-1"
+              initial={{ scale: 0, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 14, delay: 0.3 }}
+            >
+              {world.emoji}
+            </motion.div>
+          )}
           <div className="text-5xl mb-2">🎉</div>
           <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
             {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}

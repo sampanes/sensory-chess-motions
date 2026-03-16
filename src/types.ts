@@ -91,6 +91,12 @@ export type Level = {
    * future valid-move computation. Move numbers are 1-indexed (move 1 = first move made).
    */
   dynamicRivers?: Array<{ row: number; col: number; appearsOnMove: number }>;
+  /**
+   * When true, a pawn that reaches its goal triggers the Promotion Picker instead
+   * of the normal celebration. The player selects queen/rook/bishop/knight, then
+   * the celebration fires with the chosen piece.
+   */
+  allowPromotion?: boolean;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

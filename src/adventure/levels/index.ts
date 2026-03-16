@@ -14,6 +14,7 @@ import { queenSoloLevels } from './queen';
 import { frontierLevels } from './frontier';
 import { shadowLevels } from './shadows';
 import { revealLevels } from './reveal';
+import { crownLevels } from './crown';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
@@ -25,6 +26,7 @@ export { queenSoloLevels, queenFinale } from './queen';
 export { frontierLevels } from './frontier';
 export { shadowLevels } from './shadows';
 export { revealLevels } from './reveal';
+export { crownLevels } from './crown';
 
 // Register single-piece worlds
 WORLD_LEVELS[0] = act1KingLevels;
@@ -40,6 +42,8 @@ WORLD_LEVELS[7] = frontierLevels;
 WORLD_LEVELS[8] = shadowLevels;
 // World 9 — The First Board (8×8 levels)
 WORLD_LEVELS[9] = revealLevels;
+// World 10 — The Pawn's Crown (promotion levels)
+WORLD_LEVELS[10] = crownLevels;
 
 // Register two-piece worlds
 DUO_WORLD_LEVELS[5] = duoLevels;
