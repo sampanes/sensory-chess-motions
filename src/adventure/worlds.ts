@@ -302,8 +302,32 @@ export const WORLDS: WorldDef[] = [
         'That moment has a name. Chess players have called it the same thing for a thousand years.',
         'Checkmate. The game is over. You just learned how to end one.',
       ],
+      nextTeaser: 'The Grand Finale',
+      nextTeaserEmoji: '♟️',
     },
     mapPos: { x: 0.42, y: 0.22 },
+  },
+  {
+    id: 12,
+    name: 'The Grand Finale',
+    emoji: '♟️',
+    tagline: "You've been learning chess all along.",
+    palette: {
+      bg: 'linear-gradient(to bottom, #1c1c2e, #1e1b4b, #312e81)',
+      accent: '#fbbf24',
+      nodeColor: '#f59e0b',
+    },
+    story: {
+      title: "You've Been Playing Chess",
+      paragraphs: [
+        'Every piece. Every path. Every threat.',
+        'You started with a little king who just wanted to find the flag.',
+        'You learned the rook and the bishop and the knight and the pawn and the queen.',
+        'And now — standing in front of the real board — you realize you know all of them.',
+        "This is chess. You've been playing it all along.",
+      ],
+    },
+    mapPos: { x: 0.60, y: 0.14 },
   },
 ];
 

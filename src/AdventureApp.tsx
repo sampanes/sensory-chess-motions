@@ -36,6 +36,7 @@ import { playCelebrationSound } from './utils/sounds';
 import { getValidMoves } from './utils/moveCalculator';
 import { GalleryBoard } from './components/GalleryBoard';
 import { OracleMode } from './adventure/OracleMode';
+import { GrandFinale } from './adventure/GrandFinale';
 
 // ─── Dad Cheat — URL param helpers ───────────────────────────────────────────
 // ?adventure&dadcheat               — all worlds unlocked, trials skipped
@@ -254,6 +255,16 @@ export default function AdventureApp() {
     return (
       <FirstBoardGallery
         onDone={() => setFirstBoardGalleryDone(true)}
+        onBack={() => setPhase('worldMap')}
+      />
+    );
+  }
+
+  // Grand Finale (world 12) — custom two-scene component
+  if (selectedWorld === 12) {
+    return (
+      <GrandFinale
+        onComplete={() => handleWorldComplete(12)}
         onBack={() => setPhase('worldMap')}
       />
     );
