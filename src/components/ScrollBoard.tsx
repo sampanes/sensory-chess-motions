@@ -76,8 +76,14 @@ function computeAnchor(
 
 // ─── Decoration helper (same hash as BoardShell) ─────────────────────────────
 
-function getDecoration(r: number, c: number): string | null {
-  const hash = Math.abs((r * 31) ^ (c * 37)) % 10;
+function getDecoration(r: number, c: number, spaceTheme?: boolean): string | null {
+  const hash = Math.abs((r * 31) ^ (c * 37)) % 14;
+  if (spaceTheme) {
+    if (hash === 1) return '✨';
+    if (hash === 2) return '🪐';
+    if (hash === 3) return '🛰️';
+    return null;
+  }
   if (hash === 1) return '🌱';
   if (hash === 2) return '🌼';
   if (hash === 3) return '🍀';
@@ -127,6 +133,8 @@ export interface ScrollBoardProps {
   showCheckerboard?: boolean;
   /** Ghost replay position — translucent copy of the piece at this cell (null = hidden) */
   ghostPos?: Position | null;
+  /** When true, applies space visual theme: void rifts, fuel cells, cyan move rings */
+  spaceTheme?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -143,6 +151,7 @@ export function ScrollBoard({
   worldTheme,
   showCheckerboard,
   ghostPos,
+  spaceTheme,
 }: ScrollBoardProps) {
   const axis      = level.scrollAxis ?? 'vertical';
   const boardRows = level.boardHeight ?? VISIBLE;
@@ -285,8 +294,9 @@ export function ScrollBoard({
     consumedFood.some(f => f.row === pos.row && f.col === pos.col);
 
   const getSquareClasses = (r: number, c: number) => {
-    if (isRiverCell(r, c) && !isBridgeCell(r, c)) return 'bg-blue-400';
-    if (isRiverCell(r, c) && isBridgeCell(r, c)) return 'bg-amber-500';
+    if (isRiverCell(r, c) && !isBridgeCell(r, c)) return spaceTheme ? 'bg-slate-950' : 'bg-blue-400';
+    if (isRiverCell(r, c) && isBridgeCell(r, c))  return spaceTheme ? 'bg-slate-900' : 'bg-amber-500';
+    if (spaceTheme) return (r + c) % 2 === 0 ? 'bg-slate-800' : 'bg-slate-700';
     return (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
   };
 
@@ -440,7 +450,7 @@ export function ScrollBoard({
               const suggested  = suggestedMove?.row === r && suggestedMove?.col === c;
               const piece      = isPieceCell(r, c);
               const inTrail    = isTrailCell(r, c) && !piece;
-              const decoration = !river && !bridge && !goal && !piece ? getDecoration(r, c) : null;
+              const decoration = !river && !bridge && !goal && !piece ? getDecoration(r, c, spaceTheme) : null;
 
               return (
                 <motion.div
@@ -450,7 +460,7 @@ export function ScrollBoard({
                   onClick={() => handleSquareClick(r, c)}
                   whileHover={valid ? { scale: 1.03 } : {}}
                 >
-                  {!river && !bridge && (
+                  {!river && !bridge && !spaceTheme && (
                     <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
                   )}
 
@@ -465,7 +475,7 @@ export function ScrollBoard({
                     </div>
                   )}
 
-                  {river && !bridge && (
+                  {river && !bridge && !spaceTheme && (
                     <div className="absolute inset-0 overflow-hidden">
                       <motion.div
                         className="absolute inset-0"
@@ -486,7 +496,16 @@ export function ScrollBoard({
                     </div>
                   )}
 
-                  {bridge && (
+                  {river && !bridge && spaceTheme && (
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.18) 0%, transparent 70%)' }}
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                  )}
+
+                  {bridge && !spaceTheme && (
                     <div className="absolute inset-0">
                       <div className="absolute inset-2 rounded-md border-2 border-amber-900/30 bg-amber-600/20" />
                       {[0, 1, 2, 3].map(j => (
@@ -498,6 +517,19 @@ export function ScrollBoard({
                       ))}
                       <div className="absolute top-2 bottom-2 left-2 w-1 bg-amber-800/40 rounded-full" />
                       <div className="absolute top-2 bottom-2 right-2 w-1 bg-amber-800/40 rounded-full" />
+                    </div>
+                  )}
+
+                  {bridge && spaceTheme && (
+                    <div className="absolute inset-0">
+                      <div className="absolute inset-1 rounded-md border border-cyan-400/50" style={{ boxShadow: '0 0 8px rgba(34,211,238,0.4) inset' }} />
+                      {[1, 2, 3].map(j => (
+                        <div
+                          key={j}
+                          className="absolute rounded-sm"
+                          style={{ width: '80%', height: '2px', top: `${15 + j * 22}%`, left: '10%', background: 'rgba(34,211,238,0.35)' }}
+                        />
+                      ))}
                     </div>
                   )}
 
@@ -531,7 +563,7 @@ export function ScrollBoard({
                           transition={{ duration: 0.25 }}
                           style={{ fontSize: squareSize * 0.7 }}
                         >
-                          🍎
+                          {spaceTheme ? '⚡' : '🍎'}
                         </motion.span>
                       )}
                   </AnimatePresence>
@@ -558,6 +590,8 @@ export function ScrollBoard({
                         className={`rounded-full border-2 ${
                           goal
                             ? 'w-10 h-10 bg-green-300/50 border-green-400'
+                            : spaceTheme
+                            ? isMobile ? 'w-7 h-7 bg-cyan-300/70 border-cyan-300' : 'w-5 h-5 bg-cyan-300/60 border-cyan-400/80'
                             : isMobile
                             ? 'w-7 h-7 bg-yellow-300/70 border-yellow-300'
                             : 'w-5 h-5 bg-yellow-300/60 border-yellow-400/80'
@@ -565,6 +599,8 @@ export function ScrollBoard({
                         animate={{
                           boxShadow: goal
                             ? ['0 0 10px rgba(74,222,128,0.4)', '0 0 20px rgba(74,222,128,0.7)', '0 0 10px rgba(74,222,128,0.4)']
+                            : spaceTheme
+                            ? ['0 0 6px rgba(34,211,238,0.3)', '0 0 14px rgba(34,211,238,0.6)', '0 0 6px rgba(34,211,238,0.3)']
                             : ['0 0 6px rgba(250,204,21,0.3)', '0 0 14px rgba(250,204,21,0.6)', '0 0 6px rgba(250,204,21,0.3)'],
                           scale: suggested ? [1, 1.35, 1] : [1, 1.12, 1],
                         }}
@@ -575,22 +611,22 @@ export function ScrollBoard({
 
                   {hasFence(r, c, 'top') && (
                     <div className="absolute top-0 left-0 right-0 z-[5]" style={{ height: '6px' }}>
-                      <div className="w-full h-full rounded-full" style={{ background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
+                      <div className="w-full h-full rounded-full" style={spaceTheme ? { background: '#22d3ee', boxShadow: '0 0 8px rgba(34,211,238,0.7)' } : { background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
                     </div>
                   )}
                   {hasFence(r, c, 'bottom') && (
                     <div className="absolute bottom-0 left-0 right-0 z-[5]" style={{ height: '6px' }}>
-                      <div className="w-full h-full rounded-full" style={{ background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
+                      <div className="w-full h-full rounded-full" style={spaceTheme ? { background: '#22d3ee', boxShadow: '0 0 8px rgba(34,211,238,0.7)' } : { background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
                     </div>
                   )}
                   {hasFence(r, c, 'left') && (
                     <div className="absolute top-0 left-0 bottom-0 z-[5]" style={{ width: '6px' }}>
-                      <div className="h-full w-full rounded-full" style={{ background: 'repeating-linear-gradient(0deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '2px 0 4px rgba(0,0,0,0.3)' }} />
+                      <div className="h-full w-full rounded-full" style={spaceTheme ? { background: '#22d3ee', boxShadow: '0 0 8px rgba(34,211,238,0.7)' } : { background: 'repeating-linear-gradient(0deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '2px 0 4px rgba(0,0,0,0.3)' }} />
                     </div>
                   )}
                   {hasFence(r, c, 'right') && (
                     <div className="absolute top-0 right-0 bottom-0 z-[5]" style={{ width: '6px' }}>
-                      <div className="h-full w-full rounded-full" style={{ background: 'repeating-linear-gradient(0deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '-2px 0 4px rgba(0,0,0,0.3)' }} />
+                      <div className="h-full w-full rounded-full" style={spaceTheme ? { background: '#22d3ee', boxShadow: '0 0 8px rgba(34,211,238,0.7)' } : { background: 'repeating-linear-gradient(0deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '-2px 0 4px rgba(0,0,0,0.3)' }} />
                     </div>
                   )}
                 </motion.div>

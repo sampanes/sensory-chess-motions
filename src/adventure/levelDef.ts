@@ -72,6 +72,9 @@ export type ScrollLevelDef = {
    * The compiler scans them automatically.
    */
   strips: Strip[];
+  /** Space-world contrast data — passed through to the compiled Level. */
+  contrastData?: Array<{ piece: PieceType; moves: number }>;
+  contrastTakeaway?: string;
 };
 
 // ─── Compiler ────────────────────────────────────────────────────────────────
@@ -142,5 +145,7 @@ export function compileScrollLevel(def: ScrollLevelDef): Level {
     boardHeight,
     boardWidth,
     scrollAxis: def.axis,
+    contrastData: def.contrastData,
+    contrastTakeaway: def.contrastTakeaway,
   };
 }

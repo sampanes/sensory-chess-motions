@@ -29,6 +29,11 @@ export const frontierLevels: Level[] = [
     goal:  { row: 0, col: 2 },
     starThresholds: { three: 1, two: 2 },
     obstacles: { fences: [], rivers: [], bridges: [], food: [] },
+    contrastData: [
+      { piece: 'bishop', moves: 2 },
+      { piece: 'pawn',   moves: 4 },
+    ],
+    contrastTakeaway: 'Open sky favors the rook — one straight shot. Every piece gets there eventually.',
   },
 
   // ── S2 — Rift Crossing ───────────────────────────────────────────────────
@@ -53,6 +58,11 @@ export const frontierLevels: Level[] = [
       bridges: [{ row: 2, col: 2 }], // col-2 is the starlane
       food: [],
     },
+    contrastData: [
+      { piece: 'knight', moves: 4 },
+      { piece: 'king',   moves: 6 },
+    ],
+    contrastTakeaway: 'The starlane is a rook highway. Anything that can\'t slide has to go the long way around.',
   },
 
   // ── S3 — Gate Maze ───────────────────────────────────────────────────────
@@ -67,6 +77,11 @@ export const frontierLevels: Level[] = [
     pieceType: 'knight',
     axis: 'vertical',
     starThresholds: { three: 2, two: 4 },
+    contrastData: [
+      { piece: 'rook',   moves: 5 },
+      { piece: 'bishop', moves: 4 },
+    ],
+    contrastTakeaway: 'Gates are walls to sliders. The knight doesn\'t even see them.',
     strips: [
       // strips[i] = row i for vertical axis
       /* row 0 */ [0,   0,   'G', 0,   0  ],
@@ -89,6 +104,11 @@ export const frontierLevels: Level[] = [
     pieceType: 'rook',
     axis: 'horizontal',
     starThresholds: { three: 1, two: 2 },
+    contrastData: [
+      { piece: 'bishop', moves: 6 },
+      { piece: 'king',   moves: 10 },
+    ],
+    contrastTakeaway: 'Distance is nothing to a rook. A bishop zigzags; a king plods. Same corridor — completely different journeys.',
     strips: [
       // strips[i] = col i; each strip = [row0, row1, row2, row3, row4]
       /* col 0  */ [0, 0, 'S', 0, 0],
@@ -119,6 +139,11 @@ export const frontierLevels: Level[] = [
     start: { row: 4, col: 0 },
     goal:  { row: 0, col: 4 },
     starThresholds: { three: 1, two: 2 },
+    contrastData: [
+      { piece: 'rook',   moves: 3 },
+      { piece: 'knight', moves: 3 },
+    ],
+    contrastTakeaway: 'When every straight path is blocked, diagonals are a superpower. The bishop crossed in one step.',
     obstacles: {
       fences:  [],
       rivers:  [
@@ -146,6 +171,11 @@ export const frontierLevels: Level[] = [
     pieceType: 'knight',
     axis: 'vertical',
     starThresholds: { three: 2, two: 4 },
+    contrastData: [
+      { piece: 'rook',   moves: 7 },
+      { piece: 'bishop', moves: 5 },
+    ],
+    contrastTakeaway: 'Rifts and gates are invisible to the knight. Every other piece has to find a way around.',
     strips: [
       /* row 0 */ [0,   0,   'G', 0,   0  ],
       /* row 1 */ [0,  'R',   0, 'R',  0  ],
@@ -168,6 +198,11 @@ export const frontierLevels: Level[] = [
     start: { row: 4, col: 0 },
     goal:  { row: 0, col: 3 },
     starThresholds: { three: 4, two: 6 },
+    contrastData: [
+      { piece: 'rook',   moves: 5 },
+      { piece: 'bishop', moves: 4 },
+    ],
+    contrastTakeaway: 'The pawn eats diagonally — the fuel cells were laid out just for it.',
     obstacles: {
       fences: [],
       rivers: [
@@ -196,6 +231,11 @@ export const frontierLevels: Level[] = [
     pieceType: 'rook',
     axis: 'vertical',
     starThresholds: { three: 3, two: 5 },
+    contrastData: [
+      { piece: 'knight', moves: 5 },
+      { piece: 'bishop', moves: 7 },
+    ],
+    contrastTakeaway: 'Two terrains, two challenges. No single piece dominates everything — that\'s the frontier.',
     strips: [
       // strips[i] = row i (row 0 = top/goal, row 10 = bottom/start)
       /* row 0  */ [0,   0,   'G', 0,   0  ],

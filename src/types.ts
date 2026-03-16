@@ -61,6 +61,13 @@ export type Level = {
    * Never touches moveCalculator.ts; handled in AdventureApp / board components.
    */
   watchedSquares?: Position[];
+  /**
+   * Space-world only. How other pieces fare on this board (for the contrast card).
+   * The player's own piece and move count come from component state.
+   */
+  contrastData?: Array<{ piece: PieceType; moves: number }>;
+  /** One-line lesson shown at the bottom of the contrast card. */
+  contrastTakeaway?: string;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

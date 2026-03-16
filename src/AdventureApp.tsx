@@ -105,6 +105,13 @@ const REMIX_CONFIGS: Partial<Record<number, RemixConfig>> = {
     contrast: 'The queen fired straight down the line.',
     insight: 'The bishop only moves diagonally — same board, completely different route.',
   },
+  7: {
+    levelIndex: 3,       // S4 — Long Vacuum (rook, 1 move across 11 columns)
+    remixPiece: 'bishop',
+    offer: 'Now cross the Long Vacuum as a Bishop!',
+    contrast: 'The rook crossed 11 columns in a single move.',
+    insight: "The bishop zigzags — 6 moves where the rook needed 1. Distance is a rook's friend.",
+  },
 };
 
 // ─── Top-level phase ──────────────────────────────────────────────────────────
@@ -584,6 +591,7 @@ function WorldPlay({
             onStuck={setIsStuck}
             showCheckerboard={worldId === 3}
             ghostPos={ghostPos}
+            spaceTheme={world.spaceTheme}
           />
         ) : (
           <BoardShell
@@ -598,6 +606,7 @@ function WorldPlay({
             onStuck={setIsStuck}
             showCheckerboard={worldId === 3}
             ghostPos={ghostPos}
+            spaceTheme={world.spaceTheme}
           />
         )}
 
@@ -693,6 +702,41 @@ function WorldPlay({
           <p className="text-gray-600 mb-4">
             Reached the flag in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.
           </p>
+
+          {/* Contrast card — space worlds only */}
+          {world.spaceTheme && level.contrastData && level.contrastData.length > 0 && (
+            <motion.div
+              className="rounded-2xl p-4 mb-4 text-left"
+              style={{ background: 'rgba(30,27,75,0.7)', border: '1px solid rgba(129,140,248,0.35)' }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#818cf8' }}>
+                Other Pieces
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <ChessPieceIcon type={effectiveLevel.pieceType} size={20} />
+                  <span className="text-sm font-bold text-white capitalize">{effectiveLevel.pieceType}</span>
+                  <span className="ml-auto text-sm font-bold" style={{ color: '#fbbf24' }}>{moveCount} move{moveCount !== 1 ? 's' : ''}</span>
+                  <span className="text-xs ml-1" style={{ color: '#86efac' }}>← you</span>
+                </div>
+                {level.contrastData.map(({ piece, moves }) => (
+                  <div key={piece} className="flex items-center gap-2">
+                    <ChessPieceIcon type={piece} size={20} />
+                    <span className="text-sm capitalize" style={{ color: '#94a3b8' }}>{piece}</span>
+                    <span className="ml-auto text-sm" style={{ color: '#64748b' }}>{moves} move{moves !== 1 ? 's' : ''}</span>
+                  </div>
+                ))}
+              </div>
+              {level.contrastTakeaway && (
+                <p className="mt-3 text-xs border-t pt-2" style={{ color: '#a5b4fc', borderColor: 'rgba(129,140,248,0.25)' }}>
+                  💡 {level.contrastTakeaway}
+                </p>
+              )}
+            </motion.div>
+          )}
 
           <div className="flex justify-center gap-3 mb-6">
             {[1, 2, 3].map(s => (
@@ -934,6 +978,7 @@ function WorldPlay({
             onFoodConsumed={f => setRemixConsumedFood(prev => [...prev, f])}
             onStuck={setIsRemixStuck}
             showCheckerboard={worldId === 3}
+            spaceTheme={world.spaceTheme}
           />
         ) : (
           <BoardShell
@@ -947,6 +992,7 @@ function WorldPlay({
             onFoodConsumed={f => setRemixConsumedFood(prev => [...prev, f])}
             onStuck={setIsRemixStuck}
             showCheckerboard={worldId === 3}
+            spaceTheme={world.spaceTheme}
           />
         )}
 
