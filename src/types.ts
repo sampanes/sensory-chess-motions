@@ -97,6 +97,19 @@ export type Level = {
    * the celebration fires with the chosen piece.
    */
   allowPromotion?: boolean;
+  /**
+   * When true, the win condition is NOT reaching a goal square but controlling
+   * (having in valid moves) all squares listed in targetSquares.
+   * Set goal to { row: -1, col: -1 } so no flag is shown.
+   */
+  controlMode?: boolean;
+  /** Squares the piece must be able to reach from its position to win in controlMode. */
+  targetSquares?: Position[];
+  /**
+   * When true (only meaningful in controlMode), the win triggers the special
+   * "checkmate" screen instead of the regular celebration. Used exactly once.
+   */
+  checkmateMoment?: boolean;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

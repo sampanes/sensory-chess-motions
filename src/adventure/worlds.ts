@@ -279,8 +279,31 @@ export const WORLDS: WorldDef[] = [
         'And then it became anything it wanted.',
         'That\'s what the edge of the board does. That\'s been true forever.',
       ],
+      nextTeaser: 'The First Check',
+      nextTeaserEmoji: '♟️',
     },
     mapPos: { x: 0.22, y: 0.3 },
+  },
+  {
+    id: 11,
+    name: 'The First Check',
+    emoji: '♟️',
+    tagline: 'Watched squares, trapped kings, and the word that ends the game.',
+    palette: {
+      bg: 'linear-gradient(to bottom, #1c0a09, #3b1212, #450a0a)',
+      accent: '#f87171',
+      nodeColor: '#ef4444',
+    },
+    story: {
+      title: 'The King Had Nowhere Left',
+      paragraphs: [
+        'You watched the squares. You placed your pieces. You shut every door.',
+        'The king stood in its corner, surrounded — every escape sealed.',
+        'That moment has a name. Chess players have called it the same thing for a thousand years.',
+        'Checkmate. The game is over. You just learned how to end one.',
+      ],
+    },
+    mapPos: { x: 0.42, y: 0.22 },
   },
 ];
 

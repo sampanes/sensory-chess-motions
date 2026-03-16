@@ -15,6 +15,7 @@ import { frontierLevels } from './frontier';
 import { shadowLevels } from './shadows';
 import { revealLevels } from './reveal';
 import { crownLevels } from './crown';
+import { firstCheckLevels } from './firstcheck';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
@@ -27,6 +28,7 @@ export { frontierLevels } from './frontier';
 export { shadowLevels } from './shadows';
 export { revealLevels } from './reveal';
 export { crownLevels } from './crown';
+export { firstCheckLevels } from './firstcheck';
 
 // Register single-piece worlds
 WORLD_LEVELS[0] = act1KingLevels;
@@ -44,6 +46,8 @@ WORLD_LEVELS[8] = shadowLevels;
 WORLD_LEVELS[9] = revealLevels;
 // World 10 — The Pawn's Crown (promotion levels)
 WORLD_LEVELS[10] = crownLevels;
+// World 11 — The First Check (defender + attacker pairs)
+WORLD_LEVELS[11] = firstCheckLevels;
 
 // Register two-piece worlds
 DUO_WORLD_LEVELS[5] = duoLevels;

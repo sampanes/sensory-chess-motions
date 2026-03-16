@@ -33,6 +33,7 @@ import {
   incrementAttempts,
 } from './adventure/sharing';
 import { playCelebrationSound } from './utils/sounds';
+import { getValidMoves } from './utils/moveCalculator';
 import { GalleryBoard } from './components/GalleryBoard';
 import { OracleMode } from './adventure/OracleMode';
 
@@ -293,7 +294,7 @@ export default function AdventureApp() {
 
 // ─── WorldPlay ────────────────────────────────────────────────────────────────
 
-type PlayPhase = 'intro' | 'playing' | 'promotion' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
+type PlayPhase = 'intro' | 'playing' | 'promotion' | 'checkmate' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
 
 function getStars(thresholds: { three: number; two: number }, moves: number): number {
   if (moves <= thresholds.three) return 3;
@@ -457,6 +458,36 @@ function WorldPlay({
         }, 600);
       }
       return; // capture move done — skip goal check
+    }
+
+    // controlMode win: piece must have all targetSquares in its valid moves from newPos
+    if (effectiveLevel.controlMode && effectiveLevel.targetSquares && effectiveLevel.targetSquares.length > 0) {
+      const effectiveObstacles = {
+        ...effectiveLevel.obstacles,
+        rivers: [
+          ...effectiveLevel.obstacles.rivers,
+          ...(effectiveLevel.watchedSquares ?? []),
+        ],
+      };
+      const moves = getValidMoves(
+        effectiveLevel.pieceType,
+        newPos,
+        effectiveObstacles,
+        consumedFood,
+        effectiveLevel.boardHeight ?? 5,
+        effectiveLevel.boardWidth ?? 5,
+      );
+      const allCovered = effectiveLevel.targetSquares.every(t =>
+        moves.some(m => m.row === t.row && m.col === t.col)
+      );
+      if (allCovered) {
+        setLastStars(getStars(effectiveLevel.starThresholds, next));
+        setTimeout(() => {
+          playCelebrationSound(effectiveLevel.pieceType);
+          setPlayPhase(effectiveLevel.checkmateMoment ? 'checkmate' : 'celebration');
+        }, 600);
+      }
+      return; // controlMode levels never use the normal goal check
     }
 
     if (!level.captureAll && newPos.row === level.goal.row && newPos.col === level.goal.col) {
@@ -954,6 +985,72 @@ function WorldPlay({
               <span className="capitalize text-sm font-bold text-gray-700">{piece}</span>
             </motion.button>
           ))}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Checkmate moment ──
+  if (playPhase === 'checkmate') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center"
+        style={{ background: 'linear-gradient(to bottom, #1c0a09, #3b1212, #450a0a)' }}
+      >
+        <motion.div
+          className="max-w-sm w-full"
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.55 }}
+        >
+          <motion.div
+            className="text-7xl mb-5 select-none"
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+          >
+            ♚
+          </motion.div>
+
+          <motion.h2
+            className="text-3xl font-extrabold text-white mb-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            Checkmate.
+          </motion.h2>
+
+          <motion.div
+            className="rounded-2xl p-6 text-left space-y-3 mb-6"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(248,113,113,0.3)' }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <p className="text-white/90 text-base leading-relaxed">
+              The king has nowhere to go. Every square around it is watched.
+            </p>
+            <p className="text-white/90 text-base leading-relaxed">
+              When that happens in a real chess game, the game is over. It&apos;s called{' '}
+              <strong className="text-red-300">checkmate</strong>.
+            </p>
+            <p className="text-red-300 font-bold text-base">
+              You just did that.
+            </p>
+          </motion.div>
+
+          <motion.button
+            onClick={() => setPlayPhase('celebration')}
+            className="w-full bg-red-500 hover:bg-red-400 text-white font-bold text-xl py-4 rounded-2xl shadow-lg cursor-pointer"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1 }}
+          >
+            Continue ✨
+          </motion.button>
         </motion.div>
       </div>
     );
