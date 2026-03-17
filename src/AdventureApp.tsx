@@ -366,9 +366,11 @@ function WorldPlay({
     ? { ...level, pieceType: selectedPieceType }
     : level;
 
-  // Dynamic squareSize: shrink for boards wider than 5 columns
+  // Dynamic squareSize: shrink for non-scroll boards wider than 5 columns.
+  // Scroll boards always use standard size — only 5 columns are visible at once.
   const _boardCols = effectiveLevel?.boardWidth ?? 5;
-  const squareSize = _boardCols > 5
+  const _isScrollBoard = !!effectiveLevel?.scrollAxis;
+  const squareSize = (!_isScrollBoard && _boardCols > 5)
     ? Math.min(56, Math.floor((Math.min(window.innerWidth, 600) - 48) / _boardCols))
     : 72;
 
@@ -609,23 +611,20 @@ function WorldPlay({
                 {world.tagline}
               </motion.p>
 
-              <AnimatePresence>
-                {introBtnVisible && (
-                  <motion.button
-                    onClick={advanceIntro}
-                    className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
-                    style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Let's see the level →
-                  </motion.button>
-                )}
-              </AnimatePresence>
+              <motion.button
+                onClick={advanceIntro}
+                className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})`,
+                  visibility: introBtnVisible ? 'visible' : 'hidden',
+                }}
+                animate={{ opacity: introBtnVisible ? 1 : 0, scale: introBtnVisible ? 1 : 0.9 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Let's see the level →
+              </motion.button>
 
               <button
                 onClick={onBack}
@@ -686,23 +685,20 @@ function WorldPlay({
                 </motion.div>
               )}
 
-              <AnimatePresence>
-                {introBtnVisible && (
-                  <motion.button
-                    onClick={advanceIntro}
-                    className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
-                    style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    I'm ready →
-                  </motion.button>
-                )}
-              </AnimatePresence>
+              <motion.button
+                onClick={advanceIntro}
+                className="w-full text-white font-bold text-lg py-4 rounded-2xl shadow-lg cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})`,
+                  visibility: introBtnVisible ? 'visible' : 'hidden',
+                }}
+                animate={{ opacity: introBtnVisible ? 1 : 0, scale: introBtnVisible ? 1 : 0.9 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                I'm ready →
+              </motion.button>
 
               <button
                 onClick={() => setIntroStep(0)}
@@ -813,23 +809,20 @@ function WorldPlay({
                 </div>
               )}
 
-              <AnimatePresence>
-                {introBtnVisible && (
-                  <motion.button
-                    onClick={startLevel}
-                    className="w-full text-white font-bold text-2xl py-5 rounded-2xl shadow-xl cursor-pointer"
-                    style={{ background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})` }}
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {levelIndex === 0 ? "Let's Go! 🌟" : 'Play! 🌟'}
-                  </motion.button>
-                )}
-              </AnimatePresence>
+              <motion.button
+                onClick={startLevel}
+                className="w-full text-white font-bold text-2xl py-5 rounded-2xl shadow-xl cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, ${world.palette.nodeColor}, ${world.palette.accent})`,
+                  visibility: introBtnVisible ? 'visible' : 'hidden',
+                }}
+                animate={{ opacity: introBtnVisible ? 1 : 0, scale: introBtnVisible ? 1 : 0.85 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {levelIndex === 0 ? "Let's Go! 🌟" : 'Play! 🌟'}
+              </motion.button>
 
               <button
                 onClick={() => setIntroStep(1)}
