@@ -62,6 +62,10 @@ export interface BoardShellProps {
   watchPhaseActive?: boolean;
   /** Called when one full sentinel cycle has completed during Watch Phase. */
   onWatchPhaseComplete?: () => void;
+  /** Position of the enemy king in trapMode levels. */
+  kingPos?: Position | null;
+  /** When true, plays the king collapse animation (scale down + fade). */
+  kingCollapsing?: boolean;
 }
 
 export function BoardShell({
@@ -88,6 +92,8 @@ export function BoardShell({
   onSentinelStepsChange,
   watchPhaseActive,
   onWatchPhaseComplete,
+  kingPos,
+  kingCollapsing = false,
 }: BoardShellProps) {
   // ── Sentinel state (internal — BoardShell owns the advance clock) ──────────
   const [sentinelSteps, setSentinelSteps] = useState<number[]>(
@@ -109,6 +115,11 @@ export function BoardShell({
   // Dynamic river sealing state
   const [sealedRivers, setSealedRivers] = useState<Position[]>([]);
   const [sealingCells, setSealingCells] = useState<Position[]>([]); // currently flashing ice-blue
+
+  // King escape squares — computed once from kingPos (shown as amber circles when showKingEscapes is on)
+  const kingEscapeSquares: Position[] = (level.showKingEscapes && kingPos)
+    ? getValidMoves('king', kingPos, { fences: [], rivers: [], bridges: [], food: [] }, [], numRows, numCols)
+    : [];
 
   // ---------------------------------------------------------------------------
   // Derived cell queries
@@ -648,6 +659,27 @@ export function BoardShell({
                   />
                 )}
 
+                {/* ── King escape squares — amber circles (showKingEscapes only) ── */}
+                {kingEscapeSquares.some(sq => sq.row === r && sq.col === c) && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 0.9, 0.5] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <div style={{
+                      width: squareSize * 0.45,
+                      height: squareSize * 0.45,
+                      borderRadius: '50%',
+                      border: '2px solid rgba(251,146,60,0.75)',
+                      background: 'rgba(251,146,60,0.18)',
+                    }} />
+                  </motion.div>
+                )}
+
                 {/* ── Route waypoints — amber dots at each patrol stop ── */}
                 {(patrolPieces ?? []).map((patrol, si) => {
                   if (!patrol.route.some(wp => wp.row === r && wp.col === c)) return null;
@@ -777,6 +809,46 @@ export function BoardShell({
             </div>
           );
         })}
+
+        {/* ── Enemy king (trapMode) ── */}
+        {kingPos && (
+          <motion.div
+            className="absolute pointer-events-none flex items-center justify-center"
+            style={{
+              width: `${squareSize}px`,
+              height: `${squareSize}px`,
+              left: kingPos.col * squareSize,
+              top: kingPos.row * squareSize,
+              zIndex: 11,
+            }}
+            animate={kingCollapsing
+              ? { scale: [1, 0.3], opacity: [1, 0], rotate: [0, 20] }
+              : { scale: 1, opacity: 1 }
+            }
+            transition={kingCollapsing
+              ? { duration: 0.6, ease: 'easeIn' }
+              : { type: 'spring', stiffness: 260, damping: 20 }
+            }
+          >
+            {/* Pulsing dark glow ring */}
+            <motion.div
+              style={{
+                position: 'absolute', inset: -3, borderRadius: '50%',
+                boxShadow: '0 0 12px 3px rgba(17,24,39,0.7)',
+                pointerEvents: 'none',
+              }}
+              animate={kingCollapsing ? {} : { opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+            <motion.div
+              animate={kingCollapsing ? {} : { scale: [1, 1.06, 1] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ filter: 'grayscale(1) brightness(0.3) saturate(0)' }}
+            >
+              <ChessPieceIcon type="king" size={squareSize * 0.8} />
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* ── Full-screen caught flash overlay ── */}
         {caughtBy !== null && (

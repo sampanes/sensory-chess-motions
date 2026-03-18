@@ -143,6 +143,12 @@ export type Level = {
   trapMode?: boolean;
   /** Position of the enemy king in trapMode levels. */
   kingPos?: Position;
+  /**
+   * When true, the king's possible escape squares are shown as amber circles
+   * at the start of the level (intro + first attempt) so the child sees what
+   * they need to cover.
+   */
+  showKingEscapes?: boolean;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';

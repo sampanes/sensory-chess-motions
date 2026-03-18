@@ -219,4 +219,86 @@ const d8: Level = {
   ],
 };
 
-export const darkSectorLevels: Level[] = [d1, d2, d3, d4, d5, d6, d7, d8];
+// ── T1: The Corner Trap ───────────────────────────────────────────────────────
+const t1: Level = {
+  name: 'The Corner Trap',
+  description: 'The king is in the corner. One move covers everything.',
+  pieceType: 'rook',
+  start: { row: 4, col: 0 },
+  goal:  { row: -1, col: -1 },
+  boardHeight: 5, boardWidth: 5,
+  starThresholds: { three: 1, two: 3 },
+  obstacles: EMPTY,
+  trapMode: true,
+  kingPos: { row: 0, col: 0 },
+  showKingEscapes: true,
+  patrolPieces: [
+    // Static guard: rook covers row 1 + column 4
+    { pieceType: 'rook', route: [{ row: 1, col: 4 }] },
+  ],
+  hint: 'One rook move covers the whole row. What does the guard already cover?',
+};
+
+// ── T2: The Open Field ────────────────────────────────────────────────────────
+const t2: Level = {
+  name: 'The Open Field',
+  description: "No guards. Just you and the king. Find a square that watches everything.",
+  pieceType: 'queen',
+  start: { row: 4, col: 0 },
+  goal:  { row: -1, col: -1 },
+  boardHeight: 5, boardWidth: 5,
+  starThresholds: { three: 2, two: 4 },
+  obstacles: EMPTY,
+  trapMode: true,
+  kingPos: { row: 0, col: 3 },
+  showKingEscapes: true,
+  patrolPieces: [],
+  hint: 'The queen covers rows, columns, and diagonals all at once.',
+};
+
+// ── T3: The Rank and the Diagonal ─────────────────────────────────────────────
+const t3: Level = {
+  name: 'The Rank and the Diagonal',
+  description: 'The rook holds the rank. The bishop seals the corners.',
+  pieceType: 'bishop',
+  start: { row: 5, col: 0 },
+  goal:  { row: -1, col: -1 },
+  boardHeight: 6, boardWidth: 6,
+  starThresholds: { three: 3, two: 5 },
+  obstacles: EMPTY,
+  trapMode: true,
+  kingPos: { row: 0, col: 4 },
+  patrolPieces: [
+    // Static guard: rook covers row 1 + column 5
+    { pieceType: 'rook', route: [{ row: 1, col: 5 }] },
+  ],
+  hint: 'The rook already blocks below the king. Cover the two diagonal escapes.',
+};
+
+// ── T4: The Real Thing ────────────────────────────────────────────────────────
+const t4: Level = {
+  name: 'The Real Thing',
+  description: 'One of your pieces can end this. Find it.',
+  pieceType: 'queen',
+  start: { row: 6, col: 0 },
+  goal:  { row: -1, col: -1 },
+  boardHeight: 8, boardWidth: 8,
+  starThresholds: { three: 2, two: 4 },
+  obstacles: {
+    fences: [], bridges: [],
+    rivers: [
+      { row: 1, col: 3 }, { row: 2, col: 5 },
+      { row: 3, col: 2 }, { row: 5, col: 6 },
+    ],
+    food: [],
+  },
+  trapMode: true,
+  kingPos: { row: 0, col: 6 },
+  patrolPieces: [
+    { pieceType: 'rook',   route: [{ row: 7, col: 5 }] },
+    { pieceType: 'bishop', route: [{ row: 2, col: 0 }] },
+  ],
+  hint: 'Find the square where your queen covers every escape the king has left.',
+};
+
+export const darkSectorLevels: Level[] = [d1, d2, d3, d4, d5, d6, d7, d8, t1, t2, t3, t4];

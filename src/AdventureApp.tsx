@@ -34,6 +34,7 @@ import {
 } from './adventure/sharing';
 import { playCelebrationSound } from './utils/sounds';
 import { getValidMoves } from './utils/moveCalculator';
+import { isKingTrapped } from './utils/threatZone';
 import { GalleryBoard } from './components/GalleryBoard';
 import { OracleMode } from './adventure/OracleMode';
 import { GrandFinale } from './adventure/GrandFinale';
@@ -342,9 +343,9 @@ function WorldPlay({
   const [consumedFood,    setConsumedFood]    = useState<Food[]>([]);
   const [capturedEnemies, setCapturedEnemies] = useState<Enemy[]>([]);
   const [trail,           setTrail]           = useState<Position[]>([levels[levelIndex]?.start ?? { row: 0, col: 0 }]);
-  // Sentinel steps — kept in sync with BoardShell via onSentinelStepsChange; used by M31 trap detection
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_sentinelSteps,  setSentinelSteps]   = useState<number[]>([]);
+  // Sentinel steps — kept in sync with BoardShell via onSentinelStepsChange; used for trap detection
+  const [sentinelSteps,   setSentinelSteps]   = useState<number[]>([]);
+  const [kingCollapsing,  setKingCollapsing]  = useState(false);
   // Watch Phase — track which levels have already been watched (skip on retry)
   const [hasWatchedSet,   setHasWatchedSet]   = useState<Set<number>>(new Set());
   const [watchLabel,      setWatchLabel]      = useState<string | null>(null);
@@ -445,6 +446,7 @@ function WorldPlay({
     setResetCount(c => c + 1);
     setIsStuck(false);
     setGhostStep(0);
+    setKingCollapsing(false);
   };
 
   const handleWatchPhaseComplete = () => {
@@ -526,6 +528,29 @@ function WorldPlay({
         }, 600);
       }
       return; // controlMode levels never use the normal goal check
+    }
+
+    // trapMode win: enemy king has no escape squares
+    if (level.trapMode && level.kingPos) {
+      const rows = level.boardHeight ?? 5;
+      const cols = level.boardWidth ?? 5;
+      const trapped = isKingTrapped(
+        level.kingPos,
+        effectiveLevel.pieceType,
+        newPos,
+        level.patrolPieces ?? [],
+        sentinelSteps,
+        rows, cols,
+      );
+      if (trapped) {
+        setLastStars(getStars(level.starThresholds, next));
+        setKingCollapsing(true);
+        setTimeout(() => {
+          playCelebrationSound(effectiveLevel.pieceType);
+          setPlayPhase('celebration');
+        }, 1400);
+      }
+      return; // trapMode levels never use the goal-flag check
     }
 
     if (!level.captureAll && newPos.row === level.goal.row && newPos.col === level.goal.col) {
@@ -1053,6 +1078,8 @@ function WorldPlay({
             patrolPieces={level.patrolPieces}
             onSentinelStepsChange={setSentinelSteps}
             watchPhaseActive={false}
+            kingPos={level.kingPos}
+            kingCollapsing={kingCollapsing}
           />
         )}
 
@@ -1287,7 +1314,9 @@ function WorldPlay({
             {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}
           </h2>
           <p className="text-gray-600 mb-4">
-            {level.captureAll
+            {level.trapMode
+              ? <><strong className="text-gray-800">Checkmate.</strong> The king had nowhere to go. {moveCount} move{moveCount !== 1 ? 's' : ''}.</>
+              : level.captureAll
               ? <>Captured all shadows in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
               : <>Reached the flag in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
             }
