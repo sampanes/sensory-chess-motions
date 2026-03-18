@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
-import { Level, PieceType, Position, Food, Enemy } from '../types';
+import { Level, PieceType, Position, Food, Enemy, PatrolPiece } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
+import { getSentinelThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -53,6 +54,16 @@ export interface BoardShellProps {
   externalPiecePos?: Position;
   /** When set, overrides level.pieceType for the displayed piece icon. */
   displayPieceType?: PieceType;
+  /** Patrol pieces for this level — rendered at their current route position. */
+  patrolPieces?: PatrolPiece[];
+  /** Current step index for each patrol piece. Defaults to each piece's startIndex. */
+  sentinelSteps?: number[];
+  /** Squares about to become threatened — shown as bright amber sweep preview. */
+  sweepPreviewSquares?: Position[];
+  /** Index of sentinel that just caught the player — triggers a full-screen red flash. */
+  caughtByIndex?: number | null;
+  /** Square the player just vacated that was swept — triggers an amber near-miss shimmer. */
+  nearMissSquare?: Position | null;
 }
 
 export function BoardShell({
@@ -75,7 +86,14 @@ export function BoardShell({
   interactive = true,
   externalPiecePos,
   displayPieceType,
+  patrolPieces,
+  sentinelSteps: sentinelStepsProp,
+  sweepPreviewSquares,
+  caughtByIndex,
+  nearMissSquare,
 }: BoardShellProps) {
+  // Resolve sentinelSteps: prop if provided, otherwise default to each piece's startIndex.
+  const sentinelSteps = sentinelStepsProp ?? (patrolPieces ?? []).map(p => p.startIndex ?? 0);
   const numRows = boardRowsProp ?? level.boardHeight ?? 5;
   const numCols = boardColsProp ?? level.boardWidth ?? 5;
   const [piecePos, setPiecePos] = useState<Position>(level.start);
@@ -443,6 +461,81 @@ export function BoardShell({
                   </motion.div>
                 )}
 
+                {/* ── Sentinel threat zones ── */}
+                {(patrolPieces ?? []).map((patrol, si) => {
+                  const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
+                  const threatened = getSentinelThreat(patrol, stepIdx, numRows, numCols);
+                  if (!threatened.some(sq => sq.row === r && sq.col === c)) return null;
+                  return (
+                    <motion.div
+                      key={`threat-${si}`}
+                      animate={{ opacity: [0.55, 0.95, 0.55] }}
+                      transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{
+                        position: 'absolute', inset: 0, borderRadius: 2,
+                        background: 'radial-gradient(circle, rgba(251,146,60,0.22) 0%, transparent 75%)',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <span style={{ position: 'absolute', bottom: 2, right: 2, fontSize: 7, opacity: 0.7 }}>🔴</span>
+                    </motion.div>
+                  );
+                })}
+
+                {/* ── Sweep preview (brighter — threat incoming next step) ── */}
+                {sweepPreviewSquares?.some(sq => sq.row === r && sq.col === c) && (
+                  <motion.div
+                    key={`sweep-${r}-${c}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(251,146,60,0.52)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+
+                {/* ── Near-miss shimmer ── */}
+                {nearMissSquare?.row === r && nearMissSquare?.col === c && (
+                  <motion.div
+                    key={`nearmiss-${r}-${c}`}
+                    initial={{ opacity: 0.75 }}
+                    animate={{ opacity: 0 }}
+                    transition={{ duration: 0.65 }}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(251,146,60,0.75)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+
+                {/* ── Route waypoints — amber dots at each patrol stop ── */}
+                {(patrolPieces ?? []).map((patrol, si) => {
+                  if (!patrol.route.some(wp => wp.row === r && wp.col === c)) return null;
+                  // Hide waypoint when sentinel is standing here (don't draw dot under piece)
+                  const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
+                  const sentinelHere = patrol.route[stepIdx % patrol.route.length];
+                  if (patrol.route.length > 1 && sentinelHere.row === r && sentinelHere.col === c) return null;
+                  return (
+                    <div
+                      key={`wp-${si}`}
+                      style={{
+                        position: 'absolute',
+                        width: 6, height: 6,
+                        borderRadius: '50%',
+                        background: 'rgba(251,146,60,0.38)',
+                        border: '0.5px solid rgba(251,146,60,0.55)',
+                        top: '50%', left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  );
+                })}
+
                 {hasFence(r, c, 'top') && (
                   <div className="absolute top-0 left-0 right-0 z-[5] flex items-center" style={{ height: '6px' }}>
                     <div className="w-full h-full rounded-full" style={spaceTheme ? { background: '#22d3ee', boxShadow: '0 0 8px rgba(34,211,238,0.7)' } : { background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
@@ -512,6 +605,56 @@ export function BoardShell({
           >
             <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
           </div>
+        )}
+
+        {/* ── Sentinel pieces ── */}
+        {(patrolPieces ?? []).map((patrol, si) => {
+          const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
+          const pos = patrol.route[stepIdx % patrol.route.length];
+          return (
+            <div
+              key={`sentinel-${si}`}
+              style={{
+                position: 'absolute',
+                top: pos.row * squareSize,
+                left: pos.col * squareSize,
+                width: squareSize,
+                height: squareSize,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 12,
+              }}
+            >
+              {/* Glow ring */}
+              <div style={{
+                position: 'absolute', inset: -2, borderRadius: '50%',
+                boxShadow: '0 0 10px 2px rgba(239,68,68,0.65)',
+                pointerEvents: 'none',
+              }} />
+              <motion.div
+                animate={{ scale: [1, 1.07, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ filter: 'hue-rotate(300deg) saturate(2.2) brightness(0.85)' }}
+              >
+                <ChessPieceIcon type={patrol.pieceType} size={squareSize * 0.82} />
+              </motion.div>
+            </div>
+          );
+        })}
+
+        {/* ── Full-screen caught flash overlay ── */}
+        {caughtByIndex !== null && caughtByIndex !== undefined && (
+          <motion.div
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(185,28,28,0.50)',
+              pointerEvents: 'none',
+              zIndex: 50,
+            }}
+          />
         )}
 
         {/* Floating animated piece */}
