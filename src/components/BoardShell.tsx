@@ -58,6 +58,10 @@ export interface BoardShellProps {
   patrolPieces?: PatrolPiece[];
   /** Called whenever sentinel step indices change — used by parent for trap-mode win detection. */
   onSentinelStepsChange?: (steps: number[]) => void;
+  /** When true: interactive is forced off; BoardShell auto-advances sentinels one full cycle. */
+  watchPhaseActive?: boolean;
+  /** Called when one full sentinel cycle has completed during Watch Phase. */
+  onWatchPhaseComplete?: () => void;
 }
 
 export function BoardShell({
@@ -82,6 +86,8 @@ export function BoardShell({
   displayPieceType,
   patrolPieces,
   onSentinelStepsChange,
+  watchPhaseActive,
+  onWatchPhaseComplete,
 }: BoardShellProps) {
   // ── Sentinel state (internal — BoardShell owns the advance clock) ──────────
   const [sentinelSteps, setSentinelSteps] = useState<number[]>(
@@ -283,10 +289,42 @@ export function BoardShell({
   }, [animKey]);
 
   // ---------------------------------------------------------------------------
+  // Watch Phase auto-advance — runs one full sentinel cycle at 600ms/step
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!watchPhaseActive || !patrolPieces?.length) return;
+
+    const patrol = patrolPieces[0];
+    const len = patrol.route.length;
+    const cycleLength = patrol.routeMode === 'loop' ? len : 2 * (len - 1);
+
+    let stepCount = 0;
+    const tick = setInterval(() => {
+      stepCount++;
+      setSentinelSteps(prev => prev.map((s, i) => {
+        const p = (patrolPieces ?? [])[i];
+        const pLen = p.route.length;
+        if (pLen <= 1) return 0;
+        if (p.routeMode === 'loop') return (s + 1) % pLen;
+        const full = 2 * (pLen - 1);
+        return (s + 1) % full;
+      }));
+      if (stepCount >= cycleLength) {
+        clearInterval(tick);
+        onWatchPhaseComplete?.();
+      }
+    }, 600);
+
+    return () => clearInterval(tick);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchPhaseActive]);
+
+  // ---------------------------------------------------------------------------
   // Click handler
   // ---------------------------------------------------------------------------
   const handleSquareClick = (row: number, col: number) => {
     if (!interactive) return;
+    if (watchPhaseActive) return;
     if (catchActive) return;
     if (!isValidMove(validMoves, row, col)) {
       if (isMobile && validMoves.length > 0) {

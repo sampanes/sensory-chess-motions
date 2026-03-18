@@ -306,7 +306,7 @@ export default function AdventureApp() {
 
 // ─── WorldPlay ────────────────────────────────────────────────────────────────
 
-type PlayPhase = 'intro' | 'playing' | 'promotion' | 'checkmate' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
+type PlayPhase = 'intro' | 'watchPhase' | 'playing' | 'promotion' | 'checkmate' | 'celebration' | 'trial' | 'story' | 'remix-offer' | 'remix-playing' | 'remix-result' | 'done';
 
 function getStars(thresholds: { three: number; two: number }, moves: number): number {
   if (moves <= thresholds.three) return 3;
@@ -345,6 +345,11 @@ function WorldPlay({
   // Sentinel steps — kept in sync with BoardShell via onSentinelStepsChange; used by M31 trap detection
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_sentinelSteps,  setSentinelSteps]   = useState<number[]>([]);
+  // Watch Phase — track which levels have already been watched (skip on retry)
+  const [hasWatchedSet,   setHasWatchedSet]   = useState<Set<number>>(new Set());
+  const [watchLabel,      setWatchLabel]      = useState<string | null>(null);
+  // D8 atmosphere escalation — track piece row for star speed multiplier
+  const [pieceRow,        setPieceRow]        = useState(0);
   const [moveCount,       setMoveCount]       = useState(0);
   const [resetCount,      setResetCount]      = useState(0);
   const [lastStars,       setLastStars]       = useState(0);
@@ -424,7 +429,12 @@ function WorldPlay({
       setGhostRoute(null);
     }
     setGhostStep(0);
-    setPlayPhase('playing');
+    const lev = levels[levelIndex];
+    if (lev.watchPhaseLabel && !hasWatchedSet.has(levelIndex)) {
+      setPlayPhase('watchPhase');
+    } else {
+      setPlayPhase('playing');
+    }
   };
 
   const resetBoard = () => {
@@ -435,6 +445,16 @@ function WorldPlay({
     setResetCount(c => c + 1);
     setIsStuck(false);
     setGhostStep(0);
+  };
+
+  const handleWatchPhaseComplete = () => {
+    setWatchLabel(level.watchPhaseLabel ?? null);
+    setTimeout(() => {
+      setHasWatchedSet(prev => new Set([...prev, levelIndex]));
+      setWatchLabel(null);
+      setResetCount(c => c + 1); // remount BoardShell with fresh sentinel positions
+      setPlayPhase('playing');
+    }, 2200);
   };
 
   const startRemix = () => {
@@ -461,6 +481,7 @@ function WorldPlay({
     setTrail(newTrail);
     const next = moveCount + 1;
     setMoveCount(next);
+    setPieceRow(newPos.row);
     const pieceType = effectiveLevel.pieceType;
 
     if (capturedEnemy) {
@@ -841,6 +862,76 @@ function WorldPlay({
     );
   }
 
+  // D8 "The Dark Core" — star speed increases as player ascends (row 10→0)
+  const darkCoreMultiplier = (worldId === 13 && effectiveLevel.name === 'The Dark Core')
+    ? 1.0 + Math.max(0, (10 - pieceRow) / 10) * 0.4
+    : 1.0;
+
+  // ── Watch Phase ──
+  if (playPhase === 'watchPhase') {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
+        style={{ background: world.spaceTheme ? undefined : world.palette.bg, position: 'relative', zIndex: 1 }}
+      >
+        {world.spaceTheme && <StarfieldCanvas speedMultiplier={darkCoreMultiplier} />}
+        <div className="text-center" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: world.palette.accent }}>
+            {effectiveLevel.name}
+          </div>
+          <div className="text-sm" style={{ color: world.spaceTheme ? '#c7d2fe' : '#374151', opacity: 0.7 }}>
+            Watch the sentinel...
+          </div>
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <BoardShell
+            key={`watch-${worldId}-${levelIndex}`}
+            level={effectiveLevel}
+            consumedFood={[]}
+            trail={[effectiveLevel.start]}
+            squareSize={squareSize}
+            isMobile={false}
+            onMove={() => {}}
+            onFoodConsumed={() => {}}
+            onStuck={() => {}}
+            showCheckerboard={worldId === 3}
+            spaceTheme={world.spaceTheme}
+            interactive={false}
+            patrolPieces={level.patrolPieces}
+            watchPhaseActive={true}
+            onWatchPhaseComplete={handleWatchPhaseComplete}
+          />
+
+          {/* Watch label overlay */}
+          <div style={{ position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 24 }}>
+            <AnimatePresence>
+              {watchLabel && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    background: 'rgba(0,0,0,0.75)',
+                    border: '1px solid rgba(251,146,60,0.4)',
+                    borderRadius: 10, padding: '12px 20px',
+                    color: 'white', textAlign: 'center',
+                    maxWidth: 280, fontSize: 14, lineHeight: 1.5,
+                  }}
+                >
+                  {watchLabel}
+                  <div style={{ marginTop: 8, fontSize: 12, color: 'rgba(251,146,60,0.8)' }}>
+                    Now it's your turn.
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Playing ──
   if (playPhase === 'playing') {
     return (
@@ -848,7 +939,7 @@ function WorldPlay({
         className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 select-none"
         style={{ background: world.spaceTheme ? undefined : world.palette.bg, position: 'relative', zIndex: 1 }}
       >
-        {world.spaceTheme && <StarfieldCanvas />}
+        {world.spaceTheme && <StarfieldCanvas speedMultiplier={darkCoreMultiplier} />}
         <motion.div
           className="text-center"
           initial={{ y: -20, opacity: 0 }}
@@ -887,6 +978,8 @@ function WorldPlay({
             showCheckerboard={worldId === 3}
             ghostPos={ghostPos}
             spaceTheme={world.spaceTheme}
+            patrolPieces={level.patrolPieces}
+            onSentinelStepsChange={setSentinelSteps}
           />
         ) : (
           <BoardShell
@@ -906,6 +999,7 @@ function WorldPlay({
             capturedEnemies={capturedEnemies}
             patrolPieces={level.patrolPieces}
             onSentinelStepsChange={setSentinelSteps}
+            watchPhaseActive={false}
           />
         )}
 

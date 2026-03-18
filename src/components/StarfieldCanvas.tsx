@@ -46,8 +46,12 @@ function buildStars(count: number, minR: number, maxR: number, speed: number, W:
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function StarfieldCanvas() {
+export function StarfieldCanvas({ speedMultiplier = 1.0 }: { speedMultiplier?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const speedMultiplierRef = useRef(speedMultiplier);
+
+  // Keep the ref in sync with the prop so the animation loop can read it without restarting.
+  useEffect(() => { speedMultiplierRef.current = speedMultiplier; }, [speedMultiplier]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -79,7 +83,7 @@ export function StarfieldCanvas() {
         const stars = layers[li];
         stars.forEach(star => {
           // Drift downward slowly (piece moving "up through space" feel)
-          star.y += star.speed * dt;
+          star.y += star.speed * speedMultiplierRef.current * dt;
           if (star.y > H + star.r) star.y = -star.r;
 
           // Twinkle

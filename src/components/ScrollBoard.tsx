@@ -20,8 +20,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Flag } from 'lucide-react';
-import { Enemy, Level, Position, Food } from '../types';
+import { Enemy, Level, PatrolPiece, Position, Food } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
+import { getSentinelThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound, playWhooshSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -135,6 +136,10 @@ export interface ScrollBoardProps {
   ghostPos?: Position | null;
   /** When true, applies space visual theme: void rifts, fuel cells, cyan move rings */
   spaceTheme?: boolean;
+  /** Patrol pieces for this level — rendered at their current route position. */
+  patrolPieces?: PatrolPiece[];
+  /** Called whenever sentinel step indices change. */
+  onSentinelStepsChange?: (steps: number[]) => void;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -152,6 +157,8 @@ export function ScrollBoard({
   showCheckerboard,
   ghostPos,
   spaceTheme,
+  patrolPieces,
+  onSentinelStepsChange,
 }: ScrollBoardProps) {
   const axis      = level.scrollAxis ?? 'vertical';
   const boardRows = level.boardHeight ?? VISIBLE;
@@ -164,6 +171,16 @@ export function ScrollBoard({
   const [animKey, setAnimKey]         = useState(0);
   const [suggestedMove, setSuggestedMove] = useState<Position | null>(null);
   const [mobileCoach, setMobileCoach] = useState<string | null>(null);
+
+  // ── Sentinel state ────────────────────────────────────────────────────────
+  const [sentinelSteps, setSentinelSteps] = useState<number[]>(
+    () => (patrolPieces ?? []).map(p => p.startIndex ?? 0),
+  );
+  const [sweepPreview, setSweepPreview]   = useState<Position[]>([]);
+  const [caughtBy,     setCaughtBy]       = useState<number | null>(null);
+  const [catchActive,  setCatchActive]    = useState(false);
+  const [nearMiss,     setNearMiss]       = useState<Position | null>(null);
+  const prevPosRef = useRef<Position>(level.start);
 
   // ── Peek pan state ────────────────────────────────────────────────────────
   // peekOffset: extra px shift added to gridOffset while the user drags
@@ -241,8 +258,84 @@ export function ScrollBoard({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [piecePos]);
 
+  // ── Sentinel catch reset ─────────────────────────────────────────────────
+  const handleCatchReset = () => {
+    setPiecePos(level.start);
+    setSentinelSteps((patrolPieces ?? []).map(p => p.startIndex ?? 0));
+    setSweepPreview([]);
+    setCaughtBy(null);
+    setCatchActive(false);
+    setNearMiss(null);
+    setAnimKey(0);
+    prevPosRef.current = level.start;
+  };
+
+  // Auto-restart after 2200ms if player doesn't tap "Try again"
+  useEffect(() => {
+    if (!catchActive) return;
+    const t = setTimeout(() => handleCatchReset(), 2200);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catchActive]);
+
+  // ── Sentinel advance — fires after each player move ───────────────────────
+  useEffect(() => {
+    if (animKey === 0 || !patrolPieces?.length) return;
+
+    const resolveIdx = (patrol: PatrolPiece, mirrorIdx: number) => {
+      const len = patrol.route.length;
+      if (patrol.routeMode === 'loop') return mirrorIdx % len;
+      return mirrorIdx < len ? mirrorIdx : 2 * (len - 1) - mirrorIdx;
+    };
+
+    const nextSteps = sentinelSteps.map((step, i) => {
+      const patrol = patrolPieces[i];
+      const len = patrol.route.length;
+      if (len <= 1) return 0;
+      if (patrol.routeMode === 'loop') return (step + 1) % len;
+      const full = 2 * (len - 1);
+      return (step + 1) % full;
+    });
+
+    const previewZones = nextSteps.flatMap((s, i) => {
+      const patrol = patrolPieces[i];
+      return getSentinelThreat(patrol, resolveIdx(patrol, s), boardRows, boardCols);
+    });
+    setSweepPreview(previewZones);
+
+    const advanceTimer = setTimeout(() => {
+      setSweepPreview([]);
+      setSentinelSteps(nextSteps);
+      onSentinelStepsChange?.(nextSteps);
+
+      const currentPos = piecePos;
+      for (let i = 0; i < patrolPieces.length; i++) {
+        const zone = getSentinelThreat(patrolPieces[i], resolveIdx(patrolPieces[i], nextSteps[i]), boardRows, boardCols);
+        if (zone.some(sq => sq.row === currentPos.row && sq.col === currentPos.col)) {
+          setCaughtBy(i);
+          setCatchActive(true);
+          return;
+        }
+      }
+
+      const prev = prevPosRef.current;
+      for (let i = 0; i < patrolPieces.length; i++) {
+        const zone = getSentinelThreat(patrolPieces[i], resolveIdx(patrolPieces[i], nextSteps[i]), boardRows, boardCols);
+        if (zone.some(sq => sq.row === prev.row && sq.col === prev.col)) {
+          setNearMiss(prev);
+          setTimeout(() => setNearMiss(null), 750);
+          break;
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(advanceTimer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animKey]);
+
   // ── Click handler ─────────────────────────────────────────────────────────
   const handleSquareClick = (row: number, col: number) => {
+    if (catchActive) return;
     if (!isValidMove(validMoves, row, col)) {
       if (isMobile && validMoves.length > 0) {
         const nearest = validMoves.reduce((best, candidate) => {
@@ -266,6 +359,8 @@ export function ScrollBoard({
     setSuggestedMove(null);
     setMobileCoach(null);
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(10);
+
+    prevPosRef.current = piecePos;
     setPiecePos(newPos);
     setAnimKey(prev => prev + 1);
     onStuck(false);
@@ -609,6 +704,75 @@ export function ScrollBoard({
                     </motion.div>
                   )}
 
+                  {/* ── Sentinel threat zones ── */}
+                  {(patrolPieces ?? []).map((patrol, si) => {
+                    const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
+                    const threatened = getSentinelThreat(patrol, stepIdx, boardRows, boardCols);
+                    if (!threatened.some(sq => sq.row === r && sq.col === c)) return null;
+                    return (
+                      <motion.div
+                        key={`threat-${si}`}
+                        animate={{ opacity: [0.55, 0.95, 0.55] }}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                        style={{
+                          position: 'absolute', inset: 0, borderRadius: 2,
+                          background: 'radial-gradient(circle, rgba(251,146,60,0.22) 0%, transparent 75%)',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        <span style={{ position: 'absolute', bottom: 2, right: 2, fontSize: 7, opacity: 0.7 }}>🔴</span>
+                      </motion.div>
+                    );
+                  })}
+
+                  {/* ── Sweep preview ── */}
+                  {sweepPreview.some(sq => sq.row === r && sq.col === c) && (
+                    <div
+                      style={{
+                        position: 'absolute', inset: 0,
+                        background: 'rgba(251,146,60,0.52)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+
+                  {/* ── Near-miss shimmer ── */}
+                  {nearMiss?.row === r && nearMiss?.col === c && (
+                    <motion.div
+                      key={`nearmiss-${r}-${c}`}
+                      initial={{ opacity: 0.75 }}
+                      animate={{ opacity: 0 }}
+                      transition={{ duration: 0.65 }}
+                      style={{
+                        position: 'absolute', inset: 0,
+                        background: 'rgba(251,146,60,0.75)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+
+                  {/* ── Route waypoints ── */}
+                  {(patrolPieces ?? []).map((patrol, si) => {
+                    if (!patrol.route.some(wp => wp.row === r && wp.col === c)) return null;
+                    const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
+                    const sentinelHere = patrol.route[stepIdx % patrol.route.length];
+                    if (patrol.route.length > 1 && sentinelHere.row === r && sentinelHere.col === c) return null;
+                    return (
+                      <div
+                        key={`wp-${si}`}
+                        style={{
+                          position: 'absolute',
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: 'rgba(251,146,60,0.38)',
+                          border: '0.5px solid rgba(251,146,60,0.55)',
+                          top: '50%', left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    );
+                  })}
+
                   {hasFence(r, c, 'top') && (
                     <div className="absolute top-0 left-0 right-0 z-[5]" style={{ height: '6px' }}>
                       <div className="w-full h-full rounded-full" style={spaceTheme ? { background: '#22d3ee', boxShadow: '0 0 8px rgba(34,211,238,0.7)' } : { background: 'repeating-linear-gradient(90deg, #78350f 0px, #78350f 5px, #92400e 5px, #92400e 7px, #a16207 7px, #a16207 9px)', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
@@ -651,6 +815,41 @@ export function ScrollBoard({
               <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
             </div>
           )}
+
+          {/* ── Sentinel pieces — in world coords, scroll with the grid ── */}
+          {(patrolPieces ?? []).map((patrol, si) => {
+            const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
+            const pos = patrol.route[stepIdx % patrol.route.length];
+            return (
+              <div
+                key={`sentinel-${si}`}
+                style={{
+                  position: 'absolute',
+                  top: pos.row * squareSize,
+                  left: pos.col * squareSize,
+                  width: squareSize,
+                  height: squareSize,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  pointerEvents: 'none',
+                  zIndex: 12,
+                  transition: 'top 0.28s ease, left 0.28s ease',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', inset: -2, borderRadius: '50%',
+                  boxShadow: '0 0 10px 2px rgba(239,68,68,0.65)',
+                  pointerEvents: 'none',
+                }} />
+                <motion.div
+                  animate={{ scale: [1, 1.07, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ filter: 'hue-rotate(300deg) saturate(2.2) brightness(0.85)' }}
+                >
+                  <ChessPieceIcon type={patrol.pieceType} size={squareSize * 0.82} />
+                </motion.div>
+              </div>
+            );
+          })}
 
           {/* Floating piece — positioned in world coords, scrolls with the grid */}
           <motion.div
@@ -703,6 +902,70 @@ export function ScrollBoard({
           </span>
         </motion.div>
       )}
+
+      {/* ── Full-screen caught flash overlay ── */}
+      {caughtBy !== null && (
+        <motion.div
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(185,28,28,0.50)',
+            pointerEvents: 'none',
+            zIndex: 50,
+          }}
+        />
+      )}
+
+      {/* ── Catch sequence card ── */}
+      <AnimatePresence>
+        {catchActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 30,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.55)',
+              borderRadius: 12,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, type: 'spring' }}
+              style={{
+                background: 'rgba(30,10,10,0.9)',
+                border: '1px solid rgba(239,68,68,0.5)',
+                borderRadius: 12, padding: '20px 28px',
+                textAlign: 'center', color: 'white',
+              }}
+            >
+              <div style={{ fontSize: 28, marginBottom: 8 }}>🔴</div>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+                The sentinel found you.
+              </div>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                onClick={handleCatchReset}
+                style={{
+                  background: 'rgba(239,68,68,0.2)',
+                  border: '1px solid rgba(239,68,68,0.5)',
+                  borderRadius: 8, color: 'white',
+                  padding: '8px 20px', cursor: 'pointer', fontSize: 15,
+                }}
+              >
+                ↺ Try again
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       </div>{/* end wrapper */}
 
