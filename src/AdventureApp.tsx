@@ -200,6 +200,7 @@ export default function AdventureApp() {
             setPhase('challenge');
           }}
           onSelectOracle={() => setPhase('oracle')}
+          isDadCheat={IS_DAD_CHEAT}
         />
         <AnimatePresence>
           {showInstallBanner && (

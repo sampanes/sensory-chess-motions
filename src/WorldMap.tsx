@@ -7,7 +7,7 @@
  * Available (unlocked, not yet complete) worlds pulse gently.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WORLDS, WorldDef } from './adventure/worlds';
 import { Roster } from './Roster';
@@ -48,13 +48,35 @@ interface WorldMapProps {
   onSelectChallenge?: (worldId: number) => void;
   /** Called when the player taps the Oracle node. Only shown when world 8 is complete. */
   onSelectOracle?: () => void;
+  /** When true, shows a discreet dev-only progress reset button. */
+  isDadCheat?: boolean;
 }
 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack, onSelectChallenge, onSelectOracle }: WorldMapProps) {
+function clearAllProgress() {
+  localStorage.removeItem('scm_adv_progress');
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('tbk_ghost_') || key.startsWith('tbk_attempts_'))) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+  window.location.reload();
+}
+
+export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack, onSelectChallenge, onSelectOracle, isDadCheat }: WorldMapProps) {
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
+  const [resetState, setResetState] = useState<'idle' | 'confirming'>('idle');
+
+  useEffect(() => {
+    if (resetState !== 'confirming') return;
+    const t = setTimeout(() => setResetState('idle'), 4000);
+    return () => clearTimeout(t);
+  }, [resetState]);
 
   // Only show unlocked worlds + the single next locked world (surprise teaser).
   // Worlds further ahead stay hidden so children don't see spoilers.
@@ -381,6 +403,31 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
       <div className="relative z-10 pb-2 sm:pb-4 px-4 flex justify-center">
         <Roster completedWorlds={completedWorlds} />
       </div>
+
+      {/* Dad-cheat: discreet progress reset button */}
+      {isDadCheat && (
+        <button
+          onClick={() => {
+            if (resetState === 'idle') {
+              setResetState('confirming');
+            } else {
+              clearAllProgress();
+            }
+          }}
+          className="fixed bottom-4 left-3 text-xs font-medium border-none cursor-pointer rounded-lg px-2 py-1"
+          style={{
+            background: 'rgba(0,0,0,0.35)',
+            color: 'white',
+            opacity: resetState === 'confirming' ? 1 : 0.35,
+            transition: 'opacity 0.2s',
+            zIndex: 50,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = resetState === 'confirming' ? '1' : '0.35')}
+        >
+          {resetState === 'idle' ? '⚠ Reset all progress' : 'Tap again to confirm — this erases everything'}
+        </button>
+      )}
 
       {/* Ground decoration */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-around items-end pb-1 pointer-events-none opacity-70 text-3xl">
