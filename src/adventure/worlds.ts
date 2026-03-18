@@ -31,6 +31,8 @@ export type WorldDef = {
   mapPos: { x: number; y: number };
   /** When true, the board floats over a parallax starfield and the Piece Selector appears on every intro card. */
   spaceTheme?: boolean;
+  /** When set, this world unlocks when the given worldId is completed, regardless of numerical order. */
+  unlockAfter?: number;
 };
 
 // ─── All worlds ───────────────────────────────────────────────────────────────
@@ -326,8 +328,34 @@ export const WORLDS: WorldDef[] = [
         'And now — standing in front of the real board — you realize you know all of them.',
         "This is chess. You've been playing it all along.",
       ],
+      nextTeaser: 'The Dark Sector',
+      nextTeaserEmoji: '🛸',
     },
     mapPos: { x: 0.72, y: 0.08 },
+  },
+  {
+    id: 13,
+    name: 'The Dark Sector',
+    emoji: '🛸',
+    tagline: 'The outer sectors are guarded. Move through the dark.',
+    spaceTheme: true,
+    unlockAfter: 7,
+    palette: {
+      bg: 'linear-gradient(to bottom, #050510, #0d0d1a, #1a0a1a)',
+      accent: '#fb923c',
+      nodeColor: '#ef4444',
+    },
+    story: {
+      title: 'The Dark Sector Falls Silent',
+      paragraphs: [
+        'The sentinels stopped. One by one, their amber glow faded.',
+        'You had moved through every corridor they watched — and they never saw you.',
+        'And then you turned the tables.',
+        'You trapped a king. You built the checkmate yourself.',
+        "That's the real game. You just played it.",
+      ],
+    },
+    mapPos: { x: 0.74, y: 0.04 },
   },
 ];
 
@@ -341,6 +369,13 @@ export function getUnlockedWorlds(completedWorlds: number[]): number[] {
   for (const id of completedWorlds) {
     if (id + 1 < WORLDS.length) unlocked.add(id + 1);
   }
+  // Custom unlock: worlds with unlockAfter unlock when that world is completed,
+  // regardless of numerical order (e.g. World 13 unlocks after World 7).
+  WORLDS.forEach(w => {
+    if (w.unlockAfter !== undefined && completedWorlds.includes(w.unlockAfter)) {
+      unlocked.add(w.id);
+    }
+  });
   return [...unlocked];
 }
 

@@ -26,6 +26,19 @@ export type Bridge = {
   col: number;
 };
 
+/**
+ * A piece on a patrol route — advances one step per player move.
+ * Single-element route = stationary guard (renders threat zone but never moves).
+ * 'pingpong' (default): reverses at each end.
+ * 'loop': wraps from last element back to first.
+ */
+export type PatrolPiece = {
+  pieceType: PieceType;
+  route: Position[];
+  startIndex?: number;
+  routeMode?: 'pingpong' | 'loop';
+};
+
 // A food item occupies a cell — sliding pieces stop on it (consuming it), then can pass next turn
 export type Food = {
   row: number;
@@ -110,6 +123,26 @@ export type Level = {
    * "checkmate" screen instead of the regular celebration. Used exactly once.
    */
   checkmateMoment?: boolean;
+  /**
+   * Patrol pieces — rendered on the board and advance one step per player move.
+   * Their threat zones are shown as amber overlays.
+   * A single-element route = stationary guard.
+   */
+  patrolPieces?: PatrolPiece[];
+  /**
+   * If set, the Watch Phase runs on the player's first attempt at this level:
+   * sentinels complete one full patrol cycle while the player observes.
+   * This string is shown as a label for 2s when the cycle ends before play begins.
+   */
+  watchPhaseLabel?: string;
+  /**
+   * When true, win = every square the enemy king at `kingPos` could move to is
+   * covered by combined patrol-piece threat zones + the player's piece threat.
+   * Set goal to { row: -1, col: -1 } — no flag shown.
+   */
+  trapMode?: boolean;
+  /** Position of the enemy king in trapMode levels. */
+  kingPos?: Position;
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';
