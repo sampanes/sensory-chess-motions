@@ -559,7 +559,8 @@ function WorldPlay({
       setResetCount(c => c + 1);
       setGhostRoute(null);
       setGhostStep(0);
-      setIntroStep(0);
+      // Skip "meet the piece" beat for mid-world levels — go straight to Play!
+      setIntroStep(2);
       setPlayPhase('intro');
     }
   };
@@ -784,6 +785,26 @@ function WorldPlay({
                 </motion.div>
               )}
 
+              {/* Mid-world level: show name + description here since we skipped beats 0 & 1 */}
+              {levelIndex > 0 && (
+                <motion.div
+                  className="w-full mb-4 text-center"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <div className="text-lg font-extrabold mb-1" style={{ color: world.palette.accent }}>
+                    {level.name}
+                  </div>
+                  <div className="text-sm text-gray-500 leading-snug">{level.description}</div>
+                  {level.hint && (
+                    <div className="mt-2 text-xs text-sky-700 bg-sky-50 border border-sky-200 rounded-xl px-3 py-1.5">
+                      💡 {level.hint}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
               <motion.div
                 className="bg-white/50 border border-amber-200 rounded-xl p-3 mb-6 text-sm text-amber-800 w-full"
                 initial={{ opacity: 0 }}
@@ -806,7 +827,7 @@ function WorldPlay({
                       setTrail([levels[prev].start]);
                       setMoveCount(0);
                       setResetCount(c => c + 1);
-                      setIntroStep(0);
+                      setIntroStep(prev === 0 ? 0 : 2);
                     }}
                     disabled={levelIndex === 0}
                     className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
@@ -824,7 +845,7 @@ function WorldPlay({
                       setTrail([levels[next].start]);
                       setMoveCount(0);
                       setResetCount(c => c + 1);
-                      setIntroStep(0);
+                      setIntroStep(next === 0 ? 0 : 2);
                     }}
                     disabled={levelIndex === levels.length - 1}
                     className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
