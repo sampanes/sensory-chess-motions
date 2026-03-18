@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
 import { Level, PieceType, Position, Food, Enemy, PatrolPiece } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { getSentinelThreat } from '../utils/threatZone';
+import { getSentinelThreat, getAllThreats } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -56,14 +56,8 @@ export interface BoardShellProps {
   displayPieceType?: PieceType;
   /** Patrol pieces for this level — rendered at their current route position. */
   patrolPieces?: PatrolPiece[];
-  /** Current step index for each patrol piece. Defaults to each piece's startIndex. */
-  sentinelSteps?: number[];
-  /** Squares about to become threatened — shown as bright amber sweep preview. */
-  sweepPreviewSquares?: Position[];
-  /** Index of sentinel that just caught the player — triggers a full-screen red flash. */
-  caughtByIndex?: number | null;
-  /** Square the player just vacated that was swept — triggers an amber near-miss shimmer. */
-  nearMissSquare?: Position | null;
+  /** Called whenever sentinel step indices change — used by parent for trap-mode win detection. */
+  onSentinelStepsChange?: (steps: number[]) => void;
 }
 
 export function BoardShell({
@@ -87,13 +81,18 @@ export function BoardShell({
   externalPiecePos,
   displayPieceType,
   patrolPieces,
-  sentinelSteps: sentinelStepsProp,
-  sweepPreviewSquares,
-  caughtByIndex,
-  nearMissSquare,
+  onSentinelStepsChange,
 }: BoardShellProps) {
-  // Resolve sentinelSteps: prop if provided, otherwise default to each piece's startIndex.
-  const sentinelSteps = sentinelStepsProp ?? (patrolPieces ?? []).map(p => p.startIndex ?? 0);
+  // ── Sentinel state (internal — BoardShell owns the advance clock) ──────────
+  const [sentinelSteps, setSentinelSteps] = useState<number[]>(
+    () => (patrolPieces ?? []).map(p => p.startIndex ?? 0),
+  );
+  const [sweepPreview, setSweepPreview]   = useState<Position[]>([]);
+  const [caughtBy,     setCaughtBy]       = useState<number | null>(null);
+  const [catchActive,  setCatchActive]    = useState(false);
+  const [nearMiss,     setNearMiss]       = useState<Position | null>(null);
+  const [cleanEscape,  setCleanEscape]    = useState(false);
+  const prevPosRef = useRef<Position>(level.start);
   const numRows = boardRowsProp ?? level.boardHeight ?? 5;
   const numCols = boardColsProp ?? level.boardWidth ?? 5;
   const [piecePos, setPiecePos] = useState<Position>(level.start);
@@ -199,10 +198,96 @@ export function BoardShell({
   }, [animKey]);
 
   // ---------------------------------------------------------------------------
+  // Catch-sequence reset
+  // ---------------------------------------------------------------------------
+  const handleCatchReset = () => {
+    setPiecePos(level.start);
+    setSentinelSteps((patrolPieces ?? []).map(p => p.startIndex ?? 0));
+    setSweepPreview([]);
+    setCaughtBy(null);
+    setCatchActive(false);
+    setNearMiss(null);
+    setCleanEscape(false);
+    setAnimKey(0);
+    prevPosRef.current = level.start;
+  };
+
+  // Auto-restart after 2200ms if the player doesn't tap "Try again"
+  useEffect(() => {
+    if (!catchActive) return;
+    const t = setTimeout(() => handleCatchReset(), 2200);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catchActive]);
+
+  // ---------------------------------------------------------------------------
+  // Advance logic — fires after each player move (animKey change)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (animKey === 0 || !patrolPieces?.length) return;
+
+    const resolveIdx = (patrol: PatrolPiece, mirrorIdx: number) => {
+      const len = patrol.route.length;
+      if (patrol.routeMode === 'loop') return mirrorIdx % len;
+      return mirrorIdx < len ? mirrorIdx : 2 * (len - 1) - mirrorIdx;
+    };
+
+    // Step 1: compute next mirror-step indices
+    const nextSteps = sentinelSteps.map((step, i) => {
+      const patrol = patrolPieces[i];
+      const len = patrol.route.length;
+      if (len <= 1) return 0;
+      if (patrol.routeMode === 'loop') return (step + 1) % len;
+      const full = 2 * (len - 1);
+      return (step + 1) % full;
+    });
+
+    // Step 2: show sweep preview (what will be threatened after the advance)
+    const previewZones = nextSteps.flatMap((s, i) => {
+      const patrol = patrolPieces[i];
+      return getSentinelThreat(patrol, resolveIdx(patrol, s), numRows, numCols);
+    });
+    setSweepPreview(previewZones);
+
+    // Step 3: 300ms later, apply the advance and run catch/near-miss checks
+    const advanceTimer = setTimeout(() => {
+      setSweepPreview([]);
+      setSentinelSteps(nextSteps);
+      onSentinelStepsChange?.(nextSteps);
+
+      // Caught check: is the player's current position now in a threat zone?
+      const currentPos = piecePos;
+      for (let i = 0; i < patrolPieces.length; i++) {
+        const zone = getSentinelThreat(patrolPieces[i], resolveIdx(patrolPieces[i], nextSteps[i]), numRows, numCols);
+        if (zone.some(sq => sq.row === currentPos.row && sq.col === currentPos.col)) {
+          setCaughtBy(i);
+          setCatchActive(true);
+          return;
+        }
+      }
+
+      // Near-miss check: is the player's previous position now threatened?
+      const prev = prevPosRef.current;
+      for (let i = 0; i < patrolPieces.length; i++) {
+        const zone = getSentinelThreat(patrolPieces[i], resolveIdx(patrolPieces[i], nextSteps[i]), numRows, numCols);
+        if (zone.some(sq => sq.row === prev.row && sq.col === prev.col)) {
+          setNearMiss(prev);
+          setTimeout(() => setNearMiss(null), 750);
+          break;
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(advanceTimer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animKey]);
+
+  // ---------------------------------------------------------------------------
   // Click handler
   // ---------------------------------------------------------------------------
   const handleSquareClick = (row: number, col: number) => {
     if (!interactive) return;
+    if (catchActive) return;
     if (!isValidMove(validMoves, row, col)) {
       if (isMobile && validMoves.length > 0) {
         const nearest = validMoves.reduce((best, candidate) => {
@@ -221,6 +306,19 @@ export function BoardShell({
     setSuggestedMove(null);
     setMobileCoach(null);
     triggerHaptic(10);
+
+    // Clean-escape: moving from a threatened square to a safe one
+    if (patrolPieces?.length) {
+      const currentThreats = getAllThreats(patrolPieces, sentinelSteps, numRows, numCols);
+      const wasInThreat = currentThreats.some(sq => sq.row === piecePos.row && sq.col === piecePos.col);
+      const newIsSafe   = !currentThreats.some(sq => sq.row === row && sq.col === col);
+      if (wasInThreat && newIsSafe) {
+        setCleanEscape(true);
+        setTimeout(() => setCleanEscape(false), 500);
+      }
+    }
+
+    prevPosRef.current = piecePos;
     setPiecePos(newPos);
     setAnimKey(prev => prev + 1);
     onStuck(false);
@@ -483,7 +581,7 @@ export function BoardShell({
                 })}
 
                 {/* ── Sweep preview (brighter — threat incoming next step) ── */}
-                {sweepPreviewSquares?.some(sq => sq.row === r && sq.col === c) && (
+                {sweepPreview.some(sq => sq.row === r && sq.col === c) && (
                   <motion.div
                     key={`sweep-${r}-${c}`}
                     initial={{ opacity: 0 }}
@@ -498,7 +596,7 @@ export function BoardShell({
                 )}
 
                 {/* ── Near-miss shimmer ── */}
-                {nearMissSquare?.row === r && nearMissSquare?.col === c && (
+                {nearMiss?.row === r && nearMiss?.col === c && (
                   <motion.div
                     key={`nearmiss-${r}-${c}`}
                     initial={{ opacity: 0.75 }}
@@ -643,7 +741,7 @@ export function BoardShell({
         })}
 
         {/* ── Full-screen caught flash overlay ── */}
-        {caughtByIndex !== null && caughtByIndex !== undefined && (
+        {caughtBy !== null && (
           <motion.div
             initial={{ opacity: 0.5 }}
             animate={{ opacity: 0 }}
@@ -656,6 +754,55 @@ export function BoardShell({
             }}
           />
         )}
+
+        {/* ── Catch sequence card ── */}
+        <AnimatePresence>
+          {catchActive && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'absolute', inset: 0, zIndex: 30,
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.55)',
+                borderRadius: 4,
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, type: 'spring' }}
+                style={{
+                  background: 'rgba(30,10,10,0.9)',
+                  border: '1px solid rgba(239,68,68,0.5)',
+                  borderRadius: 12, padding: '20px 28px',
+                  textAlign: 'center', color: 'white',
+                }}
+              >
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🔴</div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+                  The sentinel found you.
+                </div>
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  onClick={handleCatchReset}
+                  style={{
+                    background: 'rgba(239,68,68,0.2)',
+                    border: '1px solid rgba(239,68,68,0.5)',
+                    borderRadius: 8, color: 'white',
+                    padding: '8px 20px', cursor: 'pointer', fontSize: 15,
+                  }}
+                >
+                  ↺ Try again
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Floating animated piece */}
         <motion.div
@@ -676,13 +823,15 @@ export function BoardShell({
           >
             <motion.div
               animate={{
-                filter: [
-                  'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
-                  'drop-shadow(0 6px 10px rgba(0,0,0,0.35))',
-                  'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
-                ],
+                filter: cleanEscape
+                  ? 'drop-shadow(0 0 8px rgba(34,211,238,0.9))'
+                  : [
+                      'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
+                      'drop-shadow(0 6px 10px rgba(0,0,0,0.35))',
+                      'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
+                    ],
               }}
-              transition={{ duration: 2, repeat: Infinity }}
+              transition={{ duration: cleanEscape ? 0.1 : 2, repeat: cleanEscape ? 0 : Infinity }}
             >
               <ChessPieceIcon type={displayPieceType ?? level.pieceType} size={squareSize * 0.7} />
             </motion.div>

@@ -16,6 +16,7 @@ import { shadowLevels } from './shadows';
 import { revealLevels } from './reveal';
 import { crownLevels } from './crown';
 import { firstCheckLevels } from './firstcheck';
+import { darkSectorLevels } from './darksector';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
@@ -29,6 +30,7 @@ export { shadowLevels } from './shadows';
 export { revealLevels } from './reveal';
 export { crownLevels } from './crown';
 export { firstCheckLevels } from './firstcheck';
+export { darkSectorLevels } from './darksector';
 
 // Register single-piece worlds
 WORLD_LEVELS[0] = act1KingLevels;
@@ -48,6 +50,8 @@ WORLD_LEVELS[9] = revealLevels;
 WORLD_LEVELS[10] = crownLevels;
 // World 11 — The First Check (defender + attacker pairs)
 WORLD_LEVELS[11] = firstCheckLevels;
+// World 13 — The Dark Sector (patrol sentinels)
+WORLD_LEVELS[13] = darkSectorLevels;
 
 // Register two-piece worlds
 DUO_WORLD_LEVELS[5] = duoLevels;

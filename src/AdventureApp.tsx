@@ -342,6 +342,9 @@ function WorldPlay({
   const [consumedFood,    setConsumedFood]    = useState<Food[]>([]);
   const [capturedEnemies, setCapturedEnemies] = useState<Enemy[]>([]);
   const [trail,           setTrail]           = useState<Position[]>([levels[levelIndex]?.start ?? { row: 0, col: 0 }]);
+  // Sentinel steps — kept in sync with BoardShell via onSentinelStepsChange; used by M31 trap detection
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_sentinelSteps,  setSentinelSteps]   = useState<number[]>([]);
   const [moveCount,       setMoveCount]       = useState(0);
   const [resetCount,      setResetCount]      = useState(0);
   const [lastStars,       setLastStars]       = useState(0);
@@ -901,6 +904,8 @@ function WorldPlay({
             spaceTheme={world.spaceTheme}
             enemies={level.enemies}
             capturedEnemies={capturedEnemies}
+            patrolPieces={level.patrolPieces}
+            onSentinelStepsChange={setSentinelSteps}
           />
         )}
 
