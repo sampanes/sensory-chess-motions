@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Prevent ALL dark-mode adaptation — pieces are white SVGs that break if inverted */
+:root { color-scheme: only light; }
+
 /* Custom scrollbar for a softer look */
 ::-webkit-scrollbar {
   width: 6px;
