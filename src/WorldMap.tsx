@@ -15,7 +15,7 @@ import { Roster } from './Roster';
 // ─── SVG coordinate helpers ───────────────────────────────────────────────────
 
 const VW = 400; // SVG viewBox width
-const VH = 300; // SVG viewBox height
+const VH = 520; // SVG viewBox height — portrait ratio fills phone screens better
 
 function worldSVGPos(w: WorldDef) {
   return { x: w.mapPos.x * VW, y: w.mapPos.y * VH };
@@ -136,7 +136,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
 
       {/* Map SVG */}
       <div className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-2 py-1 sm:py-4">
-        <div className="w-full max-w-lg relative" style={{ aspectRatio: `${VW}/${VH}`, maxHeight: '55vh' }}>
+        <div className="w-full max-w-lg relative" style={{ aspectRatio: `${VW}/${VH}`, maxHeight: '82vh' }}>
           <svg
             viewBox={`0 0 ${VW} ${VH}`}
             className="w-full h-full"
