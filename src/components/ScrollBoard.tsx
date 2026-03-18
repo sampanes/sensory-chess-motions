@@ -163,7 +163,11 @@ export function ScrollBoard({
   const axis      = level.scrollAxis ?? 'vertical';
   const boardRows = level.boardHeight ?? VISIBLE;
   const boardCols = level.boardWidth  ?? VISIBLE;
-  const frontier  = axis === 'vertical' ? 'high' : 'high';
+  // 'low'  → piece moves toward lower indices (up the board, like D8 row 10→0)
+  // 'high' → piece moves toward higher indices (down the board, like Frontier row 0→N)
+  const frontier: 'low' | 'high' = axis === 'vertical'
+    ? (level.start.row > level.goal.row ? 'low' : 'high')
+    : 'high';
 
   // ── Piece state ──────────────────────────────────────────────────────────
   const [piecePos, setPiecePos]       = useState<Position>(level.start);
@@ -891,14 +895,16 @@ export function ScrollBoard({
           className="absolute pointer-events-none z-20 flex items-center justify-center"
           style={
             axis === 'vertical'
-              ? { top: 6, left: 0, right: 0 }
+              ? frontier === 'low'
+                ? { top: 6, left: 0, right: 0 }    // piece goes up → hint at top
+                : { bottom: 6, left: 0, right: 0 }  // piece goes down → hint at bottom
               : { right: 6, top: 0, bottom: 0 }
           }
           animate={{ opacity: [0.45, 1, 0.45] }}
           transition={{ duration: 1.4, repeat: Infinity }}
         >
           <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 5px rgba(0,0,0,0.7)', lineHeight: 1 }}>
-            {axis === 'vertical' ? '↑' : '→'}
+            {axis === 'vertical' ? (frontier === 'low' ? '↑' : '↓') : '→'}
           </span>
         </motion.div>
       )}

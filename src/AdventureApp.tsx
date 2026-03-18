@@ -816,42 +816,38 @@ function WorldPlay({
                 <span className="font-semibold">2 ★</span> in {level.starThresholds.two}
               </motion.div>
 
-              {/* Dad cheat level-jump controls */}
+              {/* Dad cheat level-jump dots */}
               {skipTrial && (
-                <div className="flex gap-2 justify-center mb-4">
-                  <button
-                    onClick={() => {
-                      const prev = Math.max(0, levelIndex - 1);
-                      setLevelIndex(prev);
-                      setConsumedFood([]);
-                      setTrail([levels[prev].start]);
-                      setMoveCount(0);
-                      setResetCount(c => c + 1);
-                      setIntroStep(prev === 0 ? 0 : 2);
-                    }}
-                    disabled={levelIndex === 0}
-                    className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
-                  >
-                    ◀ Prev level
-                  </button>
-                  <span className="text-xs text-gray-400 self-center">
-                    👨 {levelIndex + 1}/{levels.length}
-                  </span>
-                  <button
-                    onClick={() => {
-                      const next = Math.min(levels.length - 1, levelIndex + 1);
-                      setLevelIndex(next);
-                      setConsumedFood([]);
-                      setTrail([levels[next].start]);
-                      setMoveCount(0);
-                      setResetCount(c => c + 1);
-                      setIntroStep(next === 0 ? 0 : 2);
-                    }}
-                    disabled={levelIndex === levels.length - 1}
-                    className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1 hover:bg-white cursor-pointer bg-white/40 disabled:opacity-30"
-                  >
-                    Next level ▶
-                  </button>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4 max-w-xs">
+                  {levels.map((lvl, i) => (
+                    <button
+                      key={i}
+                      title={lvl.name}
+                      onClick={() => {
+                        setLevelIndex(i);
+                        setConsumedFood([]);
+                        setCapturedEnemies([]);
+                        setTrail([levels[i].start]);
+                        setMoveCount(0);
+                        setResetCount(c => c + 1);
+                        setSelectedPieceType(null);
+                        setIntroStep(i === 0 ? 0 : 2);
+                      }}
+                      style={{
+                        width: 28, height: 28,
+                        borderRadius: '50%',
+                        border: `2px solid ${i === levelIndex ? world.palette.accent : 'rgba(0,0,0,0.18)'}`,
+                        background: i === levelIndex ? world.palette.nodeColor : 'rgba(255,255,255,0.6)',
+                        color: i === levelIndex ? 'white' : world.palette.accent,
+                        fontSize: 11, fontWeight: 700,
+                        cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        padding: 0,
+                      }}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
                 </div>
               )}
 
@@ -984,6 +980,42 @@ function WorldPlay({
             )}
           </motion.span>
         </motion.div>
+
+        {/* Dad-cheat level dots — quick jump to any level in the world */}
+        {skipTrial && (
+          <div className="flex flex-wrap gap-1 justify-center" style={{ position: 'relative', zIndex: 1 }}>
+            {levels.map((lvl, i) => (
+              <button
+                key={i}
+                title={lvl.name}
+                onClick={() => {
+                  setLevelIndex(i);
+                  setConsumedFood([]);
+                  setCapturedEnemies([]);
+                  setTrail([levels[i].start]);
+                  setMoveCount(0);
+                  setResetCount(c => c + 1);
+                  setSelectedPieceType(null);
+                  setIntroStep(i === 0 ? 0 : 2);
+                  setPlayPhase('intro');
+                }}
+                style={{
+                  width: 22, height: 22,
+                  borderRadius: '50%',
+                  border: `2px solid ${i === levelIndex ? world.palette.accent : 'rgba(0,0,0,0.2)'}`,
+                  background: i === levelIndex ? world.palette.nodeColor : 'rgba(255,255,255,0.55)',
+                  color: i === levelIndex ? 'white' : world.palette.accent,
+                  fontSize: 9, fontWeight: 700,
+                  cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  padding: 0,
+                }}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
 
         {effectiveLevel.scrollAxis ? (
           <ScrollBoard
