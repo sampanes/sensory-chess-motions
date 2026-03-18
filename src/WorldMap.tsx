@@ -21,9 +21,9 @@ function worldSVGPos(w: WorldDef) {
   return { x: w.mapPos.x * VW, y: w.mapPos.y * VH };
 }
 
-// Build a smooth SVG path through all world nodes
-function buildPath(): string {
-  const pts = WORLDS.map(worldSVGPos);
+// Build a smooth SVG path through the given world nodes
+function buildPath(worlds: WorldDef[]): string {
+  const pts = worlds.map(worldSVGPos);
   if (pts.length < 2) return '';
   let d = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 1; i < pts.length; i++) {
@@ -36,8 +36,6 @@ function buildPath(): string {
   }
   return d;
 }
-
-const PATH_D = buildPath();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +55,17 @@ interface WorldMapProps {
 
 export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBack, onSelectChallenge, onSelectOracle }: WorldMapProps) {
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
+
+  // Only show unlocked worlds + the single next locked world (surprise teaser).
+  // Worlds further ahead stay hidden so children don't see spoilers.
+  const nextLockedId = WORLDS
+    .map(w => w.id)
+    .filter(id => !unlockedWorlds.includes(id))
+    .reduce((min, id) => Math.min(min, id), Infinity);
+  const visibleWorlds = WORLDS.filter(w =>
+    unlockedWorlds.includes(w.id) || w.id === nextLockedId,
+  );
+  const mapPath = buildPath(visibleWorlds);
 
   const handleNodeClick = (world: WorldDef) => {
     if (!unlockedWorlds.includes(world.id)) {
@@ -113,7 +122,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
           >
             {/* Dashed winding path */}
             <path
-              d={PATH_D}
+              d={mapPath}
               fill="none"
               stroke="rgba(255,255,255,0.35)"
               strokeWidth={10}
@@ -123,7 +132,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
             />
             {/* Solid inner path highlight */}
             <path
-              d={PATH_D}
+              d={mapPath}
               fill="none"
               stroke="rgba(255,255,255,0.18)"
               strokeWidth={4}
@@ -131,7 +140,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
             />
             {/* Animated draw-in: bright line sweeps the path on mount, then fades */}
             <motion.path
-              d={PATH_D}
+              d={mapPath}
               fill="none"
               stroke="rgba(255,255,255,0.75)"
               strokeWidth={6}
@@ -144,8 +153,8 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
               }}
             />
 
-            {/* World nodes */}
-            {WORLDS.map(world => {
+            {/* World nodes — only visible worlds rendered */}
+            {visibleWorlds.map(world => {
               const pos = worldSVGPos(world);
               const completed = completedWorlds.includes(world.id);
               const unlocked = unlockedWorlds.includes(world.id);

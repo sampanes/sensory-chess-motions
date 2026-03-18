@@ -37,8 +37,8 @@ const PEEK = 0.15;
  * After a piece move, compute the new viewport anchor (the world index at the
  * scroll-axis start of the visible window).
  *
- * frontier = 'low'  → piece moves toward lower indices (vertical, going up)
- * frontier = 'high' → piece moves toward higher indices (horizontal, going right)
+ * frontier = 'low'  → piece moves toward lower indices (horizontal, going left — unused)
+ * frontier = 'high' → piece moves toward higher indices (vertical going down, horizontal going right)
  */
 function computeAnchor(
   pieceAxis: number,
@@ -156,7 +156,7 @@ export function ScrollBoard({
   const axis      = level.scrollAxis ?? 'vertical';
   const boardRows = level.boardHeight ?? VISIBLE;
   const boardCols = level.boardWidth  ?? VISIBLE;
-  const frontier  = axis === 'vertical' ? 'low' : 'high';
+  const frontier  = axis === 'vertical' ? 'high' : 'high';
 
   // ── Piece state ──────────────────────────────────────────────────────────
   const [piecePos, setPiecePos]       = useState<Position>(level.start);
@@ -321,7 +321,7 @@ export function ScrollBoard({
       try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     }
 
-    // For vertical (piece goes up / frontier=low): dragging UP (neg delta) peeks toward top
+    // For vertical (piece goes down / frontier=high): dragging UP (neg delta) peeks toward top
     // For horizontal (piece goes right / frontier=high): dragging LEFT (neg delta) peeks toward right
     const rawPeekDelta = axis === 'vertical' ? -rawDelta : rawDelta;
     const newPeek = dragStartRef.current.peek + rawPeekDelta;

@@ -7,7 +7,7 @@
  *
  * Axis conventions:
  *   vertical   — world extends in rows (top = row 0, bottom = row N-1)
- *                Piece moves UP toward the goal. strips[0] = topmost row.
+ *                Piece moves DOWN toward the goal. strips[0] = topmost row (start side).
  *   horizontal — world extends in cols (left = col 0, right = col N-1)
  *                Piece moves RIGHT toward the goal. strips[0] = leftmost col.
  *

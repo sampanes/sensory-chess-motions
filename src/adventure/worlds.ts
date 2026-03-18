@@ -56,7 +56,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Pawn's Farm",
       nextTeaserEmoji: '🌾',
     },
-    mapPos: { x: 0.15, y: 0.78 },
+    mapPos: { x: 0.18, y: 0.90 },
   },
   {
     id: 1,
@@ -78,7 +78,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Rook's Roads",
       nextTeaserEmoji: '🛤️',
     },
-    mapPos: { x: 0.36, y: 0.58 },
+    mapPos: { x: 0.52, y: 0.80 },
   },
   {
     id: 2,
@@ -100,7 +100,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Bishop's Grove",
       nextTeaserEmoji: '🌲',
     },
-    mapPos: { x: 0.57, y: 0.68 },
+    mapPos: { x: 0.83, y: 0.72 },
   },
   {
     id: 3,
@@ -122,7 +122,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Knight's Mountains",
       nextTeaserEmoji: '⛰️',
     },
-    mapPos: { x: 0.70, y: 0.42 },
+    mapPos: { x: 0.65, y: 0.62 },
   },
   {
     id: 4,
@@ -144,7 +144,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Paired Path',
       nextTeaserEmoji: '🤝',
     },
-    mapPos: { x: 0.82, y: 0.56 },
+    mapPos: { x: 0.84, y: 0.51 },
   },
   {
     id: 5,
@@ -166,7 +166,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Queen's Realm",
       nextTeaserEmoji: '👑',
     },
-    mapPos: { x: 0.88, y: 0.37 },
+    mapPos: { x: 0.64, y: 0.40 },
   },
   {
     id: 6,
@@ -189,7 +189,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Starfield Frontier',
       nextTeaserEmoji: '🌌',
     },
-    mapPos: { x: 0.93, y: 0.18 },
+    mapPos: { x: 0.88, y: 0.27 },
   },
   {
     id: 7,
@@ -213,7 +213,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Shadow Pieces',
       nextTeaserEmoji: '👥',
     },
-    mapPos: { x: 0.5, y: 0.06 },
+    mapPos: { x: 0.55, y: 0.14 },
   },
   {
     id: 8,
@@ -236,7 +236,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The First Board',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.25, y: 0.08 },
+    mapPos: { x: 0.22, y: 0.06 },
   },
   {
     id: 9,
@@ -259,7 +259,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "The Pawn's Crown",
       nextTeaserEmoji: '👑',
     },
-    mapPos: { x: 0.08, y: 0.12 },
+    mapPos: { x: 0.08, y: 0.17 },
   },
   {
     id: 10,
@@ -282,7 +282,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The First Check',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.22, y: 0.3 },
+    mapPos: { x: 0.28, y: 0.30 },
   },
   {
     id: 11,
@@ -305,7 +305,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Grand Finale',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.42, y: 0.22 },
+    mapPos: { x: 0.50, y: 0.20 },
   },
   {
     id: 12,
@@ -327,7 +327,7 @@ export const WORLDS: WorldDef[] = [
         "This is chess. You've been playing it all along.",
       ],
     },
-    mapPos: { x: 0.60, y: 0.14 },
+    mapPos: { x: 0.72, y: 0.08 },
   },
 ];
 

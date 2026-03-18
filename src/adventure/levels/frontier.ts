@@ -68,8 +68,8 @@ export const frontierLevels: Level[] = [
   // ── S3 — Gate Maze ───────────────────────────────────────────────────────
   // Two laser-gate fences block straight paths. Knight jumps over both in 2 moves.
   // Rook must find narrow gaps, taking 5+ moves.
-  // Gate 1: fB on row 3, all cols except col 2  (gap at col 2)
-  // Gate 2: fB on row 1, all cols except col 1  (gap at col 1)
+  // Gate 1: fB on row 1, all cols except col 2  (gap at col 2)
+  // Gate 2: fB on row 3, all cols except col 1  (gap at col 1)
   compileScrollLevel({
     name: 'Gate Maze',
     description: 'Laser gates seal every straight corridor. Something that can leap over them will cut through in seconds.',
@@ -83,12 +83,12 @@ export const frontierLevels: Level[] = [
     ],
     contrastTakeaway: 'Gates are walls to sliders. The knight doesn\'t even see them.',
     strips: [
-      // strips[i] = row i for vertical axis
-      /* row 0 */ [0,   0,   'G', 0,   0  ],
-      /* row 1 */ [{ fB: true }, 0, { fB: true }, { fB: true }, { fB: true }],
+      // strips[i] = row i for vertical axis (piece starts top, moves down to goal)
+      /* row 0 */ [0,   0,   'S', 0,   0  ],
+      /* row 1 */ [{ fB: true }, { fB: true }, 0, { fB: true }, { fB: true }],
       /* row 2 */ [0,   0,   0,   0,   0  ],
-      /* row 3 */ [{ fB: true }, { fB: true }, 0, { fB: true }, { fB: true }],
-      /* row 4 */ [0,   0,   'S', 0,   0  ],
+      /* row 3 */ [{ fB: true }, 0, { fB: true }, { fB: true }, { fB: true }],
+      /* row 4 */ [0,   0,   'G', 0,   0  ],
     ],
   }),
 
@@ -177,11 +177,12 @@ export const frontierLevels: Level[] = [
     ],
     contrastTakeaway: 'Rifts and gates are invisible to the knight. Every other piece has to find a way around.',
     strips: [
-      /* row 0 */ [0,   0,   'G', 0,   0  ],
+      // piece starts top, moves down to goal
+      /* row 0 */ [0,   0,   'S', 0,   0  ],
       /* row 1 */ [0,  'R',   0, 'R',  0  ],
       /* row 2 */ [0, { fB: true }, { fB: true }, { fB: true }, 0],
       /* row 3 */ [0,  'R',   0, 'R',  0  ],
-      /* row 4 */ [0,   0,   'S', 0,   0  ],
+      /* row 4 */ [0,   0,   'G', 0,   0  ],
     ],
   }),
 
@@ -220,14 +221,14 @@ export const frontierLevels: Level[] = [
 
   // ── S8 — Frontier Convergence ────────────────────────────────────────────
   // [↕ vertical scroll] 11-row finale.
-  // Lower zone (rows 5–10): open highway — rook slides freely.
-  // Upper zone (rows 0–4): rift clusters flanking col 2 — requires navigation.
-  // Default piece: rook (races through lower zone, navigates upper).
-  // With piece selector: try knight to cut through the upper zone with L-jumps.
+  // Upper zone (rows 0–6): open highway — rook slides freely.
+  // Lower zone (rows 7–10): rift clusters flanking col 2 — requires navigation.
+  // Default piece: rook (races through upper zone, navigates lower).
+  // With piece selector: try knight to cut through the lower zone with L-jumps.
   compileScrollLevel({
     name: 'Frontier Convergence',
-    description: 'Half open highway, half rift field. One piece blazes through the vacuum below — but can it handle the maze above?',
-    hint: 'The rook is fast on the open stretch. For the rift field up top, think about what can jump.',
+    description: 'Half open highway, half rift field. One piece blazes through the vacuum — but can it handle the maze at the end?',
+    hint: 'The rook is fast on the open stretch. For the rift field ahead, think about what can jump.',
     pieceType: 'rook',
     axis: 'vertical',
     starThresholds: { three: 3, two: 5 },
@@ -237,18 +238,18 @@ export const frontierLevels: Level[] = [
     ],
     contrastTakeaway: 'Two terrains, two challenges. No single piece dominates everything — that\'s the frontier.',
     strips: [
-      // strips[i] = row i (row 0 = top/goal, row 10 = bottom/start)
-      /* row 0  */ [0,   0,   'G', 0,   0  ],
-      /* row 1  */ [0,  'R',   0, 'R',  0  ],  // rifts flanking col 2
-      /* row 2  */ ['R', 0,    0,  0,  'R'],   // outer rifts
-      /* row 3  */ [0,  'R',   0, 'R',  0  ],  // rifts again
-      /* row 4  */ [0,   0,    0,  0,   0  ],  // clear transition
-      /* row 5  */ [0,   0,    0,  0,   0  ],  // open rook highway begins
-      /* row 6  */ [0,   0,    0,  0,   0  ],
-      /* row 7  */ [0,   0,    0,  0,   0  ],
-      /* row 8  */ [0,   0,    0,  0,   0  ],
-      /* row 9  */ [0,   0,    0,  0,   0  ],
-      /* row 10 */ [0,   0,   'S', 0,   0  ],
+      // strips[i] = row i (row 0 = top/start, row 10 = bottom/goal)
+      /* row 0  */ [0,   0,   'S', 0,   0  ],
+      /* row 1  */ [0,   0,    0,  0,   0  ],  // open rook highway
+      /* row 2  */ [0,   0,    0,  0,   0  ],
+      /* row 3  */ [0,   0,    0,  0,   0  ],
+      /* row 4  */ [0,   0,    0,  0,   0  ],
+      /* row 5  */ [0,   0,    0,  0,   0  ],
+      /* row 6  */ [0,   0,    0,  0,   0  ],  // clear transition
+      /* row 7  */ [0,  'R',   0, 'R',  0  ],  // rifts flanking col 2
+      /* row 8  */ ['R', 0,    0,  0,  'R'],   // outer rifts
+      /* row 9  */ [0,  'R',   0, 'R',  0  ],  // rifts again
+      /* row 10 */ [0,   0,   'G', 0,   0  ],
     ],
   }),
 ];
