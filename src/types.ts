@@ -152,3 +152,26 @@ export type Level = {
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';
+
+// ─── Free Play Chess Game ──────────────────────────────────────────────────
+
+export type PieceColor = 'white' | 'black';
+
+export type GamePiece = {
+  id: string;
+  color: PieceColor;
+  pieceType: PieceType;
+  position: Position;
+  hasMoved?: boolean;
+};
+
+export type ChessPhase = 'playing' | 'check' | 'checkmate' | 'stalemate';
+
+export type ChessGameState = {
+  pieces: GamePiece[];
+  turn: PieceColor;
+  phase: ChessPhase;
+  selectedId: string | null;
+  legalTargets: Position[];
+  lastMove?: { from: Position; to: Position; capturedId?: string };
+};
