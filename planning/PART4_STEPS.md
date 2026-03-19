@@ -3,6 +3,15 @@
 
 ---
 
+## Status (as of 18 Mar 2026)
+
+**M26–M31: COMPLETE.** All six milestones committed. World 13 (The Dark Sector) is fully implemented: patrol sentinels, watch phase, catch sequence, near-miss/clean-escape, D1–D8 escalation arc, trap mode, T1–T4 king-trapping puzzles, king collapse animation, checkmate celebration.
+
+**The Hunt Mechanic section below (guardPieces, huntTarget, watchedSquares removal): DEFERRED.**
+It was designed before the milestones were written but never assigned a milestone number. The `watchedSquares` field still works — levels built on it (firstcheck.ts P1a–P5b, queen.ts Q7–Q9) function correctly. The Hunt Mechanic is queued as M36–M38 *after* the Part 5 free-play game.
+
+---
+
 ## Pre-Milestone Bug Fixes
 
 Complete these before starting any Part 4 milestones.

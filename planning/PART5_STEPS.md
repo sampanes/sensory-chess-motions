@@ -3,6 +3,17 @@
 
 ---
 
+## Status (as of 18 Mar 2026)
+
+- **M32 ✅ COMPLETE** — `src/utils/gameEngine.ts` + `PieceColor`/`GamePiece`/`ChessPhase`/`ChessGameState` types. Gardner's Minichess starting position. `getLegalMoves`, `applyMove`, `isInCheck`, `isCheckmate`, `isStalemate`. `tsc --noEmit` clean.
+- **M33** — FreePlayBoard + FreePlayGame + GameHUD. *Next.*
+- **M34** — Check glow, GameOverScreen, checkmate/stalemate UI.
+- **M35** — Story integration, entry point, first-game orientation.
+
+**Note:** `GamePhase` was already in use for the adventure game. The chess game uses `ChessPhase` instead.
+
+---
+
 Everything up to this point has been puzzles. The child moved one piece at a time — reach the flag, capture the shadow, trap the king. The rules were always curated. The board was always arranged in their favour. There was always a right answer.
 
 Chess is not that.
