@@ -1242,19 +1242,30 @@ function WorldPlay({
 
   // ── Celebration ──
   if (playPhase === 'celebration') {
+    const isSpace = world.spaceTheme;
     return (
-      <div className="min-h-screen bg-gradient-to-b from-yellow-200 via-amber-100 to-orange-100 flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-5 p-6 text-center overflow-hidden"
+        style={{
+          background: isSpace
+            ? 'linear-gradient(to bottom, #020617, #0f172a, #1e1b4b)'
+            : 'linear-gradient(to bottom, #fef9c3, #fde68a, #fed7aa)',
+        }}
+      >
+        {isSpace && <StarfieldCanvas speedMultiplier={darkCoreMultiplier} />}
         {/* Falling emoji stream */}
         {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute text-2xl select-none pointer-events-none"
-            style={{ left: `${(i * 8.5) % 100}vw` }}
+            style={{ left: `${(i * 8.5) % 100}vw`, zIndex: 1 }}
             initial={{ y: -120, opacity: 1 }}
             animate={{ y: '110vh', rotate: Math.random() * 720 - 360, opacity: [1, 1, 0] }}
             transition={{ duration: 3 + Math.random() * 2, delay: Math.random() * 1.2, repeat: Infinity, ease: 'linear' }}
           >
-            {[world.emoji, '⭐', '✨', '🌟', '🎊', '💛'][i % 6]}
+            {isSpace
+              ? [world.emoji, '⭐', '✨', '🌟', '💫', '🌌'][i % 6]
+              : [world.emoji, '⭐', '✨', '🌟', '🎊', '💛'][i % 6]}
           </motion.div>
         ))}
 
@@ -1268,7 +1279,9 @@ function WorldPlay({
               className="fixed pointer-events-none"
               style={{
                 width: `${5 + i % 4}px`, height: `${3 + i % 3}px`,
-                background: ['#fbbf24','#f87171','#34d399','#60a5fa','#a78bfa','#fb7185'][i % 6],
+                background: isSpace
+                  ? ['#818cf8','#a78bfa','#38bdf8','#34d399','#fb923c','#f472b6'][i % 6]
+                  : ['#fbbf24','#f87171','#34d399','#60a5fa','#a78bfa','#fb7185'][i % 6],
                 borderRadius: '1px', top: '50%', left: '50%', zIndex: 50,
               }}
               initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
@@ -1294,7 +1307,7 @@ function WorldPlay({
             >
               <div className="text-2xl mb-1">👑</div>
               <ChessPieceIcon type={promotedPiece} size={64} />
-              <p className="text-amber-700 font-bold mt-1 capitalize">
+              <p className={`font-bold mt-1 capitalize ${isSpace ? 'text-indigo-300' : 'text-amber-700'}`}>
                 The pawn became a {promotedPiece}!
               </p>
             </motion.div>
@@ -1310,15 +1323,15 @@ function WorldPlay({
             </motion.div>
           )}
           <div className="text-5xl mb-2">🎉</div>
-          <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
+          <h2 className={`text-3xl font-extrabold mb-1 ${isSpace ? 'text-white' : 'text-gray-800'}`}>
             {lastStars === 3 ? 'Perfect!' : lastStars === 2 ? 'Well done!' : 'You made it!'}
           </h2>
-          <p className="text-gray-600 mb-4">
+          <p className={`mb-4 ${isSpace ? 'text-indigo-200' : 'text-gray-600'}`}>
             {level.trapMode
-              ? <><strong className="text-gray-800">Checkmate.</strong> The king had nowhere to go. {moveCount} move{moveCount !== 1 ? 's' : ''}.</>
+              ? <><strong className={isSpace ? 'text-white' : 'text-gray-800'}>Checkmate.</strong> The king had nowhere to go. {moveCount} move{moveCount !== 1 ? 's' : ''}.</>
               : level.captureAll
-              ? <>Captured all shadows in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
-              : <>Reached the flag in <span className="font-bold text-amber-600">{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
+              ? <>Captured all shadows in <span className={`font-bold ${isSpace ? 'text-indigo-300' : 'text-amber-600'}`}>{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
+              : <>Reached the flag in <span className={`font-bold ${isSpace ? 'text-indigo-300' : 'text-amber-600'}`}>{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
             }
           </p>
 
@@ -1386,7 +1399,7 @@ function WorldPlay({
             {lastStars < 3 && (
               <motion.button
                 onClick={startLevel}
-                className="text-sky-600 font-semibold hover:underline cursor-pointer bg-transparent border-none text-sm"
+                className={`font-semibold hover:underline cursor-pointer bg-transparent border-none text-sm ${isSpace ? 'text-indigo-300' : 'text-sky-600'}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
@@ -1400,7 +1413,11 @@ function WorldPlay({
                 const url = encodeBuiltinChallenge(worldId, levelIndex);
                 navigator.clipboard?.writeText(url).catch(() => {});
               }}
-              className="text-sm text-sky-600 border border-sky-300 rounded-xl px-4 py-2 bg-sky-50 hover:bg-sky-100 cursor-pointer"
+              className="text-sm rounded-xl px-4 py-2 cursor-pointer"
+              style={isSpace
+                ? { color: '#a5b4fc', border: '1px solid rgba(129,140,248,0.4)', background: 'rgba(30,27,75,0.6)' }
+                : { color: '#0284c7', border: '1px solid #bae6fd', background: '#f0f9ff' }
+              }
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}

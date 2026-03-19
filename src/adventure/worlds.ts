@@ -215,7 +215,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Shadow Pieces',
       nextTeaserEmoji: '👥',
     },
-    mapPos: { x: 0.55, y: 0.14 },
+    mapPos: { x: 0.72, y: 0.20 },
   },
   {
     id: 8,
@@ -238,7 +238,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The First Board',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.22, y: 0.06 },
+    mapPos: { x: 0.22, y: 0.08 },
   },
   {
     id: 9,
@@ -284,7 +284,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The First Check',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.28, y: 0.30 },
+    mapPos: { x: 0.20, y: 0.25 },
   },
   {
     id: 11,
@@ -307,7 +307,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Grand Finale',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.50, y: 0.20 },
+    mapPos: { x: 0.38, y: 0.30 },
   },
   {
     id: 12,
@@ -331,7 +331,7 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Dark Sector',
       nextTeaserEmoji: '🛸',
     },
-    mapPos: { x: 0.72, y: 0.08 },
+    mapPos: { x: 0.52, y: 0.12 },
   },
   {
     id: 13,
@@ -355,7 +355,7 @@ export const WORLDS: WorldDef[] = [
         "That's the real game. You just played it.",
       ],
     },
-    mapPos: { x: 0.74, y: 0.04 },
+    mapPos: { x: 0.75, y: 0.06 },
   },
 ];
 

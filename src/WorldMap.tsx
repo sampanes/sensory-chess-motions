@@ -404,7 +404,7 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
         <Roster completedWorlds={completedWorlds} />
       </div>
 
-      {/* Dad-cheat: discreet progress reset button */}
+      {/* Dad-cheat: progress reset button — only visible behind ?dadcheat URL */}
       {isDadCheat && (
         <button
           onClick={() => {
@@ -414,18 +414,18 @@ export function WorldMap({ completedWorlds, unlockedWorlds, onSelectWorld, onBac
               clearAllProgress();
             }
           }}
-          className="fixed bottom-4 left-3 text-xs font-medium border-none cursor-pointer rounded-lg px-2 py-1"
+          className="fixed bottom-4 left-3 font-semibold border-2 cursor-pointer rounded-xl px-3 py-2"
           style={{
-            background: 'rgba(0,0,0,0.35)',
-            color: 'white',
-            opacity: resetState === 'confirming' ? 1 : 0.35,
-            transition: 'opacity 0.2s',
+            fontSize: 13,
+            background: resetState === 'confirming' ? 'rgba(185,28,28,0.92)' : 'rgba(30,30,40,0.82)',
+            color: resetState === 'confirming' ? 'white' : '#fca5a5',
+            borderColor: resetState === 'confirming' ? '#ef4444' : 'rgba(239,68,68,0.45)',
+            boxShadow: resetState === 'confirming' ? '0 0 12px rgba(239,68,68,0.5)' : 'none',
+            transition: 'all 0.2s',
             zIndex: 50,
           }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = resetState === 'confirming' ? '1' : '0.35')}
         >
-          {resetState === 'idle' ? '⚠ Reset all progress' : 'Tap again to confirm — this erases everything'}
+          {resetState === 'idle' ? '⚠ Reset progress' : '🔴 Tap again — erases everything'}
         </button>
       )}
 
