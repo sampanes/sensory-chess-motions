@@ -337,10 +337,8 @@ export function DuoBoard({
 
           {/* Custom threat overlay — hand-crafted zones (watchedSquares) */}
           {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
-              style={{ background: 'rgba(239,68,68,0.22)' }}>
-              <span className="text-xs opacity-40 select-none">👁</span>
-            </div>
+            <div className="absolute inset-0 pointer-events-none"
+              style={{ background: 'rgba(239,68,68,0.20)' }} />
           )}
 
           {river && !bridge && (

@@ -117,20 +117,29 @@ const p3b: Level = {
 
 // ── Pair 4 — Checkmate ───────────────────────────────────────────────────────
 
-/** P4a — King must navigate through a gauntlet of watched squares. */
+/**
+ * P4a — King threads between two bishop sentinels whose crossing diagonals
+ * close off most of the board.
+ *
+ * Bishop at (3,0): threatens (2,1),(1,2),(0,3),(4,1).
+ * Bishop at (1,4): threatens (0,3),(2,3),(3,2),(4,1).
+ * Combined: (0,3),(1,2),(2,1),(2,3),(3,2),(4,1) + guard squares (3,0),(1,4).
+ *
+ * One optimal 4-move path: (4,0)→(3,1)→(2,2)→(1,3)→(0,4).
+ */
 const p4a: Level = {
   name: 'Closing In',
-  description: 'The guards surround the path. The king has fewer and fewer safe squares to step on.',
-  hint: 'Hug the edges and move one diagonal at a time.',
+  description: 'Two bishop sentinels watch the crossing diagonals. Most of the board is covered — the king must find the one safe path between them.',
+  hint: 'The bishops watch the X-shapes. Hug the center gap — straight through the middle.',
   pieceType: 'king',
   start: { row: 4, col: 0 },
   goal:  { row: 0, col: 4 },
   boardHeight: 5, boardWidth: 5,
-  starThresholds: { three: 8, two: 11 },
+  starThresholds: { three: 4, two: 7 },
   obstacles: EMPTY,
-  watchedSquares: [
-    { row: 1, col: 1 }, { row: 2, col: 1 }, { row: 3, col: 1 },
-    { row: 1, col: 2 }, { row: 1, col: 3 },
+  guardPieces: [
+    { pieceType: 'bishop', position: { row: 3, col: 0 } },
+    { pieceType: 'bishop', position: { row: 1, col: 4 } },
   ],
 };
 
