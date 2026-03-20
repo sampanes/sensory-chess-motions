@@ -215,6 +215,41 @@ export function applyMove(from: Position, to: Position, state: ChessGameState): 
   };
 }
 
+// ─── Simple AI ────────────────────────────────────────────────────────────────
+
+const PIECE_VALUE: Record<PieceType, number> = {
+  queen: 9, rook: 5, bishop: 3, knight: 3, pawn: 1, king: 0,
+};
+
+/**
+ * Returns one legal move for the active side using a simple 1-ply greedy heuristic:
+ * prefer captures by piece value, pick randomly among equals (and among non-captures).
+ * Returns null if no moves exist (should not happen — caller checks phase first).
+ */
+export function getAIMove(state: ChessGameState): { from: Position; to: Position } | null {
+  const { pieces, turn } = state;
+
+  type Candidate = { from: Position; to: Position; score: number };
+  const candidates: Candidate[] = [];
+
+  for (const piece of pieces.filter(p => p.color === turn)) {
+    for (const target of getLegalMovesFromPieces(piece, pieces)) {
+      const captured = pieceAt(target.row, target.col, pieces);
+      candidates.push({
+        from: piece.position,
+        to: target,
+        score: captured ? PIECE_VALUE[captured.pieceType] : 0,
+      });
+    }
+  }
+
+  if (candidates.length === 0) return null;
+
+  const maxScore = Math.max(...candidates.map(c => c.score));
+  const best = candidates.filter(c => c.score === maxScore);
+  return best[Math.floor(Math.random() * best.length)];
+}
+
 // Convenience exports for external use
 export function isCheckmate(color: PieceColor, pieces: GamePiece[]): boolean {
   if (!isInCheck(color, pieces)) return false;

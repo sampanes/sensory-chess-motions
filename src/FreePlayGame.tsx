@@ -5,6 +5,7 @@ import {
   buildInitialGameState,
   getLegalMoves,
   applyMove,
+  getAIMove,
 } from './utils/gameEngine';
 import { FreePlayBoard } from './components/FreePlayBoard';
 import { GameHUD } from './components/GameHUD';
@@ -69,6 +70,18 @@ export function FreePlayGame() {
     }
   }, [gameState.phase, showOrientation]);
 
+  // AI plays black — fires after each state update where it's black's turn
+  useEffect(() => {
+    if (gameState.turn !== 'black') return;
+    if (gameState.phase === 'checkmate' || gameState.phase === 'stalemate') return;
+    const t = setTimeout(() => {
+      const move = getAIMove(gameState);
+      if (move) setGameState(s => applyMove(move.from, move.to, s));
+    }, 650);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState.turn, gameState.phase]);
+
   function handleDismissStory() {
     localStorage.setItem('tbk_freeplay_seen', '1');
     setShowStory(false);
@@ -77,6 +90,7 @@ export function FreePlayGame() {
   function handleSquareClick(row: number, col: number) {
     const { pieces, turn, phase, selectedId, legalTargets } = gameState;
     if (phase === 'checkmate' || phase === 'stalemate') return;
+    if (turn === 'black') return; // AI's turn — ignore player input
 
     const clickedPiece = pieces.find(p => p.position.row === row && p.position.col === col);
 
@@ -147,7 +161,7 @@ export function FreePlayGame() {
                   animate={{ opacity: 0.75 }}
                   exit={{ opacity: 0 }}
                 >
-                  You are White.&nbsp; Tap a piece to move.
+                  You are White.&nbsp; The opponent plays Black.
                 </motion.p>
               )}
             </AnimatePresence>
