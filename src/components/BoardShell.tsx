@@ -167,10 +167,15 @@ export function BoardShell({
   useEffect(() => {
     // Guard pieces and their threat zones are impassable — merge into obstacles.rivers.
     // Knights ignore them naturally (they jump rivers). watchedSquares kept for Q8/Q9.
+    // huntTarget threat zone is also impassable (player must approach from its blind side).
+    const htThreat = level.huntTarget
+      ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, { fences: [], rivers: [], bridges: [], food: [] }, [], numRows, numCols)
+      : [];
     const baseRivers = [
       ...level.obstacles.rivers,
       ...computeGuardThreat(level.guardPieces ?? [], numRows, numCols),
       ...(level.watchedSquares ?? []),
+      ...htThreat,
       ...sealedRivers,
     ];
     const baseBridges = level.obstacles.bridges.filter(
@@ -189,7 +194,9 @@ export function BoardShell({
     const allCaptured = level.captureAll
       ? capturedEnemies.length >= (level.enemies?.length ?? 0)
       : false;
-    const atGoal = allCaptured || (!level.captureAll && piecePos.row === level.goal.row && piecePos.col === level.goal.col);
+    const atGoal = allCaptured
+      || (!level.captureAll && piecePos.row === level.goal.row && piecePos.col === level.goal.col)
+      || !!(level.huntTarget && piecePos.row === level.huntTarget.position.row && piecePos.col === level.huntTarget.position.col);
     if (moves.length === 0 && animKey > 0 && !atGoal) {
       onStuck(true);
       playWompSound();
@@ -396,6 +403,15 @@ export function BoardShell({
   const isGuardSquare = (r: number, c: number) =>
     level.guardPieces?.some(g => g.position.row === r && g.position.col === c) ?? false;
 
+  // Precompute huntTarget threat set — threat zone only (not the target's own square)
+  const EMPTY_OBS_HT = { fences: [], rivers: [], bridges: [], food: [] };
+  const huntTargetThreat = level.huntTarget
+    ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, EMPTY_OBS_HT, [], numRows, numCols)
+    : [];
+  const huntTargetThreatSet = new Set(huntTargetThreat.map(p => `${p.row},${p.col}`));
+  const isHuntTarget = (r: number, c: number) =>
+    level.huntTarget?.position.row === r && level.huntTarget?.position.col === c;
+
   return (
     <>
       <motion.div
@@ -440,6 +456,12 @@ export function BoardShell({
 
                 {/* Guard piece threat zone — shown on threatened cells, not on the guard itself */}
                 {!river && !bridge && guardThreatSet.has(`${r},${c}`) && !isGuardSquare(r, c) && (
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: 'rgba(239,68,68,0.20)' }} />
+                )}
+
+                {/* Hunt target threat zone — same red wash, excludes the target's own square */}
+                {!river && !bridge && huntTargetThreatSet.has(`${r},${c}`) && !isHuntTarget(r, c) && (
                   <div className="absolute inset-0 pointer-events-none"
                     style={{ background: 'rgba(239,68,68,0.20)' }} />
                 )}
@@ -809,6 +831,32 @@ export function BoardShell({
             </div>
           </div>
         ))}
+
+        {/* ── Hunt target — capturable enemy; brighter tint + pulsing ring ── */}
+        {level.huntTarget && (
+          <div
+            style={{
+              position: 'absolute',
+              top: level.huntTarget.position.row * squareSize,
+              left: level.huntTarget.position.col * squareSize,
+              width: squareSize,
+              height: squareSize,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 9,
+            }}
+          >
+            <motion.div
+              style={{ position: 'absolute', inset: -2, borderRadius: 4, border: '2px solid rgba(239,68,68,0.65)' }}
+              animate={{ boxShadow: ['0 0 6px 2px rgba(239,68,68,0.30)', '0 0 16px 5px rgba(239,68,68,0.65)', '0 0 6px 2px rgba(239,68,68,0.30)'] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div style={{ position: 'absolute', top: 2, right: 3, fontSize: squareSize * 0.2, opacity: 0.45, userSelect: 'none' }}>⊕</div>
+            <div style={{ filter: 'hue-rotate(340deg) saturate(2.2) brightness(0.85)', opacity: 0.95 }}>
+              <ChessPieceIcon type={level.huntTarget.pieceType} size={squareSize * 0.78} />
+            </div>
+          </div>
+        )}
 
         {/* ── Sentinel pieces ── */}
         {(patrolPieces ?? []).map((patrol, si) => {

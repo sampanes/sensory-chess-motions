@@ -17,6 +17,7 @@ import { revealLevels } from './reveal';
 import { crownLevels } from './crown';
 import { firstCheckLevels } from './firstcheck';
 import { darkSectorLevels } from './darksector';
+import { huntLevels } from './hunt';
 
 export { act1KingLevels } from './king';
 export { farmLevels } from './farm';
@@ -31,6 +32,7 @@ export { revealLevels } from './reveal';
 export { crownLevels } from './crown';
 export { firstCheckLevels } from './firstcheck';
 export { darkSectorLevels } from './darksector';
+export { huntLevels } from './hunt';
 
 // Register single-piece worlds
 WORLD_LEVELS[0] = act1KingLevels;
@@ -52,6 +54,8 @@ WORLD_LEVELS[10] = crownLevels;
 WORLD_LEVELS[11] = firstCheckLevels;
 // World 13 — The Dark Sector (patrol sentinels)
 WORLD_LEVELS[13] = darkSectorLevels;
+// World 14 — The Blind Spot (hunt mechanic)
+WORLD_LEVELS[14] = huntLevels;
 
 // Register two-piece worlds
 DUO_WORLD_LEVELS[5] = duoLevels;

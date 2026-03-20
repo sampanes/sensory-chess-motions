@@ -357,6 +357,28 @@ export const WORLDS: WorldDef[] = [
     },
     mapPos: { x: 0.75, y: 0.06 },
   },
+  {
+    id: 14,
+    name: 'The Blind Spot',
+    emoji: '🎯',
+    tagline: 'Every piece has a weakness. Find it.',
+    palette: {
+      bg: 'linear-gradient(to bottom, #1a0a0a, #2d0f0f, #1a1208)',
+      accent: '#dc2626',
+      nodeColor: '#ef4444',
+    },
+    story: {
+      title: 'You Found the Blind Spot',
+      paragraphs: [
+        'The rook watches every row and column — but never a diagonal.',
+        'The bishop watches every diagonal — but never a row or column.',
+        'The queen watches everything — except the square an L away.',
+        "You knew where they couldn't see. That's how you caught them.",
+        'Every piece has a blind spot. Now you know them all.',
+      ],
+    },
+    mapPos: { x: 0.62, y: 0.18 },
+  },
 ];
 
 // ─── Unlock logic ─────────────────────────────────────────────────────────────

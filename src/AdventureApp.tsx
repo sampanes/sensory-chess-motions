@@ -570,6 +570,19 @@ function WorldPlay({
       return; // trapMode levels never use the goal-flag check
     }
 
+    // huntTarget win: player lands on the hunt target's square
+    if (effectiveLevel.huntTarget &&
+        newPos.row === effectiveLevel.huntTarget.position.row &&
+        newPos.col === effectiveLevel.huntTarget.position.col) {
+      saveGhostIfBest(worldId, levelIndex, newTrail);
+      setLastStars(getStars(level.starThresholds, next));
+      setTimeout(() => {
+        playCelebrationSound(pieceType);
+        setPlayPhase('celebration');
+      }, 600);
+      return;
+    }
+
     if (!level.captureAll && newPos.row === level.goal.row && newPos.col === level.goal.col) {
       saveGhostIfBest(worldId, levelIndex, newTrail);
       setLastStars(getStars(level.starThresholds, next));
@@ -1346,6 +1359,8 @@ function WorldPlay({
           <p className={`mb-4 ${isSpace ? 'text-indigo-200' : 'text-gray-600'}`}>
             {level.trapMode
               ? <><strong className={isSpace ? 'text-white' : 'text-gray-800'}>Checkmate.</strong> The king had nowhere to go. {moveCount} move{moveCount !== 1 ? 's' : ''}.</>
+              : level.huntTarget
+              ? <><strong className={isSpace ? 'text-white' : 'text-gray-800'}>You found its blind spot.</strong> Captured in <span className={`font-bold ${isSpace ? 'text-indigo-300' : 'text-amber-600'}`}>{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
               : level.captureAll
               ? <>Captured all shadows in <span className={`font-bold ${isSpace ? 'text-indigo-300' : 'text-amber-600'}`}>{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>
               : <>Reached the flag in <span className={`font-bold ${isSpace ? 'text-indigo-300' : 'text-amber-600'}`}>{moveCount}</span> move{moveCount !== 1 ? 's' : ''}.</>

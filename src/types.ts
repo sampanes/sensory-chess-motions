@@ -152,6 +152,14 @@ export type Level = {
    * they need to cover.
    */
   showKingEscapes?: boolean;
+  /**
+   * The level's goal is to CAPTURE this piece — no flag is shown.
+   * Set goal to { row: -1, col: -1 }.
+   * The piece's threat zone (via getValidMoves) is added to obstacles.rivers,
+   * so the player can only approach from squares outside its vision.
+   * Win fires when the player's piece lands on huntTarget.position.
+   */
+  huntTarget?: { pieceType: PieceType; position: Position };
 };
 
 export type GamePhase = 'intro' | 'playing' | 'celebration' | 'allDone';
