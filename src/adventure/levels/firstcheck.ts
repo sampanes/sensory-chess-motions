@@ -79,20 +79,20 @@ const p2b: Level = {
 
 // ── Pair 3 — Two Threats ─────────────────────────────────────────────────────
 
-/** P3a — King navigates a board watched by both a column and a row segment. */
+/** P3a — King navigates around two knight guards whose scattered threats form an X across the board. */
 const p3a: Level = {
   name: 'Two Dangers',
-  description: 'Two guards watch the board — one along a column, one across a row. The king must find the narrow gap.',
-  hint: 'You cannot go through either watched area. Look for the unguarded corner.',
+  description: 'Two enemy knights guard the board. Their reach is strange — they jump to scattered squares. Find the path their shadows don\'t cover.',
+  hint: 'Knights don\'t block in straight lines. Hug the left edge or the right edge all the way around.',
   pieceType: 'king',
   start: { row: 4, col: 0 },
   goal:  { row: 0, col: 4 },
   boardHeight: 5, boardWidth: 5,
   starThresholds: { three: 6, two: 9 },
   obstacles: EMPTY,
-  watchedSquares: [
-    { row: 2, col: 1 }, { row: 2, col: 2 },
-    { row: 3, col: 1 }, { row: 3, col: 2 },
+  guardPieces: [
+    { pieceType: 'knight', position: { row: 1, col: 3 } },
+    { pieceType: 'knight', position: { row: 3, col: 1 } },
   ],
 };
 
@@ -157,18 +157,18 @@ const p4b: Level = {
 
 // ── Pair 5 — The Royal Guard ─────────────────────────────────────────────────
 
-/** P5a — King navigates with some squares guarded, needing a longer detour. */
+/** P5a — King navigates past a bishop guard whose diagonals block the direct path. */
 const p5a: Level = {
   name: 'Safe Passage',
-  description: 'Some squares are watched. Others are free. The king must read the board and find its path.',
-  hint: 'The king can always move one step. Look for the unguarded route.',
+  description: 'A bishop holds the corner and watches two long diagonals. The straight path is cut off — but the king can always find another way.',
+  hint: 'The bishop blocks the diagonal route. Go around it — left side or right side.',
   pieceType: 'king',
   start: { row: 2, col: 2 },
   goal:  { row: 0, col: 4 },
   boardHeight: 5, boardWidth: 5,
-  starThresholds: { three: 4, two: 6 },
+  starThresholds: { three: 3, two: 5 },
   obstacles: EMPTY,
-  watchedSquares: [{ row: 1, col: 3 }, { row: 2, col: 3 }, { row: 1, col: 2 }],
+  guardPieces: [{ pieceType: 'bishop', position: { row: 0, col: 2 } }],
 };
 
 /**
