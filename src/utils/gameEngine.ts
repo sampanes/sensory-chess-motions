@@ -190,6 +190,21 @@ export function applyMove(from: Position, to: Position, state: ChessGameState): 
   const captured = pieceAt(to.row, to.col, state.pieces);
   const newPieces = applyPiecesMove(moving, to, state.pieces);
   const nextTurn: PieceColor = state.turn === 'white' ? 'black' : 'white';
+  const lastMove = { from, to, capturedId: captured?.id };
+
+  // Pawn promotion: white reaches row 0, black reaches row 4.
+  const promotionRow = moving.color === 'white' ? 0 : BOARD_SIZE - 1;
+  if (moving.pieceType === 'pawn' && to.row === promotionRow) {
+    return {
+      pieces: newPieces,
+      turn: nextTurn,
+      phase: 'promotion',
+      selectedId: null,
+      legalTargets: [],
+      lastMove,
+      promotionSquare: to,
+    };
+  }
 
   const inCheck = isInCheck(nextTurn, newPieces);
   const hasLegal = newPieces
@@ -205,14 +220,41 @@ export function applyMove(from: Position, to: Position, state: ChessGameState): 
     phase = 'playing';
   }
 
-  return {
-    pieces: newPieces,
-    turn: nextTurn,
-    phase,
-    selectedId: null,
-    legalTargets: [],
-    lastMove: { from, to, capturedId: captured?.id },
-  };
+  return { pieces: newPieces, turn: nextTurn, phase, selectedId: null, legalTargets: [], lastMove };
+}
+
+/**
+ * Resolve a pending promotion by replacing the pawn with the chosen piece,
+ * then evaluating check/checkmate/stalemate for the side about to move.
+ */
+export function applyPromotion(chosenType: PieceType, state: ChessGameState): ChessGameState {
+  const sq = state.promotionSquare;
+  if (!sq) return state;
+
+  // The promoting pawn belongs to the side that just moved (opposite of current turn).
+  const promotingColor: PieceColor = state.turn === 'white' ? 'black' : 'white';
+  const newPieces = state.pieces.map(p =>
+    p.position.row === sq.row && p.position.col === sq.col && p.color === promotingColor
+      ? { ...p, pieceType: chosenType }
+      : p,
+  );
+
+  const nextTurn = state.turn;
+  const inCheck = isInCheck(nextTurn, newPieces);
+  const hasLegal = newPieces
+    .filter(p => p.color === nextTurn)
+    .some(p => getLegalMovesFromPieces(p, newPieces).length > 0);
+
+  let phase: ChessPhase;
+  if (!hasLegal) {
+    phase = inCheck ? 'checkmate' : 'stalemate';
+  } else if (inCheck) {
+    phase = 'check';
+  } else {
+    phase = 'playing';
+  }
+
+  return { pieces: newPieces, turn: nextTurn, phase, selectedId: null, legalTargets: [], lastMove: state.lastMove };
 }
 
 // ─── Simple AI ────────────────────────────────────────────────────────────────

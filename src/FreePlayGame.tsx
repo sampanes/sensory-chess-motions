@@ -5,14 +5,55 @@ import {
   buildInitialGameState,
   getLegalMoves,
   applyMove,
+  applyPromotion,
   getAIMove,
 } from './utils/gameEngine';
 import { FreePlayBoard } from './components/FreePlayBoard';
 import { GameHUD } from './components/GameHUD';
 import { GameOverScreen } from './components/GameOverScreen';
+import { ChessPieceIcon } from './components/ChessPieceIcon';
+import { PieceType } from './types';
 
 function getSquareSize(): number {
   return Math.min(72, Math.floor((Math.min(window.innerWidth, window.innerHeight) - 48) / 5));
+}
+
+const PROMOTION_PIECES: PieceType[] = ['queen', 'rook', 'bishop', 'knight'];
+
+function PromotionPicker({ squareSize, onChoose }: { squareSize: number; onChoose: (p: PieceType) => void }) {
+  return (
+    <motion.div
+      className="absolute inset-0 flex flex-col items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.72)', zIndex: 20, borderRadius: 8 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <p className="text-white font-bold mb-3 text-sm tracking-wide">Your pawn promoted! Choose a piece:</p>
+      <div className="flex gap-3">
+        {PROMOTION_PIECES.map(pt => (
+          <motion.button
+            key={pt}
+            onClick={() => onChoose(pt)}
+            className="flex flex-col items-center gap-1"
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              border: '2px solid rgba(255,255,255,0.3)',
+              borderRadius: 10,
+              padding: 10,
+              cursor: 'pointer',
+              color: 'white',
+            }}
+            whileHover={{ scale: 1.12, background: 'rgba(255,255,255,0.22)' }}
+            whileTap={{ scale: 0.96 }}
+          >
+            <ChessPieceIcon type={pt} size={squareSize * 0.72} />
+            <span style={{ fontSize: 10, opacity: 0.75, textTransform: 'capitalize' }}>{pt}</span>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
 }
 
 function StoryBeat({ onDismiss }: { onDismiss: () => void }) {
@@ -70,10 +111,18 @@ export function FreePlayGame() {
     }
   }, [gameState.phase, showOrientation]);
 
-  // AI plays black — fires after each state update where it's black's turn
+  // AI plays black — fires after each state update where it's black's turn.
+  // Also handles black pawn promotion: always promotes to queen.
   useEffect(() => {
     if (gameState.turn !== 'black') return;
     if (gameState.phase === 'checkmate' || gameState.phase === 'stalemate') return;
+
+    if (gameState.phase === 'promotion') {
+      // Black promoted — auto-pick queen immediately
+      const t = setTimeout(() => setGameState(s => applyPromotion('queen', s)), 300);
+      return () => clearTimeout(t);
+    }
+
     const t = setTimeout(() => {
       const move = getAIMove(gameState);
       if (move) setGameState(s => applyMove(move.from, move.to, s));
@@ -90,6 +139,7 @@ export function FreePlayGame() {
   function handleSquareClick(row: number, col: number) {
     const { pieces, turn, phase, selectedId, legalTargets } = gameState;
     if (phase === 'checkmate' || phase === 'stalemate') return;
+    if (phase === 'promotion') return; // awaiting promotion choice
     if (turn === 'black') return; // AI's turn — ignore player input
 
     const clickedPiece = pieces.find(p => p.position.row === row && p.position.col === col);
@@ -178,6 +228,10 @@ export function FreePlayGame() {
                 squareSize={squareSize}
                 onSquareClick={handleSquareClick}
               />
+
+              {phase === 'promotion' && (
+                <PromotionPicker squareSize={squareSize} onChoose={choice => setGameState(s => applyPromotion(choice, s))} />
+              )}
 
               {(phase === 'checkmate' || phase === 'stalemate') && (
                 <GameOverScreen

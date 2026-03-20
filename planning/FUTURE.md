@@ -520,12 +520,13 @@ That is the version of the project most worth building toward.
 6. Add ghost replay support
 
 ## Long-Term Priorities
-1. Full campaign arc
-2. Queen finale
-3. Family challenge packs
-4. Player-facing sandbox/gallery features
-5. PWA polish
-6. Endless lesson generation from good templates
+1. Daily seeded procedural lessons (high priority)
+2. Player-facing sandbox/gallery features (high priority)
+3. Full campaign arc
+4. Queen finale
+5. Endless lesson generation from good templates
+6. Family challenge packs
+7. PWA polish
 
 ---
 

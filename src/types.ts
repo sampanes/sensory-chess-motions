@@ -181,7 +181,7 @@ export type GamePiece = {
   hasMoved?: boolean;
 };
 
-export type ChessPhase = 'playing' | 'check' | 'checkmate' | 'stalemate';
+export type ChessPhase = 'playing' | 'check' | 'checkmate' | 'stalemate' | 'promotion';
 
 export type ChessGameState = {
   pieces: GamePiece[];
@@ -190,4 +190,6 @@ export type ChessGameState = {
   selectedId: string | null;
   legalTargets: Position[];
   lastMove?: { from: Position; to: Position; capturedId?: string };
+  /** Set during 'promotion' phase — the square holding the pawn awaiting choice. */
+  promotionSquare?: Position;
 };
