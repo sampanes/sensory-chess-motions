@@ -165,9 +165,9 @@ export function BoardShell({
   );
 
   useEffect(() => {
-    // Guard pieces and their threat zones are impassable — merge into obstacles.rivers.
-    // Knights ignore them naturally (they jump rivers). watchedSquares kept for Q8/Q9.
-    // huntTarget threat zone is also impassable (player must approach from its blind side).
+    // Merge all impassable zones into obstacles.rivers.
+    // Guard pieces, watchedSquares (custom zones), and huntTarget threats are all rivers.
+    // Knights ignore any river naturally (they jump to destinations, not through paths).
     const htThreat = level.huntTarget
       ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, { fences: [], rivers: [], bridges: [], food: [] }, [], numRows, numCols)
       : [];
@@ -466,7 +466,7 @@ export function BoardShell({
                     style={{ background: 'rgba(239,68,68,0.20)' }} />
                 )}
 
-                {/* Legacy watchedSquares overlay — kept for Q8/Q9 duo levels */}
+                {/* Custom threat overlay — hand-crafted zones (watchedSquares) */}
                 {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
                     style={{ background: 'rgba(239,68,68,0.22)' }}>

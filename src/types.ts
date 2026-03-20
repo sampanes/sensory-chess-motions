@@ -82,7 +82,12 @@ export type Level = {
    * The player cannot land on the guard — it is not capturable.
    */
   guardPieces?: Array<{ pieceType: PieceType; position: Position }>;
-  /** @deprecated Use guardPieces instead. Kept temporarily for Q8/Q9 duo levels. */
+  /**
+   * Custom threat overlay — a hand-crafted set of squares that become impassable rivers.
+   * Used when no single guard piece's natural threat zone matches the required shape
+   * (e.g. partial rows/columns, rectangular regions). Knights jump over these just as
+   * they jump any river. Rendered with a red eye overlay.
+   */
   watchedSquares?: Position[];
   /**
    * Space-world only. How other pieces fare on this board (for the contrast card).

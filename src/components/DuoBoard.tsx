@@ -143,8 +143,9 @@ export function DuoBoard({
     const currentPos = positions[selectedIdx];
     const otherPos   = positions[1 - selectedIdx as 0 | 1];
 
-    // Guard pieces and their threat zones are impassable (knights jump them naturally).
-    // Legacy watchedSquares kept for Q8/Q9 — only apply to non-knight pieces.
+    // All impassable zones merged into rivers.
+    // watchedSquares are custom threat zones (no guard piece equivalent).
+    // Knights jump any river, so watchedSquares are skipped for knight pieces.
     const pieceType = level.pieces[selectedIdx].pieceType;
     const guardRivers = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
     const legacyWatched = level.watchedSquares?.length && pieceType !== 'knight'
@@ -334,7 +335,7 @@ export function DuoBoard({
             <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
           )}
 
-          {/* Legacy watchedSquares overlay — kept for Q8/Q9 */}
+          {/* Custom threat overlay — hand-crafted zones (watchedSquares) */}
           {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
               style={{ background: 'rgba(239,68,68,0.22)' }}>

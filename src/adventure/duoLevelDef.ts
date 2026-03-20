@@ -27,9 +27,13 @@ export type DuoLevel = {
   /**
    * Static enemy pieces whose threat zones become impassable (see Level.guardPieces).
    */
-  guardPieces?: Array<{ pieceType: import('../types').PieceType; position: import('../types').Position }>;
-  /** @deprecated Use guardPieces instead. Kept for Q8/Q9 until redesigned. */
-  watchedSquares?: import('../types').Position[];
+  guardPieces?: Array<{ pieceType: PieceType; position: Position }>;
+  /**
+   * Custom threat overlay — hand-crafted squares that become impassable rivers.
+   * Knights jump over these; other pieces cannot enter. Used for rectangular
+   * watched zones (Q8/Q9) where no guard piece composition matches the required shape.
+   */
+  watchedSquares?: Position[];
   /** Scrolling world height (default 5). */
   boardHeight?: number;
   /** Scrolling world width (default 5). */
