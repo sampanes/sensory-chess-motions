@@ -12,6 +12,14 @@ import { FreePlayBoard } from './components/FreePlayBoard';
 import { GameHUD } from './components/GameHUD';
 import { GameOverScreen } from './components/GameOverScreen';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
+import {
+  playMoveSound,
+  playCrunchSound,
+  playWompSound,
+  playChessCheck,
+  playChessCheckmate,
+  playChessPromotion,
+} from './utils/sounds';
 
 function getSquareSize(): number {
   return Math.min(72, Math.floor((Math.min(window.innerWidth, window.innerHeight) - 48) / 5));
@@ -122,14 +130,32 @@ export function FreePlayGame() {
     setOpponentTargets([]);
 
     if (gameState.phase === 'promotion') {
-      // Black promoted — auto-pick queen immediately
-      const t = setTimeout(() => setGameState(s => applyPromotion('queen', s)), 300);
+      // Black promoted — auto-pick queen, then play sounds for resulting phase
+      const t = setTimeout(() => {
+        const newState = applyPromotion('queen', gameState);
+        playChessPromotion();
+        if (newState.phase === 'check') setTimeout(() => playChessCheck(), 350);
+        else if (newState.phase === 'checkmate') setTimeout(() => playChessCheckmate(), 450);
+        setGameState(newState);
+      }, 300);
       return () => clearTimeout(t);
     }
 
     const t = setTimeout(() => {
       const move = getAIMove(gameState);
-      if (move) setGameState(s => applyMove(move.from, move.to, s));
+      if (!move) return;
+      const movingPiece = gameState.pieces.find(
+        p => p.position.row === move.from.row && p.position.col === move.from.col,
+      );
+      const newState = applyMove(move.from, move.to, gameState);
+      if (movingPiece) {
+        playMoveSound(movingPiece.pieceType);
+        if (newState.lastMove?.capturedId) playCrunchSound();
+      }
+      if (newState.phase === 'check')     setTimeout(() => playChessCheck(), 180);
+      else if (newState.phase === 'checkmate') setTimeout(() => playChessCheckmate(), 280);
+      else if (newState.phase === 'stalemate') setTimeout(() => playWompSound(), 280);
+      setGameState(newState);
     }, 650);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -158,7 +184,13 @@ export function FreePlayGame() {
       if (legalTargets.some(t => t.row === row && t.col === col)) {
         const moving = pieces.find(p => p.id === selectedId)!;
         clearOpponentPreview();
-        setGameState(applyMove(moving.position, { row, col }, gameState));
+        const newState = applyMove(moving.position, { row, col }, gameState);
+        playMoveSound(moving.pieceType);
+        if (newState.lastMove?.capturedId) playCrunchSound();
+        if (newState.phase === 'check')          setTimeout(() => playChessCheck(), 180);
+        else if (newState.phase === 'checkmate') setTimeout(() => playChessCheckmate(), 280);
+        else if (newState.phase === 'stalemate') setTimeout(() => playWompSound(), 280);
+        setGameState(newState);
         return;
       }
 
@@ -267,7 +299,13 @@ export function FreePlayGame() {
               />
 
               {phase === 'promotion' && (
-                <PromotionPicker squareSize={squareSize} onChoose={choice => setGameState(s => applyPromotion(choice, s))} />
+                <PromotionPicker squareSize={squareSize} onChoose={choice => {
+                  const newState = applyPromotion(choice, gameState);
+                  playChessPromotion();
+                  if (newState.phase === 'check')          setTimeout(() => playChessCheck(), 350);
+                  else if (newState.phase === 'checkmate') setTimeout(() => playChessCheckmate(), 450);
+                  setGameState(newState);
+                }} />
               )}
 
               {(phase === 'checkmate' || phase === 'stalemate') && (
