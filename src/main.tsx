@@ -5,6 +5,7 @@ import "./index.css";
 import App from "./App";
 import { LevelCreator } from "./LevelCreator";
 import AdventureApp from "./AdventureApp";
+import { FreePlayGame } from "./FreePlayGame";
 
 // Disable all Framer Motion animations when user prefers reduced motion
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -24,8 +25,9 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 const params = new URLSearchParams(window.location.search);
-const isCreator  = params.has('creator');
+const isCreator   = params.has('creator');
 const isAdventure = params.has('adventure');
+const isFreePlay  = params.has('freeplay');
 
 // Register service worker for PWA / offline support
 if ('serviceWorker' in navigator) {
@@ -36,6 +38,6 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {isCreator ? <LevelCreator /> : isAdventure ? <AdventureApp /> : <App />}
+    {isCreator ? <LevelCreator /> : isFreePlay ? <FreePlayGame /> : isAdventure ? <AdventureApp /> : <App />}
   </StrictMode>
 );

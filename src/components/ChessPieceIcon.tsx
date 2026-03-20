@@ -1,11 +1,13 @@
+import React from 'react';
 import { PieceType } from '../types';
 
 interface ChessPieceIconProps {
   type: PieceType;
   size?: number;
+  style?: React.CSSProperties;
 }
 
-export const ChessPieceIcon = ({ type, size = 48 }: ChessPieceIconProps) => {
+export const ChessPieceIcon = ({ type, size = 48, style }: ChessPieceIconProps) => {
   const renderPiece = () => {
     switch (type) {
       case 'queen':
@@ -116,5 +118,5 @@ export const ChessPieceIcon = ({ type, size = 48 }: ChessPieceIconProps) => {
     }
   };
 
-  return <div className="flex items-center justify-center drop-shadow-lg">{renderPiece()}</div>;
+  return <div className="flex items-center justify-center drop-shadow-lg" style={style}>{renderPiece()}</div>;
 };
