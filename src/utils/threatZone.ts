@@ -1,6 +1,29 @@
 import { getValidMoves } from './moveCalculator';
 import { PatrolPiece, PieceType, Position } from '../types';
 
+/**
+ * Returns all squares blocked by guard pieces: each guard's threat zone
+ * (via getValidMoves with empty obstacles) plus the guard's own square.
+ * Deduplicates. Used by BoardShell, DuoBoard, and AdventureApp.
+ */
+export function computeGuardThreat(
+  guards: Array<{ pieceType: PieceType; position: Position }>,
+  boardRows = 5,
+  boardCols = 5,
+): Position[] {
+  const seen = new Set<string>();
+  const result: Position[] = [];
+  for (const g of guards) {
+    const selfKey = `${g.position.row},${g.position.col}`;
+    if (!seen.has(selfKey)) { seen.add(selfKey); result.push(g.position); }
+    for (const sq of getValidMoves(g.pieceType, g.position, EMPTY_OBS, [], boardRows, boardCols)) {
+      const key = `${sq.row},${sq.col}`;
+      if (!seen.has(key)) { seen.add(key); result.push(sq); }
+    }
+  }
+  return result;
+}
+
 const EMPTY_OBS = { fences: [], rivers: [], bridges: [], food: [] };
 
 /**

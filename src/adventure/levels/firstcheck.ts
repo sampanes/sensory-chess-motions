@@ -16,18 +16,18 @@ const NO_GOAL = { row: -1, col: -1 };
 
 // ── Pair 1 — Rook vs King ────────────────────────────────────────────────────
 
-/** P1a — King must cross the board; one square is watched. Navigate around it. */
+/** P1a — King must cross the board; an enemy king guards the center. Navigate around it. */
 const p1a: Level = {
   name: 'Dodge the Guard',
-  description: 'A guard watches one square. The king cannot step there — but the far side is safe.',
-  hint: 'Step around the watched square. Diagonal moves let the king slip past.',
+  description: 'An enemy king guards the center. It watches every square around it — the king must go the long way.',
+  hint: 'The guard controls a ring of squares. Hug the edges to get past.',
   pieceType: 'king',
-  start: { row: 2, col: 0 },
-  goal:  { row: 2, col: 4 },
+  start: { row: 4, col: 0 },
+  goal:  { row: 0, col: 4 },
   boardHeight: 5, boardWidth: 5,
-  starThresholds: { three: 4, two: 6 },
+  starThresholds: { three: 8, two: 12 },
   obstacles: EMPTY,
-  watchedSquares: [{ row: 2, col: 2 }],
+  guardPieces: [{ pieceType: 'king', position: { row: 2, col: 2 } }],
 };
 
 /** P1b — Move the rook to watch the key column. */
@@ -47,18 +47,18 @@ const p1b: Level = {
 
 // ── Pair 2 — Bishop vs King ──────────────────────────────────────────────────
 
-/** P2a — King must cross while a diagonal of watched squares cuts the board. */
+/** P2a — King must cross while a bishop guard cuts the board along its diagonals. */
 const p2a: Level = {
   name: "The Bishop's Line",
-  description: "A shadow stretches along the diagonal. The king cannot step where the bishop's line falls.",
-  hint: 'The diagonal runs from bottom-left to top-right. The king must find a path that avoids it.',
+  description: "A bishop sits in the center, watching both diagonals. The king must find the lanes the bishop can't see.",
+  hint: "The bishop controls the diagonals. Move along the straight rows and columns — those are safe.",
   pieceType: 'king',
-  start: { row: 4, col: 0 },
-  goal:  { row: 0, col: 4 },
+  start: { row: 4, col: 2 },
+  goal:  { row: 0, col: 2 },
   boardHeight: 5, boardWidth: 5,
   starThresholds: { three: 6, two: 9 },
   obstacles: EMPTY,
-  watchedSquares: [{ row: 3, col: 1 }, { row: 2, col: 2 }, { row: 1, col: 3 }],
+  guardPieces: [{ pieceType: 'bishop', position: { row: 2, col: 2 } }],
 };
 
 /** P2b — Move the bishop so its diagonal covers the two key squares. */
@@ -136,7 +136,7 @@ const p4a: Level = {
 
 /**
  * P4b — The checkmate moment.
- * The king hides in the corner (0,0), marked impassable by watchedSquares.
+ * The king hides in the corner (0,0), blocked by a river so the queen can't land there.
  * The queen must reach (1,2) to watch all three escape squares: (0,1),(1,0),(1,1).
  * When all three are covered, the checkmate screen fires.
  */
@@ -149,8 +149,7 @@ const p4b: Level = {
   goal: NO_GOAL,
   boardHeight: 5, boardWidth: 5,
   starThresholds: { three: 2, two: 3 },
-  obstacles: EMPTY,
-  watchedSquares: [{ row: 0, col: 0 }], // marks the king's corner as impassable
+  obstacles: { fences: [], rivers: [{ row: 0, col: 0 }], bridges: [], food: [] },
   controlMode: true,
   targetSquares: [{ row: 0, col: 1 }, { row: 1, col: 0 }, { row: 1, col: 1 }],
   checkmateMoment: true,

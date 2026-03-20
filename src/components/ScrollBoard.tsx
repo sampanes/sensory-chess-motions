@@ -22,7 +22,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { Flag } from 'lucide-react';
 import { Enemy, Level, PatrolPiece, Position, Food } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { getSentinelThreat } from '../utils/threatZone';
+import { getSentinelThreat, computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound, playWhooshSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -226,10 +226,10 @@ export function ScrollBoard({
 
   // ── Valid moves ──────────────────────────────────────────────────────────
   useEffect(() => {
-    // Watched squares (queen world) are treated as impassable — merge them into
-    // obstacles.rivers so the existing move calculator blocks them.
-    const effectiveObstacles = level.watchedSquares?.length
-      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...level.watchedSquares] }
+    // Guard pieces and their threat zones are impassable — merge into obstacles.rivers.
+    const guardRivers = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
+    const effectiveObstacles = (guardRivers.length || level.watchedSquares?.length)
+      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...guardRivers, ...(level.watchedSquares ?? [])] }
       : level.obstacles;
     const moves = getValidMoves(
       level.pieceType, piecePos, effectiveObstacles, consumedFood,
@@ -457,6 +457,12 @@ export function ScrollBoard({
   // ── Render ────────────────────────────────────────────────────────────────
   const totalCells = boardRows * boardCols;
 
+  // Precompute guard threat set for cell-loop rendering
+  const guardThreatPositions = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
+  const guardThreatSet = new Set(guardThreatPositions.map(p => `${p.row},${p.col}`));
+  const isGuardSquare = (r: number, c: number) =>
+    level.guardPieces?.some(g => g.position.row === r && g.position.col === c) ?? false;
+
   return (
     <>
       {/* Wrapper provides positioning context for the "more ahead" arrow */}
@@ -567,6 +573,13 @@ export function ScrollBoard({
                     <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
                   )}
 
+                  {/* Guard piece threat zone */}
+                  {!river && !bridge && guardThreatSet.has(`${r},${c}`) && !isGuardSquare(r, c) && (
+                    <div className="absolute inset-0 pointer-events-none"
+                      style={{ background: 'rgba(239,68,68,0.20)' }} />
+                  )}
+
+                  {/* Legacy watchedSquares overlay — kept for Q8/Q9 */}
                   {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
                       style={{ background: 'rgba(239,68,68,0.22)' }}>
@@ -819,6 +832,27 @@ export function ScrollBoard({
               <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
             </div>
           )}
+
+          {/* ── Guard pieces — static enemy pieces with red tint ── */}
+          {(level.guardPieces ?? []).map((g, gi) => (
+            <div
+              key={`guard-${gi}`}
+              style={{
+                position: 'absolute',
+                top: g.position.row * squareSize,
+                left: g.position.col * squareSize,
+                width: squareSize,
+                height: squareSize,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 8,
+              }}
+            >
+              <div style={{ filter: 'hue-rotate(340deg) saturate(1.8) brightness(0.75)', opacity: 0.9 }}>
+                <ChessPieceIcon type={g.pieceType} size={squareSize * 0.78} />
+              </div>
+            </div>
+          ))}
 
           {/* ── Sentinel pieces — in world coords, scroll with the grid ── */}
           {(patrolPieces ?? []).map((patrol, si) => {

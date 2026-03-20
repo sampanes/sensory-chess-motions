@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
 import { Level, PieceType, Position, Food, Enemy, PatrolPiece } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { getSentinelThreat, getAllThreats } from '../utils/threatZone';
+import { getSentinelThreat, getAllThreats, computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -165,10 +165,11 @@ export function BoardShell({
   );
 
   useEffect(() => {
-    // Watched squares (queen world) are treated as impassable cells — merge them
-    // into obstacles.rivers so the existing slider/landing logic blocks them.
+    // Guard pieces and their threat zones are impassable — merge into obstacles.rivers.
+    // Knights ignore them naturally (they jump rivers). watchedSquares kept for Q8/Q9.
     const baseRivers = [
       ...level.obstacles.rivers,
+      ...computeGuardThreat(level.guardPieces ?? [], numRows, numCols),
       ...(level.watchedSquares ?? []),
       ...sealedRivers,
     ];
@@ -389,6 +390,12 @@ export function BoardShell({
   const boardW = squareSize * numCols;
   const boardH = squareSize * numRows;
 
+  // Precompute guard threat set for cell-loop rendering
+  const guardThreatPositions = computeGuardThreat(level.guardPieces ?? [], numRows, numCols);
+  const guardThreatSet = new Set(guardThreatPositions.map(p => `${p.row},${p.col}`));
+  const isGuardSquare = (r: number, c: number) =>
+    level.guardPieces?.some(g => g.position.row === r && g.position.col === c) ?? false;
+
   return (
     <>
       <motion.div
@@ -431,6 +438,13 @@ export function BoardShell({
                   <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
                 )}
 
+                {/* Guard piece threat zone — shown on threatened cells, not on the guard itself */}
+                {!river && !bridge && guardThreatSet.has(`${r},${c}`) && !isGuardSquare(r, c) && (
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: 'rgba(239,68,68,0.20)' }} />
+                )}
+
+                {/* Legacy watchedSquares overlay — kept for Q8/Q9 duo levels */}
                 {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
                     style={{ background: 'rgba(239,68,68,0.22)' }}>
@@ -774,6 +788,27 @@ export function BoardShell({
             <ChessPieceIcon type={level.pieceType} size={squareSize * 0.7} />
           </div>
         )}
+
+        {/* ── Guard pieces — static enemy pieces with red tint ── */}
+        {(level.guardPieces ?? []).map((g, gi) => (
+          <div
+            key={`guard-${gi}`}
+            style={{
+              position: 'absolute',
+              top: g.position.row * squareSize,
+              left: g.position.col * squareSize,
+              width: squareSize,
+              height: squareSize,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 8,
+            }}
+          >
+            <div style={{ filter: 'hue-rotate(340deg) saturate(1.8) brightness(0.75)', opacity: 0.9 }}>
+              <ChessPieceIcon type={g.pieceType} size={squareSize * 0.78} />
+            </div>
+          </div>
+        ))}
 
         {/* ── Sentinel pieces ── */}
         {(patrolPieces ?? []).map((patrol, si) => {

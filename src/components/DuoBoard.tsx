@@ -24,6 +24,7 @@ import { Flag } from 'lucide-react';
 import { Food, Position } from '../types';
 import { DuoLevel } from '../adventure/duoLevelDef';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
+import { computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -142,13 +143,15 @@ export function DuoBoard({
     const currentPos = positions[selectedIdx];
     const otherPos   = positions[1 - selectedIdx as 0 | 1];
 
-    // Watched squares (queen world finale) block all pieces except the knight,
-    // which jumps over them. Merge into obstacles.rivers for non-knight pieces.
+    // Guard pieces and their threat zones are impassable (knights jump them naturally).
+    // Legacy watchedSquares kept for Q8/Q9 — only apply to non-knight pieces.
     const pieceType = level.pieces[selectedIdx].pieceType;
-    const effectiveObstacles =
-      level.watchedSquares?.length && pieceType !== 'knight'
-        ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...level.watchedSquares] }
-        : level.obstacles;
+    const guardRivers = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
+    const legacyWatched = level.watchedSquares?.length && pieceType !== 'knight'
+      ? level.watchedSquares : [];
+    const effectiveObstacles = (guardRivers.length || legacyWatched.length)
+      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...guardRivers, ...legacyWatched] }
+      : level.obstacles;
 
     const raw = getValidMoves(
       pieceType,
@@ -331,6 +334,7 @@ export function DuoBoard({
             <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
           )}
 
+          {/* Legacy watchedSquares overlay — kept for Q8/Q9 */}
           {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center"
               style={{ background: 'rgba(239,68,68,0.22)' }}>

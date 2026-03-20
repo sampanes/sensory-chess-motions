@@ -76,10 +76,13 @@ export type Level = {
   boardWidth?: number;    // default 5
   scrollAxis?: 'vertical' | 'horizontal';
   /**
-   * Adventure-mode only. Cells the queen's guards patrol — impassable for all
-   * pieces except the knight (which jumps and ignores them).
-   * Never touches moveCalculator.ts; handled in AdventureApp / board components.
+   * Static enemy pieces whose threat zones (via getValidMoves) become impassable.
+   * The piece icon renders with a red tint at its position. Threat zone squares
+   * get a red overlay. Knights ignore them naturally (they jump rivers).
+   * The player cannot land on the guard — it is not capturable.
    */
+  guardPieces?: Array<{ pieceType: PieceType; position: Position }>;
+  /** @deprecated Use guardPieces instead. Kept temporarily for Q8/Q9 duo levels. */
   watchedSquares?: Position[];
   /**
    * Space-world only. How other pieces fare on this board (for the contrast card).

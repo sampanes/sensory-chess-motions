@@ -34,7 +34,7 @@ import {
 } from './adventure/sharing';
 import { playCelebrationSound } from './utils/sounds';
 import { getValidMoves } from './utils/moveCalculator';
-import { isKingTrapped } from './utils/threatZone';
+import { isKingTrapped, computeGuardThreat } from './utils/threatZone';
 import { GalleryBoard } from './components/GalleryBoard';
 import { OracleMode } from './adventure/OracleMode';
 import { GrandFinale } from './adventure/GrandFinale';
@@ -506,6 +506,11 @@ function WorldPlay({
         ...effectiveLevel.obstacles,
         rivers: [
           ...effectiveLevel.obstacles.rivers,
+          ...computeGuardThreat(
+            effectiveLevel.guardPieces ?? [],
+            effectiveLevel.boardHeight ?? 5,
+            effectiveLevel.boardWidth ?? 5,
+          ),
           ...(effectiveLevel.watchedSquares ?? []),
         ],
       };

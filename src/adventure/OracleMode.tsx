@@ -98,10 +98,7 @@ const ORACLE_QUESTIONS: OracleQuestion[] = [
       start: { row: 4, col: 2 }, goal: { row: 0, col: 2 },
       boardHeight: 5, boardWidth: 5, starThresholds: { three: 2, two: 3 },
       obstacles: EMPTY,
-      watchedSquares: [
-        { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 },
-        { row: 2, col: 3 }, { row: 2, col: 4 },
-      ],
+      guardPieces: [{ pieceType: 'rook', position: { row: 2, col: 0 } }],
     },
   },
   {

@@ -130,11 +130,7 @@ export const queenSoloLevels: Level[] = [
     start: { row: 4, col: 4 },
     goal:  { row: 0, col: 0 },
     obstacles: { fences: [], rivers: [], bridges: [], food: [] },
-    watchedSquares: [
-      { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 },
-      { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 },
-      { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 },
-    ],
+    guardPieces: [{ pieceType: 'king', position: { row: 2, col: 2 } }],
     starThresholds: { three: 2, two: 4 },
   },
 ];

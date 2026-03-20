@@ -25,9 +25,10 @@ export type DuoLevel = {
   obstacles: Obstacle;
   starThresholds: { three: number; two: number };
   /**
-   * Adventure-mode only. Cells the queen's guards patrol — impassable for the
-   * king but ignored by the knight (which jumps over them).
+   * Static enemy pieces whose threat zones become impassable (see Level.guardPieces).
    */
+  guardPieces?: Array<{ pieceType: import('../types').PieceType; position: import('../types').Position }>;
+  /** @deprecated Use guardPieces instead. Kept for Q8/Q9 until redesigned. */
   watchedSquares?: import('../types').Position[];
   /** Scrolling world height (default 5). */
   boardHeight?: number;
