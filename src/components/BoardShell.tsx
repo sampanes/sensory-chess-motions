@@ -173,8 +173,6 @@ export function BoardShell({
       : [];
     const baseRivers = [
       ...level.obstacles.rivers,
-      ...computeGuardThreat(level.guardPieces ?? [], numRows, numCols),
-      ...(level.watchedSquares ?? []),
       ...htThreat,
       ...sealedRivers,
     ];
@@ -380,6 +378,17 @@ export function BoardShell({
     setAnimKey(prev => prev + 1);
     onStuck(false);
 
+    // Guard catch — static guard threat or watched square
+    const isGuardThreat = guardThreatSet.has(`${row},${col}`) ||
+      (level.watchedSquares?.some(ws => ws.row === row && ws.col === col) ?? false);
+    if (isGuardThreat) {
+      playWompSound();
+      triggerHaptic([80, 60, 120]);
+      setCaughtBy(-1);
+      setCatchActive(true);
+      return;
+    }
+
     const capturedEnemy = liveEnemies.find(e => e.row === row && e.col === col);
     const eatenFood = level.obstacles.food.find(f => f.row === row && f.col === col);
     if (capturedEnemy) {
@@ -397,20 +406,12 @@ export function BoardShell({
   const boardW = squareSize * numCols;
   const boardH = squareSize * numRows;
 
-  // Precompute guard threat set for cell-loop rendering
-  const guardThreatPositions = computeGuardThreat(level.guardPieces ?? [], numRows, numCols);
+  // Precompute guard threat set for cell-loop rendering.
+  // Pass level.obstacles so sliding guards respect rivers, fences, and food.
+  const guardThreatPositions = computeGuardThreat(level.guardPieces ?? [], numRows, numCols, level.obstacles);
   const guardThreatSet = new Set(guardThreatPositions.map(p => `${p.row},${p.col}`));
   const isGuardSquare = (r: number, c: number) =>
     level.guardPieces?.some(g => g.position.row === r && g.position.col === c) ?? false;
-
-  // Precompute huntTarget threat set — threat zone only (not the target's own square)
-  const EMPTY_OBS_HT = { fences: [], rivers: [], bridges: [], food: [] };
-  const huntTargetThreat = level.huntTarget
-    ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, EMPTY_OBS_HT, [], numRows, numCols)
-    : [];
-  const huntTargetThreatSet = new Set(huntTargetThreat.map(p => `${p.row},${p.col}`));
-  const isHuntTarget = (r: number, c: number) =>
-    level.huntTarget?.position.row === r && level.huntTarget?.position.col === c;
 
   return (
     <>
@@ -454,22 +455,18 @@ export function BoardShell({
                   <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
                 )}
 
-                {/* Guard piece threat zone — shown on threatened cells, not on the guard itself */}
+                {/* Guard piece threat zone — red dot (mirrors gold move dots) */}
                 {!river && !bridge && guardThreatSet.has(`${r},${c}`) && !isGuardSquare(r, c) && (
-                  <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'rgba(239,68,68,0.20)' }} />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+                    <div style={{ width: squareSize * 0.28, height: squareSize * 0.28, borderRadius: '50%', background: 'rgba(239,68,68,0.65)' }} />
+                  </div>
                 )}
 
-                {/* Hunt target threat zone — same red wash, excludes the target's own square */}
-                {!river && !bridge && huntTargetThreatSet.has(`${r},${c}`) && !isHuntTarget(r, c) && (
-                  <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'rgba(239,68,68,0.20)' }} />
-                )}
-
-                {/* Custom threat overlay — hand-crafted zones (watchedSquares) */}
+                {/* Custom threat overlay — hand-crafted zones (watchedSquares) — red dot */}
                 {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
-                  <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'rgba(239,68,68,0.20)' }} />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+                    <div style={{ width: squareSize * 0.28, height: squareSize * 0.28, borderRadius: '50%', background: 'rgba(239,68,68,0.65)' }} />
+                  </div>
                 )}
 
                 {river && !bridge && !spaceTheme && (
@@ -974,7 +971,7 @@ export function BoardShell({
               >
                 <div style={{ fontSize: 28, marginBottom: 8 }}>🔴</div>
                 <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
-                  The sentinel found you.
+                  {caughtBy === -1 ? 'That square is guarded!' : 'The sentinel found you.'}
                 </div>
                 <motion.button
                   initial={{ opacity: 0 }}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChessGameState } from './types';
+import { ChessGameState, Position, PieceType } from './types';
 import {
   buildInitialGameState,
   getLegalMoves,
@@ -12,7 +12,6 @@ import { FreePlayBoard } from './components/FreePlayBoard';
 import { GameHUD } from './components/GameHUD';
 import { GameOverScreen } from './components/GameOverScreen';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
-import { PieceType } from './types';
 
 function getSquareSize(): number {
   return Math.min(72, Math.floor((Math.min(window.innerWidth, window.innerHeight) - 48) / 5));
@@ -89,6 +88,8 @@ function StoryBeat({ onDismiss }: { onDismiss: () => void }) {
 export function FreePlayGame() {
   const [gameState, setGameState] = useState<ChessGameState>(buildInitialGameState);
   const [squareSize, setSquareSize] = useState(getSquareSize);
+  const [opponentPreviewId, setOpponentPreviewId] = useState<string | null>(null);
+  const [opponentTargets, setOpponentTargets] = useState<Position[]>([]);
   const [showStory, setShowStory] = useState(
     () => !localStorage.getItem('tbk_freeplay_seen')
   );
@@ -116,6 +117,9 @@ export function FreePlayGame() {
   useEffect(() => {
     if (gameState.turn !== 'black') return;
     if (gameState.phase === 'checkmate' || gameState.phase === 'stalemate') return;
+    // Clear any opponent preview when it's the AI's turn
+    setOpponentPreviewId(null);
+    setOpponentTargets([]);
 
     if (gameState.phase === 'promotion') {
       // Black promoted — auto-pick queen immediately
@@ -136,6 +140,11 @@ export function FreePlayGame() {
     setShowStory(false);
   }
 
+  function clearOpponentPreview() {
+    setOpponentPreviewId(null);
+    setOpponentTargets([]);
+  }
+
   function handleSquareClick(row: number, col: number) {
     const { pieces, turn, phase, selectedId, legalTargets } = gameState;
     if (phase === 'checkmate' || phase === 'stalemate') return;
@@ -148,30 +157,56 @@ export function FreePlayGame() {
       // A piece is already selected — check if click is a legal destination
       if (legalTargets.some(t => t.row === row && t.col === col)) {
         const moving = pieces.find(p => p.id === selectedId)!;
+        clearOpponentPreview();
         setGameState(applyMove(moving.position, { row, col }, gameState));
         return;
       }
 
       // Clicking a different own piece switches selection
       if (clickedPiece && clickedPiece.color === turn) {
+        clearOpponentPreview();
         const targets = getLegalMoves(clickedPiece, gameState);
         setGameState({ ...gameState, selectedId: clickedPiece.id, legalTargets: targets });
         return;
       }
 
+      // Clicking an opponent piece — show its threat preview, deselect own piece
+      if (clickedPiece && clickedPiece.color !== turn) {
+        const targets = getLegalMoves(clickedPiece, gameState);
+        setOpponentPreviewId(clickedPiece.id);
+        setOpponentTargets(targets);
+        setGameState({ ...gameState, selectedId: null, legalTargets: [] });
+        return;
+      }
+
       // Anything else: deselect
+      clearOpponentPreview();
       setGameState({ ...gameState, selectedId: null, legalTargets: [] });
       return;
     }
 
-    // Nothing selected — select an own piece
+    // Nothing selected — select an own piece or preview an opponent piece
     if (clickedPiece && clickedPiece.color === turn) {
+      clearOpponentPreview();
       const targets = getLegalMoves(clickedPiece, gameState);
       setGameState({ ...gameState, selectedId: clickedPiece.id, legalTargets: targets });
+      return;
     }
+
+    if (clickedPiece && clickedPiece.color !== turn) {
+      const targets = getLegalMoves(clickedPiece, gameState);
+      setOpponentPreviewId(clickedPiece.id);
+      setOpponentTargets(targets);
+      setGameState({ ...gameState, selectedId: null, legalTargets: [] });
+      return;
+    }
+
+    // Tapped empty square with no selection — clear everything
+    clearOpponentPreview();
   }
 
   function handleReset() {
+    clearOpponentPreview();
     setGameState(buildInitialGameState());
   }
 
@@ -222,6 +257,8 @@ export function FreePlayGame() {
                 pieces={pieces}
                 selectedId={selectedId}
                 legalTargets={legalTargets}
+                opponentPreviewId={opponentPreviewId}
+                opponentTargets={opponentTargets}
                 lastMove={lastMove}
                 turn={turn}
                 phase={phase}

@@ -24,7 +24,6 @@ import { Flag } from 'lucide-react';
 import { Food, Position } from '../types';
 import { DuoLevel } from '../adventure/duoLevelDef';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
@@ -143,16 +142,8 @@ export function DuoBoard({
     const currentPos = positions[selectedIdx];
     const otherPos   = positions[1 - selectedIdx as 0 | 1];
 
-    // All impassable zones merged into rivers.
-    // watchedSquares are custom threat zones (no guard piece equivalent).
-    // Knights jump any river, so watchedSquares are skipped for knight pieces.
     const pieceType = level.pieces[selectedIdx].pieceType;
-    const guardRivers = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
-    const legacyWatched = level.watchedSquares?.length && pieceType !== 'knight'
-      ? level.watchedSquares : [];
-    const effectiveObstacles = (guardRivers.length || legacyWatched.length)
-      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...guardRivers, ...legacyWatched] }
-      : level.obstacles;
+    const effectiveObstacles = level.obstacles;
 
     const raw = getValidMoves(
       pieceType,
@@ -335,10 +326,11 @@ export function DuoBoard({
             <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
           )}
 
-          {/* Custom threat overlay — hand-crafted zones (watchedSquares) */}
+          {/* Custom threat overlay — hand-crafted zones (watchedSquares) — red dot */}
           {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
-            <div className="absolute inset-0 pointer-events-none"
-              style={{ background: 'rgba(239,68,68,0.20)' }} />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+              <div style={{ width: squareSize * 0.28, height: squareSize * 0.28, borderRadius: '50%', background: 'rgba(239,68,68,0.65)' }} />
+            </div>
           )}
 
           {river && !bridge && (

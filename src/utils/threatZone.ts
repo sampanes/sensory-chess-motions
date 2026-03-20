@@ -1,30 +1,34 @@
 import { getValidMoves } from './moveCalculator';
-import { PatrolPiece, PieceType, Position } from '../types';
+import { Obstacle, PatrolPiece, PieceType, Position } from '../types';
+
+const EMPTY_OBS: Obstacle = { fences: [], rivers: [], bridges: [], food: [] };
 
 /**
- * Returns all squares blocked by guard pieces: each guard's threat zone
- * (via getValidMoves with empty obstacles) plus the guard's own square.
- * Deduplicates. Used by BoardShell, DuoBoard, and AdventureApp.
+ * Returns all squares threatened by guard pieces: each guard's vision cone
+ * (via getValidMoves) plus the guard's own square. Deduplicates.
+ *
+ * Pass the level's actual obstacles so sliding guards are blocked by rivers,
+ * fences, and food — a rook guard can't see through a river, for example.
+ * Defaults to open-space (no obstacles) when omitted, for backwards compatibility.
  */
 export function computeGuardThreat(
   guards: Array<{ pieceType: PieceType; position: Position }>,
   boardRows = 5,
   boardCols = 5,
+  obstacles: Obstacle = EMPTY_OBS,
 ): Position[] {
   const seen = new Set<string>();
   const result: Position[] = [];
   for (const g of guards) {
     const selfKey = `${g.position.row},${g.position.col}`;
     if (!seen.has(selfKey)) { seen.add(selfKey); result.push(g.position); }
-    for (const sq of getValidMoves(g.pieceType, g.position, EMPTY_OBS, [], boardRows, boardCols)) {
+    for (const sq of getValidMoves(g.pieceType, g.position, obstacles, [], boardRows, boardCols)) {
       const key = `${sq.row},${sq.col}`;
       if (!seen.has(key)) { seen.add(key); result.push(sq); }
     }
   }
   return result;
 }
-
-const EMPTY_OBS = { fences: [], rivers: [], bridges: [], food: [] };
 
 /**
  * Returns all squares threatened by one patrol piece at a specific step.

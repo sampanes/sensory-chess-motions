@@ -226,12 +226,10 @@ export function ScrollBoard({
 
   // ── Valid moves ──────────────────────────────────────────────────────────
   useEffect(() => {
-    // Guard pieces and their threat zones are impassable — merge into obstacles.rivers.
-    const guardRivers = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
     const htThreat = level.huntTarget
       ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, { fences: [], rivers: [], bridges: [], food: [] }, [], boardRows, boardCols)
       : [];
-    const extraRivers = [...guardRivers, ...(level.watchedSquares ?? []), ...htThreat];
+    const extraRivers = [...htThreat];
     const effectiveObstacles = extraRivers.length
       ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...extraRivers] }
       : level.obstacles;
@@ -374,6 +372,17 @@ export function ScrollBoard({
     setAnimKey(prev => prev + 1);
     onStuck(false);
 
+    // Guard catch — static guard threat or watched square
+    const isGuardThreat = guardThreatSet.has(`${row},${col}`) ||
+      (level.watchedSquares?.some(ws => ws.row === row && ws.col === col) ?? false);
+    if (isGuardThreat) {
+      playWompSound();
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([80, 60, 120]);
+      setCaughtBy(-1);
+      setCatchActive(true);
+      return;
+    }
+
     const eatenFood = level.obstacles.food.find(f => f.row === row && f.col === col);
     if (eatenFood) {
       onFoodConsumed(eatenFood);
@@ -462,19 +471,12 @@ export function ScrollBoard({
   // ── Render ────────────────────────────────────────────────────────────────
   const totalCells = boardRows * boardCols;
 
-  // Precompute guard threat set for cell-loop rendering
-  const guardThreatPositions = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
+  // Precompute guard threat set for cell-loop rendering.
+  // Pass level.obstacles so sliding guards respect rivers, fences, and food.
+  const guardThreatPositions = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols, level.obstacles);
   const guardThreatSet = new Set(guardThreatPositions.map(p => `${p.row},${p.col}`));
   const isGuardSquare = (r: number, c: number) =>
     level.guardPieces?.some(g => g.position.row === r && g.position.col === c) ?? false;
-
-  // Precompute huntTarget threat set for cell-loop rendering
-  const huntTargetThreatPositions = level.huntTarget
-    ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, { fences: [], rivers: [], bridges: [], food: [] }, [], boardRows, boardCols)
-    : [];
-  const huntTargetThreatSet = new Set(huntTargetThreatPositions.map(p => `${p.row},${p.col}`));
-  const isHuntTarget = (r: number, c: number) =>
-    level.huntTarget?.position.row === r && level.huntTarget?.position.col === c;
 
   return (
     <>
@@ -586,22 +588,18 @@ export function ScrollBoard({
                     <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(139,92,246,0.13)' }} />
                   )}
 
-                  {/* Guard piece threat zone */}
+                  {/* Guard piece threat zone — red dot */}
                   {!river && !bridge && guardThreatSet.has(`${r},${c}`) && !isGuardSquare(r, c) && (
-                    <div className="absolute inset-0 pointer-events-none"
-                      style={{ background: 'rgba(239,68,68,0.20)' }} />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+                      <div style={{ width: squareSize * 0.28, height: squareSize * 0.28, borderRadius: '50%', background: 'rgba(239,68,68,0.65)' }} />
+                    </div>
                   )}
 
-                  {/* Hunt target threat zone */}
-                  {!river && !bridge && huntTargetThreatSet.has(`${r},${c}`) && !isHuntTarget(r, c) && (
-                    <div className="absolute inset-0 pointer-events-none"
-                      style={{ background: 'rgba(239,68,68,0.20)' }} />
-                  )}
-
-                  {/* Custom threat overlay — hand-crafted zones (watchedSquares) */}
+                  {/* Custom threat overlay — hand-crafted zones (watchedSquares) — red dot */}
                   {!river && !bridge && level.watchedSquares?.some(ws => ws.row === r && ws.col === c) && (
-                    <div className="absolute inset-0 pointer-events-none"
-                      style={{ background: 'rgba(239,68,68,0.20)' }} />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+                      <div style={{ width: squareSize * 0.28, height: squareSize * 0.28, borderRadius: '50%', background: 'rgba(239,68,68,0.65)' }} />
+                    </div>
                   )}
 
                   {river && !bridge && !spaceTheme && (
@@ -1029,7 +1027,7 @@ export function ScrollBoard({
             >
               <div style={{ fontSize: 28, marginBottom: 8 }}>🔴</div>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
-                The sentinel found you.
+                {caughtBy === -1 ? 'That square is guarded!' : 'The sentinel found you.'}
               </div>
               <motion.button
                 initial={{ opacity: 0 }}

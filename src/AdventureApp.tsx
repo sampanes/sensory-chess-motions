@@ -34,7 +34,7 @@ import {
 } from './adventure/sharing';
 import { playCelebrationSound } from './utils/sounds';
 import { getValidMoves } from './utils/moveCalculator';
-import { isKingTrapped, computeGuardThreat } from './utils/threatZone';
+import { isKingTrapped } from './utils/threatZone';
 import { GalleryBoard } from './components/GalleryBoard';
 import { OracleMode } from './adventure/OracleMode';
 import { GrandFinale } from './adventure/GrandFinale';
@@ -519,20 +519,11 @@ function WorldPlay({
       return; // capture move done — skip goal check
     }
 
-    // controlMode win: piece must have all targetSquares in its valid moves from newPos
+    // controlMode win: piece must have all targetSquares in its valid moves from newPos.
+    // Guard threats and watchedSquares are passable (catch-on-landing), so they don't
+    // restrict what the piece can control.
     if (effectiveLevel.controlMode && effectiveLevel.targetSquares && effectiveLevel.targetSquares.length > 0) {
-      const effectiveObstacles = {
-        ...effectiveLevel.obstacles,
-        rivers: [
-          ...effectiveLevel.obstacles.rivers,
-          ...computeGuardThreat(
-            effectiveLevel.guardPieces ?? [],
-            effectiveLevel.boardHeight ?? 5,
-            effectiveLevel.boardWidth ?? 5,
-          ),
-          ...(effectiveLevel.watchedSquares ?? []),
-        ],
-      };
+      const effectiveObstacles = effectiveLevel.obstacles;
       const moves = getValidMoves(
         effectiveLevel.pieceType,
         newPos,

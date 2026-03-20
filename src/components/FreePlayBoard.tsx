@@ -5,12 +5,17 @@ import { GamePiece, Position, PieceColor, ChessPhase } from '../types';
 // Classic chess board colours
 const LIGHT_SQ = '#f0d9b5';
 const DARK_SQ  = '#b58863';
-const BLACK_FILTER = 'invert(0.92)';
+// Pure invert → black body with white/light outline; drop-shadow pops off dark squares
+const BLACK_FILTER = 'invert(1) drop-shadow(0 1px 2px rgba(255,255,255,0.35))';
 
 interface FreePlayBoardProps {
   pieces: GamePiece[];
   selectedId: string | null;
   legalTargets: Position[];
+  /** Id of an opponent piece the player tapped — its threat squares shown in red. */
+  opponentPreviewId?: string | null;
+  /** Squares the previewed opponent piece can move to (shown as red dots). */
+  opponentTargets?: Position[];
   lastMove?: { from: Position; to: Position };
   turn: PieceColor;
   phase: ChessPhase;
@@ -24,6 +29,8 @@ export function FreePlayBoard({
   pieces,
   selectedId,
   legalTargets,
+  opponentPreviewId,
+  opponentTargets,
   lastMove,
   turn,
   phase,
@@ -38,6 +45,10 @@ export function FreePlayBoard({
 
   function isLegalTarget(row: number, col: number) {
     return legalTargets.some(t => t.row === row && t.col === col);
+  }
+
+  function isOpponentTarget(row: number, col: number) {
+    return (opponentTargets ?? []).some(t => t.row === row && t.col === col);
   }
 
   function isLastMove(row: number, col: number) {
@@ -76,11 +87,14 @@ export function FreePlayBoard({
           const c = i % BOARD_SIZE;
           const light = (r + c) % 2 === 0;
           const legalHere = isLegalTarget(r, c);
+          const oppTargetHere = isOpponentTarget(r, c);
           const selectedHere = isSelected(r, c);
           const lastMoveHere = isLastMove(r, c);
           const checkHere = checkedKingPos?.row === r && checkedKingPos?.col === c;
           const piece = pieceAt(r, c);
           const isEnemy = piece && piece.color !== turn && legalHere;
+          // Is this the opponent piece being previewed (tapped)?
+          const opponentPreviewHere = piece?.id === opponentPreviewId;
 
           return (
             <div
@@ -91,7 +105,7 @@ export function FreePlayBoard({
                 height: squareSize,
                 background: light ? LIGHT_SQ : DARK_SQ,
                 position: 'relative',
-                cursor: legalHere || (piece?.color === turn) ? 'pointer' : 'default',
+                cursor: piece ? 'pointer' : (legalHere ? 'pointer' : 'default'),
               }}
             >
               {/* Last-move amber tint */}
@@ -104,6 +118,12 @@ export function FreePlayBoard({
               {selectedHere && (
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ background: 'rgba(99,220,99,0.45)' }} />
+              )}
+
+              {/* Opponent piece preview highlight — red tint on tapped enemy */}
+              {opponentPreviewHere && !selectedHere && (
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'rgba(239,68,68,0.3)' }} />
               )}
 
               {/* Check highlight — pulsing red on the king's square */}
@@ -127,7 +147,7 @@ export function FreePlayBoard({
                 </div>
               )}
 
-              {/* Legal target indicator */}
+              {/* Legal target indicator (gold — player's own moves) */}
               {legalHere && (
                 <div
                   className="absolute pointer-events-none"
@@ -139,7 +159,7 @@ export function FreePlayBoard({
                   }}
                 >
                   {isEnemy ? (
-                    // Enemy piece on a legal square — show capture ring
+                    // Enemy piece on a legal square — capture ring
                     <div style={{
                       position: 'absolute', inset: 3,
                       borderRadius: '50%',
@@ -147,12 +167,43 @@ export function FreePlayBoard({
                       pointerEvents: 'none',
                     }} />
                   ) : (
-                    // Empty legal square — show dot
+                    // Empty legal square — gold dot
                     <div style={{
                       width: squareSize * 0.28,
                       height: squareSize * 0.28,
                       borderRadius: '50%',
                       background: 'rgba(99,220,99,0.65)',
+                    }} />
+                  )}
+                </div>
+              )}
+
+              {/* Opponent threat indicator (red — squares the previewed enemy piece can reach) */}
+              {oppTargetHere && !legalHere && (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {piece && piece.color === turn ? (
+                    // Own piece in the line of fire — red ring warning
+                    <div style={{
+                      position: 'absolute', inset: 3,
+                      borderRadius: '50%',
+                      border: '3px solid rgba(239,68,68,0.8)',
+                      pointerEvents: 'none',
+                    }} />
+                  ) : (
+                    // Empty square — red dot
+                    <div style={{
+                      width: squareSize * 0.28,
+                      height: squareSize * 0.28,
+                      borderRadius: '50%',
+                      background: 'rgba(239,68,68,0.65)',
                     }} />
                   )}
                 </div>
