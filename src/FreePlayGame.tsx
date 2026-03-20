@@ -7,6 +7,7 @@ import {
 } from './utils/gameEngine';
 import { FreePlayBoard } from './components/FreePlayBoard';
 import { GameHUD } from './components/GameHUD';
+import { GameOverScreen } from './components/GameOverScreen';
 
 function getSquareSize(): number {
   return Math.min(72, Math.floor((Math.min(window.innerWidth, window.innerHeight) - 48) / 5));
@@ -78,43 +79,27 @@ export function FreePlayGame() {
         {/* HUD */}
         <GameHUD turn={turn} phase={phase} />
 
-        {/* Board */}
-        <FreePlayBoard
-          pieces={pieces}
-          selectedId={selectedId}
-          legalTargets={legalTargets}
-          lastMove={lastMove}
-          turn={turn}
-          phase={phase}
-          squareSize={squareSize}
-          onSquareClick={handleSquareClick}
-        />
+        {/* Board + overlay */}
+        <div style={{ position: 'relative' }}>
+          <FreePlayBoard
+            pieces={pieces}
+            selectedId={selectedId}
+            legalTargets={legalTargets}
+            lastMove={lastMove}
+            turn={turn}
+            phase={phase}
+            squareSize={squareSize}
+            onSquareClick={handleSquareClick}
+          />
 
-        {/* Game-over banner */}
-        {(phase === 'checkmate' || phase === 'stalemate') && (
-          <div
-            className="mt-4 rounded-xl p-4 text-center"
-            style={{ background: 'rgba(30,20,10,0.90)' }}
-          >
-            <p className="text-amber-100 font-bold text-lg mb-1">
-              {phase === 'checkmate'
-                ? `${turn === 'white' ? 'Black' : 'White'} wins — Checkmate.`
-                : 'Stalemate — it\'s a draw.'}
-            </p>
-            <p className="text-amber-400 text-sm mb-3">
-              {phase === 'checkmate'
-                ? 'The king is trapped. It has nowhere left to go.'
-                : 'The king can\'t move, but was never in danger.'}
-            </p>
-            <button
-              onClick={handleReset}
-              className="px-6 py-2 rounded-lg font-bold text-amber-900"
-              style={{ background: '#f5e6c8' }}
-            >
-              Play again
-            </button>
-          </div>
-        )}
+          {(phase === 'checkmate' || phase === 'stalemate') && (
+            <GameOverScreen
+              phase={phase}
+              loser={turn}
+              onPlayAgain={handleReset}
+            />
+          )}
+        </div>
 
         {/* Subtle play-again during game */}
         {phase !== 'checkmate' && phase !== 'stalemate' && (
