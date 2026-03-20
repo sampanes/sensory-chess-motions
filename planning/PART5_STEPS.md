@@ -6,9 +6,9 @@
 ## Status (as of 18 Mar 2026)
 
 - **M32 ✅ COMPLETE** — `src/utils/gameEngine.ts` + `PieceColor`/`GamePiece`/`ChessPhase`/`ChessGameState` types. Gardner's Minichess starting position. `getLegalMoves`, `applyMove`, `isInCheck`, `isCheckmate`, `isStalemate`. `tsc --noEmit` clean.
-- **M33** — FreePlayBoard + FreePlayGame + GameHUD. *Next.*
-- **M34** — Check glow, GameOverScreen, checkmate/stalemate UI.
-- **M35** — Story integration, entry point, first-game orientation.
+- **M33 ✅ COMPLETE** — FreePlayBoard + FreePlayGame + GameHUD. Interactive 5×5 game, selection, moves, captures, check pulse.
+- **M34 ✅ COMPLETE** — GameOverScreen overlay (checkmate/stalemate). Fades in over the board; dual kings for stalemate, winning king for checkmate.
+- **M35 ✅ COMPLETE** — Story beat (shown once, `tbk_freeplay_seen`), orientation label (first game, `tbk_freeplay_first_done`), 🏰 Play a Game button on world map.
 
 **Note:** `GamePhase` was already in use for the adventure game. The chess game uses `ChessPhase` instead.
 

@@ -203,6 +203,18 @@ export default function AdventureApp() {
           onSelectOracle={() => setPhase('oracle')}
           isDadCheat={IS_DAD_CHEAT}
         />
+
+        {/* Free Play entry point */}
+        <div className="flex justify-center pb-6">
+          <button
+            onClick={() => { window.location.href = window.location.pathname + '?freeplay'; }}
+            className="px-5 py-2 rounded-xl font-semibold text-amber-900 text-sm shadow-md"
+            style={{ background: '#f5e6c8', opacity: 0.85 }}
+          >
+            🏰 Play a Game
+          </button>
+        </div>
+
         <AnimatePresence>
           {showInstallBanner && (
             <motion.div

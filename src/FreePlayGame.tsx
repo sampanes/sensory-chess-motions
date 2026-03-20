@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChessGameState } from './types';
 import {
   buildInitialGameState,
@@ -13,9 +14,45 @@ function getSquareSize(): number {
   return Math.min(72, Math.floor((Math.min(window.innerWidth, window.innerHeight) - 48) / 5));
 }
 
+function StoryBeat({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <motion.div
+      className="min-h-screen flex flex-col items-center justify-center px-8 text-center"
+      style={{ background: 'linear-gradient(to bottom, #1a1208, #2d1f0a)' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      onClick={onDismiss}
+    >
+      <div className="max-w-xs">
+        <p className="text-amber-200 text-lg leading-relaxed mb-6">
+          You know the rook. You know the bishop. You know the knight that jumps over everything in its way.
+        </p>
+        <p className="text-amber-200 text-lg leading-relaxed mb-6">
+          You know the queen — all those lines, all that reach.
+        </p>
+        <p className="text-amber-200 text-lg leading-relaxed mb-6">
+          And you know the king. Slow, careful, one step at a time.
+        </p>
+        <p className="text-amber-200 text-lg leading-relaxed mb-10">
+          Now — for the first time — they're all on the same board. Both sides. Twelve pieces each.
+        </p>
+        <p className="text-amber-500 text-sm tracking-widest uppercase">Tap to begin</p>
+      </div>
+    </motion.div>
+  );
+}
+
 export function FreePlayGame() {
   const [gameState, setGameState] = useState<ChessGameState>(buildInitialGameState);
   const [squareSize, setSquareSize] = useState(getSquareSize);
+  const [showStory, setShowStory] = useState(
+    () => !localStorage.getItem('tbk_freeplay_seen')
+  );
+  const [showOrientation, setShowOrientation] = useState(
+    () => !localStorage.getItem('tbk_freeplay_first_done')
+  );
 
   // Recompute square size on resize
   useEffect(() => {
@@ -23,6 +60,19 @@ export function FreePlayGame() {
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
+
+  // Mark first game done when game ends
+  useEffect(() => {
+    if ((gameState.phase === 'checkmate' || gameState.phase === 'stalemate') && showOrientation) {
+      localStorage.setItem('tbk_freeplay_first_done', '1');
+      setShowOrientation(false);
+    }
+  }, [gameState.phase, showOrientation]);
+
+  function handleDismissStory() {
+    localStorage.setItem('tbk_freeplay_seen', '1');
+    setShowStory(false);
+  }
 
   function handleSquareClick(row: number, col: number) {
     const { pieces, turn, phase, selectedId, legalTargets } = gameState;
@@ -65,52 +115,77 @@ export function FreePlayGame() {
   const boardSize = squareSize * 5;
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center"
-      style={{ background: 'linear-gradient(to bottom, #1a1208, #2d1f0a)' }}
-    >
-      <div style={{ width: boardSize }}>
-        {/* Title */}
-        <h1 className="text-center font-bold text-amber-200 mb-4 tracking-wide"
-          style={{ fontSize: squareSize * 0.38 }}>
-          The Borrowed Kingdom
-        </h1>
+    <AnimatePresence mode="wait">
+      {showStory ? (
+        <StoryBeat key="story" onDismiss={handleDismissStory} />
+      ) : (
+        <motion.div
+          key="game"
+          className="min-h-screen flex flex-col items-center justify-center"
+          style={{ background: 'linear-gradient(to bottom, #1a1208, #2d1f0a)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div style={{ width: boardSize }}>
+            {/* Title */}
+            <h1 className="text-center font-bold text-amber-200 mb-4 tracking-wide"
+              style={{ fontSize: squareSize * 0.38 }}>
+              The Borrowed Kingdom
+            </h1>
 
-        {/* HUD */}
-        <GameHUD turn={turn} phase={phase} />
+            {/* HUD */}
+            <GameHUD turn={turn} phase={phase} />
 
-        {/* Board + overlay */}
-        <div style={{ position: 'relative' }}>
-          <FreePlayBoard
-            pieces={pieces}
-            selectedId={selectedId}
-            legalTargets={legalTargets}
-            lastMove={lastMove}
-            turn={turn}
-            phase={phase}
-            squareSize={squareSize}
-            onSquareClick={handleSquareClick}
-          />
+            {/* Orientation label — first game only */}
+            <AnimatePresence>
+              {showOrientation && (
+                <motion.p
+                  key="orientation"
+                  className="text-center text-amber-400 text-xs mb-2 tracking-wide"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.75 }}
+                  exit={{ opacity: 0 }}
+                >
+                  You are White.&nbsp; Tap a piece to move.
+                </motion.p>
+              )}
+            </AnimatePresence>
 
-          {(phase === 'checkmate' || phase === 'stalemate') && (
-            <GameOverScreen
-              phase={phase}
-              loser={turn}
-              onPlayAgain={handleReset}
-            />
-          )}
-        </div>
+            {/* Board + overlay */}
+            <div style={{ position: 'relative' }}>
+              <FreePlayBoard
+                pieces={pieces}
+                selectedId={selectedId}
+                legalTargets={legalTargets}
+                lastMove={lastMove}
+                turn={turn}
+                phase={phase}
+                squareSize={squareSize}
+                onSquareClick={handleSquareClick}
+              />
 
-        {/* Subtle play-again during game */}
-        {phase !== 'checkmate' && phase !== 'stalemate' && (
-          <button
-            onClick={handleReset}
-            className="mt-3 w-full text-center text-amber-700 text-sm opacity-50 hover:opacity-80 transition-opacity"
-          >
-            ↺ Start over
-          </button>
-        )}
-      </div>
-    </div>
+              {(phase === 'checkmate' || phase === 'stalemate') && (
+                <GameOverScreen
+                  phase={phase}
+                  loser={turn}
+                  onPlayAgain={handleReset}
+                />
+              )}
+            </div>
+
+            {/* Subtle play-again during game */}
+            {phase !== 'checkmate' && phase !== 'stalemate' && (
+              <button
+                onClick={handleReset}
+                className="mt-3 w-full text-center text-amber-700 text-sm opacity-50 hover:opacity-80 transition-opacity"
+              >
+                ↺ Start over
+              </button>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
