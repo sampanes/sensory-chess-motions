@@ -228,8 +228,12 @@ export function ScrollBoard({
   useEffect(() => {
     // Guard pieces and their threat zones are impassable — merge into obstacles.rivers.
     const guardRivers = computeGuardThreat(level.guardPieces ?? [], boardRows, boardCols);
-    const effectiveObstacles = (guardRivers.length || level.watchedSquares?.length)
-      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...guardRivers, ...(level.watchedSquares ?? [])] }
+    const htThreat = level.huntTarget
+      ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, { fences: [], rivers: [], bridges: [], food: [] }, [], boardRows, boardCols)
+      : [];
+    const extraRivers = [...guardRivers, ...(level.watchedSquares ?? []), ...htThreat];
+    const effectiveObstacles = extraRivers.length
+      ? { ...level.obstacles, rivers: [...level.obstacles.rivers, ...extraRivers] }
       : level.obstacles;
     const moves = getValidMoves(
       level.pieceType, piecePos, effectiveObstacles, consumedFood,
@@ -237,7 +241,8 @@ export function ScrollBoard({
     );
     setValidMoves(moves);
 
-    const atGoal = piecePos.row === level.goal.row && piecePos.col === level.goal.col;
+    const atGoal = (piecePos.row === level.goal.row && piecePos.col === level.goal.col)
+      || !!(level.huntTarget && piecePos.row === level.huntTarget.position.row && piecePos.col === level.huntTarget.position.col);
     if (moves.length === 0 && animKey > 0 && !atGoal) {
       onStuck(true);
       playWompSound();
@@ -463,6 +468,14 @@ export function ScrollBoard({
   const isGuardSquare = (r: number, c: number) =>
     level.guardPieces?.some(g => g.position.row === r && g.position.col === c) ?? false;
 
+  // Precompute huntTarget threat set for cell-loop rendering
+  const huntTargetThreatPositions = level.huntTarget
+    ? getValidMoves(level.huntTarget.pieceType, level.huntTarget.position, { fences: [], rivers: [], bridges: [], food: [] }, [], boardRows, boardCols)
+    : [];
+  const huntTargetThreatSet = new Set(huntTargetThreatPositions.map(p => `${p.row},${p.col}`));
+  const isHuntTarget = (r: number, c: number) =>
+    level.huntTarget?.position.row === r && level.huntTarget?.position.col === c;
+
   return (
     <>
       {/* Wrapper provides positioning context for the "more ahead" arrow */}
@@ -575,6 +588,12 @@ export function ScrollBoard({
 
                   {/* Guard piece threat zone */}
                   {!river && !bridge && guardThreatSet.has(`${r},${c}`) && !isGuardSquare(r, c) && (
+                    <div className="absolute inset-0 pointer-events-none"
+                      style={{ background: 'rgba(239,68,68,0.20)' }} />
+                  )}
+
+                  {/* Hunt target threat zone */}
+                  {!river && !bridge && huntTargetThreatSet.has(`${r},${c}`) && !isHuntTarget(r, c) && (
                     <div className="absolute inset-0 pointer-events-none"
                       style={{ background: 'rgba(239,68,68,0.20)' }} />
                   )}
@@ -853,6 +872,32 @@ export function ScrollBoard({
               </div>
             </div>
           ))}
+
+          {/* ── Hunt target — pulsing enemy piece to capture ── */}
+          {level.huntTarget && (
+            <div
+              style={{
+                position: 'absolute',
+                top: level.huntTarget.position.row * squareSize,
+                left: level.huntTarget.position.col * squareSize,
+                width: squareSize,
+                height: squareSize,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 9,
+              }}
+            >
+              <motion.div
+                style={{ position: 'absolute', inset: -2, borderRadius: 4, border: '2px solid rgba(239,68,68,0.65)' }}
+                animate={{ boxShadow: ['0 0 6px rgba(239,68,68,0.4)', '0 0 16px rgba(239,68,68,0.8)', '0 0 6px rgba(239,68,68,0.4)'] }}
+                transition={{ duration: 2.4, repeat: Infinity }}
+              />
+              <div style={{ position: 'absolute', top: 2, right: 3, fontSize: squareSize * 0.2, opacity: 0.45 }}>⊕</div>
+              <div style={{ filter: 'hue-rotate(340deg) saturate(2.2) brightness(0.85)', opacity: 0.95 }}>
+                <ChessPieceIcon type={level.huntTarget.pieceType} size={squareSize * 0.78} />
+              </div>
+            </div>
+          )}
 
           {/* ── Sentinel pieces — in world coords, scroll with the grid ── */}
           {(patrolPieces ?? []).map((patrol, si) => {

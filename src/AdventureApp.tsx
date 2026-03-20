@@ -118,6 +118,13 @@ const REMIX_CONFIGS: Partial<Record<number, RemixConfig>> = {
     contrast: 'The rook crossed 11 columns in a single move.',
     insight: "The bishop zigzags — 6 moves where the rook needed 1. Distance is a rook's friend.",
   },
+  14: {
+    levelIndex: 2,       // H3 — The Straight Path (rook hunts bishop, 2 moves)
+    remixPiece: 'knight',
+    offer: 'Now try The Straight Path as a Knight!',
+    contrast: "The rook had to circle around the bishop's diagonals — 2 moves.",
+    insight: "The knight doesn't care about diagonals. One L-jump and it's done.",
+  },
 };
 
 // ─── Top-level phase ──────────────────────────────────────────────────────────
@@ -625,7 +632,11 @@ function WorldPlay({
     setRemixTrail(prev => [...prev, newPos]);
     const next = remixMoveCount + 1;
     setRemixMoveCount(next);
-    if (newPos.row === remixLevel.goal.row && newPos.col === remixLevel.goal.col) {
+    const hitGoal = newPos.row === remixLevel.goal.row && newPos.col === remixLevel.goal.col;
+    const hitHunt = !!(remixLevel.huntTarget &&
+      newPos.row === remixLevel.huntTarget.position.row &&
+      newPos.col === remixLevel.huntTarget.position.col);
+    if (hitGoal || hitHunt) {
       setRemixLastStars(getStars(remixLevel.starThresholds, next));
       setTimeout(() => setPlayPhase('remix-result'), 600);
     }
