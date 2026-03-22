@@ -257,39 +257,97 @@ export function applyPromotion(chosenType: PieceType, state: ChessGameState): Ch
   return { pieces: newPieces, turn: nextTurn, phase, selectedId: null, legalTargets: [], lastMove: state.lastMove };
 }
 
-// ─── Simple AI ────────────────────────────────────────────────────────────────
+// ─── AI (2-ply minimax with alpha-beta) ───────────────────────────────────────
 
 const PIECE_VALUE: Record<PieceType, number> = {
   queen: 9, rook: 5, bishop: 3, knight: 3, pawn: 1, king: 0,
 };
 
-/**
- * Returns one legal move for the active side using a simple 1-ply greedy heuristic:
- * prefer captures by piece value, pick randomly among equals (and among non-captures).
- * Returns null if no moves exist (should not happen — caller checks phase first).
- */
-export function getAIMove(state: ChessGameState): { from: Position; to: Position } | null {
-  const { pieces, turn } = state;
+// Material balance from Black's perspective (positive = good for Black).
+function evaluate(pieces: GamePiece[]): number {
+  let score = 0;
+  for (const p of pieces) {
+    score += p.color === 'black' ? PIECE_VALUE[p.pieceType] : -PIECE_VALUE[p.pieceType];
+  }
+  return score;
+}
 
-  type Candidate = { from: Position; to: Position; score: number };
-  const candidates: Candidate[] = [];
+// Apply a move for the search tree, auto-promoting pawns to queen.
+function applySearchMove(piece: GamePiece, to: Position, pieces: GamePiece[]): GamePiece[] {
+  let next = applyPiecesMove(piece, to, pieces);
+  const promoRow = piece.color === 'white' ? 0 : BOARD_SIZE - 1;
+  if (piece.pieceType === 'pawn' && to.row === promoRow) {
+    next = next.map(p => p.id === piece.id ? { ...p, pieceType: 'queen' as PieceType } : p);
+  }
+  return next;
+}
 
-  for (const piece of pieces.filter(p => p.color === turn)) {
-    for (const target of getLegalMovesFromPieces(piece, pieces)) {
-      const captured = pieceAt(target.row, target.col, pieces);
-      candidates.push({
-        from: piece.position,
-        to: target,
-        score: captured ? PIECE_VALUE[captured.pieceType] : 0,
-      });
+function minimax(
+  pieces: GamePiece[],
+  depth: number,
+  isMaximizing: boolean,
+  alpha: number,
+  beta: number,
+): number {
+  const color: PieceColor = isMaximizing ? 'black' : 'white';
+  const moves: { piece: GamePiece; to: Position }[] = [];
+  for (const piece of pieces.filter(p => p.color === color)) {
+    for (const to of getLegalMovesFromPieces(piece, pieces)) {
+      moves.push({ piece, to });
     }
   }
 
-  if (candidates.length === 0) return null;
+  if (moves.length === 0) {
+    return isInCheck(color, pieces) ? (isMaximizing ? -1000 : 1000) : 0;
+  }
+  if (depth === 0) return evaluate(pieces);
 
-  const maxScore = Math.max(...candidates.map(c => c.score));
-  const best = candidates.filter(c => c.score === maxScore);
-  return best[Math.floor(Math.random() * best.length)];
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (const { piece, to } of moves) {
+      best = Math.max(best, minimax(applySearchMove(piece, to, pieces), depth - 1, false, alpha, beta));
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const { piece, to } of moves) {
+      best = Math.min(best, minimax(applySearchMove(piece, to, pieces), depth - 1, true, alpha, beta));
+      beta = Math.min(beta, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+/**
+ * Returns one legal move for the active side using 2-ply minimax with alpha-beta.
+ * Black maximises material; white minimises. Ties broken randomly.
+ * Returns null if no moves exist (caller checks phase first).
+ */
+export function getAIMove(state: ChessGameState): { from: Position; to: Position } | null {
+  const { pieces, turn } = state;
+  const isMaximizing = turn === 'black';
+  let bestScore = isMaximizing ? -Infinity : Infinity;
+  const bestMoves: { from: Position; to: Position }[] = [];
+
+  for (const piece of pieces.filter(p => p.color === turn)) {
+    for (const to of getLegalMovesFromPieces(piece, pieces)) {
+      const next = applySearchMove(piece, to, pieces);
+      const score = minimax(next, 1, !isMaximizing, -Infinity, Infinity);
+      if (isMaximizing ? score > bestScore : score < bestScore) {
+        bestScore = score;
+        bestMoves.length = 0;
+        bestMoves.push({ from: piece.position, to });
+      } else if (score === bestScore) {
+        bestMoves.push({ from: piece.position, to });
+      }
+    }
+  }
+
+  if (bestMoves.length === 0) return null;
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }
 
 // Convenience exports for external use

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChessGameState, Position, PieceType } from './types';
+import { ChessGameState, Position, PieceType, GamePiece } from './types';
 import {
   buildInitialGameState,
   getLegalMoves,
@@ -98,6 +98,8 @@ export function FreePlayGame() {
   const [squareSize, setSquareSize] = useState(getSquareSize);
   const [opponentPreviewId, setOpponentPreviewId] = useState<string | null>(null);
   const [opponentTargets, setOpponentTargets] = useState<Position[]>([]);
+  const [capturedPiece, setCapturedPiece] = useState<GamePiece | null>(null);
+  const captureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showStory, setShowStory] = useState(
     () => !localStorage.getItem('tbk_freeplay_seen')
   );
@@ -150,7 +152,7 @@ export function FreePlayGame() {
       const newState = applyMove(move.from, move.to, gameState);
       if (movingPiece) {
         playMoveSound(movingPiece.pieceType);
-        if (newState.lastMove?.capturedId) playCrunchSound();
+        if (newState.lastMove?.capturedId) { playCrunchSound(); flashCapture(newState, gameState.pieces); }
       }
       if (newState.phase === 'check')     setTimeout(() => playChessCheck(), 180);
       else if (newState.phase === 'checkmate') setTimeout(() => playChessCheckmate(), 280);
@@ -164,6 +166,15 @@ export function FreePlayGame() {
   function handleDismissStory() {
     localStorage.setItem('tbk_freeplay_seen', '1');
     setShowStory(false);
+  }
+
+  function flashCapture(newState: ChessGameState, prevPieces: GamePiece[]) {
+    if (!newState.lastMove?.capturedId) return;
+    const cap = prevPieces.find(p => p.id === newState.lastMove!.capturedId!);
+    if (!cap) return;
+    if (captureTimerRef.current) clearTimeout(captureTimerRef.current);
+    setCapturedPiece(cap);
+    captureTimerRef.current = setTimeout(() => setCapturedPiece(null), 450);
   }
 
   function clearOpponentPreview() {
@@ -186,7 +197,7 @@ export function FreePlayGame() {
         clearOpponentPreview();
         const newState = applyMove(moving.position, { row, col }, gameState);
         playMoveSound(moving.pieceType);
-        if (newState.lastMove?.capturedId) playCrunchSound();
+        if (newState.lastMove?.capturedId) { playCrunchSound(); flashCapture(newState, gameState.pieces); }
         if (newState.phase === 'check')          setTimeout(() => playChessCheck(), 180);
         else if (newState.phase === 'checkmate') setTimeout(() => playChessCheckmate(), 280);
         else if (newState.phase === 'stalemate') setTimeout(() => playWompSound(), 280);
@@ -292,6 +303,7 @@ export function FreePlayGame() {
                 opponentPreviewId={opponentPreviewId}
                 opponentTargets={opponentTargets}
                 lastMove={lastMove}
+                capturedPiece={capturedPiece}
                 turn={turn}
                 phase={phase}
                 squareSize={squareSize}

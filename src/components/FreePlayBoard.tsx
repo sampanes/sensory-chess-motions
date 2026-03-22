@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChessPieceIcon } from './ChessPieceIcon';
 import { GamePiece, Position, PieceColor, ChessPhase } from '../types';
 
@@ -17,6 +17,7 @@ interface FreePlayBoardProps {
   /** Squares the previewed opponent piece can move to (shown as red dots). */
   opponentTargets?: Position[];
   lastMove?: { from: Position; to: Position };
+  capturedPiece?: GamePiece | null;
   turn: PieceColor;
   phase: ChessPhase;
   squareSize: number;
@@ -32,6 +33,7 @@ export function FreePlayBoard({
   opponentPreviewId,
   opponentTargets,
   lastMove,
+  capturedPiece,
   turn,
   phase,
   squareSize,
@@ -212,6 +214,36 @@ export function FreePlayBoard({
           );
         })}
       </div>
+
+      {/* Captured piece burst — scales up and fades out at the capture square */}
+      <AnimatePresence>
+        {capturedPiece && (
+          <motion.div
+            key={capturedPiece.id}
+            initial={{ scale: 1, opacity: 1 }}
+            animate={{ scale: 1.9, opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              top: capturedPiece.position.row * squareSize,
+              left: capturedPiece.position.col * squareSize,
+              width: squareSize,
+              height: squareSize,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 10,
+            }}
+          >
+            <ChessPieceIcon
+              type={capturedPiece.pieceType}
+              size={squareSize * 0.82}
+              style={capturedPiece.color === 'black' ? { filter: BLACK_FILTER } : undefined}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
