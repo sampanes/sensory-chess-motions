@@ -5,7 +5,7 @@ import { Level, PieceType, Position, Food, Enemy, PatrolPiece } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { getSentinelThreat, getAllThreats, computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
-import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from '../utils/terrain';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind, isGrassBlock } from '../utils/terrain';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
 
@@ -148,7 +148,7 @@ export function BoardShell({
   const getSquareClasses = (r: number, c: number) => {
     if (isRiver(r, c) && !isBridge(r, c)) {
       if (spaceTheme) return 'bg-slate-950';
-      return getBlockBgClass(getBlockKind(r, c));
+      return getBlockBgClass(getBlockKind(r, c), r, c);
     }
     if (isRiver(r, c) && isBridge(r, c))  return spaceTheme ? 'bg-slate-900' : 'bg-amber-500';
     if (spaceTheme) return (r + c) % 2 === 0 ? 'bg-slate-800' : 'bg-slate-700';
@@ -444,7 +444,8 @@ export function BoardShell({
             const suggested  = suggestedMove?.row === r && suggestedMove?.col === c;
             const piece      = isPiece(r, c);
             const inTrail    = isTrail(r, c) && !piece;
-            const decoration = !river && !bridge && !goal && !piece ? getDecoration(r, c, spaceTheme) : null;
+            const blockKind  = getBlockKind(r, c);
+            const decoration = (!river || isGrassBlock(blockKind)) && !bridge && !goal && !piece ? getDecoration(r, c, spaceTheme) : null;
 
             return (
               <motion.div
@@ -454,7 +455,7 @@ export function BoardShell({
                 onClick={() => handleSquareClick(r, c)}
                 whileHover={valid ? { scale: 1.03 } : {}}
               >
-                {!river && !bridge && !spaceTheme && (
+                {(!river || isGrassBlock(blockKind)) && !bridge && !spaceTheme && (
                   <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
                 )}
 

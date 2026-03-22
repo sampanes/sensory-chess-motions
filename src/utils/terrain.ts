@@ -10,14 +10,23 @@ export function getFoodEmoji(kind?: FoodKind): string {
   }
 }
 
-/** Background colour class for a blocking cell (non-bridge). */
-export function getBlockBgClass(kind?: BlockKind): string {
+/**
+ * Background colour class for a blocking cell (non-bridge).
+ * Tree and rock keep grass colours so the normal grass overlay still shows through.
+ * Hole gets a sandy tan. River stays blue.
+ */
+export function getBlockBgClass(kind: BlockKind | undefined, r: number, c: number): string {
   switch (kind) {
-    case 'tree': return 'bg-emerald-800';
-    case 'rock': return 'bg-stone-400';
-    case 'hole': return 'bg-stone-900';
-    default:     return 'bg-blue-400';
+    case 'tree':
+    case 'rock': return (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
+    case 'hole': return 'bg-amber-200';
+    default:     return 'bg-blue-400'; // river
   }
+}
+
+/** Tree and rock sit on top of grass — the grass overlay should still render. */
+export function isGrassBlock(kind?: BlockKind): boolean {
+  return kind === 'tree' || kind === 'rock';
 }
 
 /** Whether a blocking cell should show the animated water overlay. */

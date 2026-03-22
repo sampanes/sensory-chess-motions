@@ -25,7 +25,7 @@ import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { getSentinelThreat, computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound, playWhooshSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
-import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from '../utils/terrain';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind, isGrassBlock } from '../utils/terrain';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -413,7 +413,7 @@ export function ScrollBoard({
   const getSquareClasses = (r: number, c: number) => {
     if (isRiverCell(r, c) && !isBridgeCell(r, c)) {
       if (spaceTheme) return 'bg-slate-950';
-      return getBlockBgClass(getBlockKind(r, c));
+      return getBlockBgClass(getBlockKind(r, c), r, c);
     }
     if (isRiverCell(r, c) && isBridgeCell(r, c))  return spaceTheme ? 'bg-slate-900' : 'bg-amber-500';
     if (spaceTheme) return (r + c) % 2 === 0 ? 'bg-slate-800' : 'bg-slate-700';
@@ -577,7 +577,8 @@ export function ScrollBoard({
               const suggested  = suggestedMove?.row === r && suggestedMove?.col === c;
               const piece      = isPieceCell(r, c);
               const inTrail    = isTrailCell(r, c) && !piece;
-              const decoration = !river && !bridge && !goal && !piece ? getDecoration(r, c, spaceTheme) : null;
+              const blockKind  = getBlockKind(r, c);
+              const decoration = (!river || isGrassBlock(blockKind)) && !bridge && !goal && !piece ? getDecoration(r, c, spaceTheme) : null;
 
               return (
                 <motion.div
@@ -587,7 +588,7 @@ export function ScrollBoard({
                   onClick={() => handleSquareClick(r, c)}
                   whileHover={valid ? { scale: 1.03 } : {}}
                 >
-                  {!river && !bridge && !spaceTheme && (
+                  {(!river || isGrassBlock(blockKind)) && !bridge && !spaceTheme && (
                     <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
                   )}
 

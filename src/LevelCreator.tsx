@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Position, PieceType, Direction, Fence, RiverCell, Bridge, Food, Level, BlockKind, FoodKind } from './types';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
 import { Flag } from 'lucide-react';
-import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from './utils/terrain';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind, isGrassBlock } from './utils/terrain';
 
 const BOARD_SIZE = 5;
 const DESKTOP_SQUARE_SIZE = 88;
@@ -357,10 +357,11 @@ export function LevelCreator() {
             const piece  = isStart(r, c);
             const goalCell = isGoal(r, c);
             const foodCell = isFood(r, c);
-            const decoration = !river && !bridge && !goalCell && !piece ? getDecoration(r, c) : null;
+            const rvKind     = getRvKind(r, c);
+            const decoration = (!river || isGrassBlock(rvKind)) && !bridge && !goalCell && !piece ? getDecoration(r, c) : null;
 
             let bgClass = '';
-            if (river && !bridge) bgClass = getBlockBgClass(getRvKind(r, c));
+            if (river && !bridge) bgClass = getBlockBgClass(rvKind, r, c);
             else if (bridge)      bgClass = 'bg-amber-500';
             else                  bgClass = (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
 
@@ -372,7 +373,7 @@ export function LevelCreator() {
                 onClick={() => handleCellClick(r, c)}
               >
                 {/* Grass overlay */}
-                {!river && !bridge && (
+                {(!river || isGrassBlock(rvKind)) && !bridge && (
                   <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400'}`} />
                 )}
 

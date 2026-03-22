@@ -26,7 +26,7 @@ import { DuoLevel } from '../adventure/duoLevelDef';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
-import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from '../utils/terrain';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind, isGrassBlock } from '../utils/terrain';
 
 // ─── Viewport constants (mirrors ScrollBoard) ─────────────────────────────────
 
@@ -288,7 +288,7 @@ export function DuoBoard({
     level.obstacles.rivers.find(rv => rv.row === r && rv.col === c)?.kind;
 
   const getSquareClasses = (r: number, c: number) => {
-    if (isRiverCell(r, c) && !isBridgeCell(r, c)) return getBlockBgClass(getBlockKind(r, c));
+    if (isRiverCell(r, c) && !isBridgeCell(r, c)) return getBlockBgClass(getBlockKind(r, c), r, c);
     if (isRiverCell(r, c) &&  isBridgeCell(r, c)) return 'bg-amber-500';
     return (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
   };
@@ -313,7 +313,8 @@ export function DuoBoard({
         : false;
       const inTrailA_  = isTrail(r, c, 0) && !(positions[0].row === r && positions[0].col === c);
       const inTrailB_  = isTrail(r, c, 1) && !(positions[1].row === r && positions[1].col === c);
-      const decoration = !river && !bridge && !anyGoal && !isPiece
+      const blockKind  = getBlockKind(r, c);
+      const decoration = (!river || isGrassBlock(blockKind)) && !bridge && !anyGoal && !isPiece
         ? getDecoration(r, c) : null;
 
       void inTrailA; // suppress lint warning on the unused intermediate variable
@@ -326,7 +327,7 @@ export function DuoBoard({
           onClick={() => handleSquareClick(r, c)}
           whileHover={valid ? { scale: 1.03 } : {}}
         >
-          {!river && !bridge && (
+          {(!river || isGrassBlock(blockKind)) && !bridge && (
             <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'grass-light' : 'grass-dark'}`} />
           )}
 
