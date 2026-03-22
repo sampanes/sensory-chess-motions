@@ -54,7 +54,7 @@ const MAP_POSITIONS: { x: number; y: number }[] = [
   { x: 0.80, y: 0.35 }, // W11 The First Check (Middle Right)
   { x: 0.88, y: 0.15 }, // W12 The Grand Finale (High Right)
   { x: 0.65, y: 0.08 }, // W13 The Dark Sector (Top Center)
-  { x: 0.45, y: 0.15 }, // W14 The Blind Spot (Final Mystery)
+  { x: 0.45, y: 0.00 }, // W14 The Blind Spot (Final Mystery)
 ];
 
 // ─── All worlds ───────────────────────────────────────────────────────────────
