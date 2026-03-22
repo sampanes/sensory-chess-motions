@@ -35,9 +35,31 @@ export type WorldDef = {
   unlockAfter?: number;
 };
 
+// ─── Map positions ─────────────────────────────────────────────────────────────
+// One entry per world, in world order. x and y are fractions of viewport (0–1).
+// Edit these to reposition nodes on the adventure map; add a new entry for each new world.
+
+const MAP_POSITIONS: { x: number; y: number }[] = [
+  { x: 0.15, y: 0.88 }, // W0  The King's Start (Bottom Left)
+  { x: 0.35, y: 0.82 }, // W1  Pawn's Farm
+  { x: 0.60, y: 0.85 }, // W2  Rook's Roads
+  { x: 0.82, y: 0.78 }, // W3  Bishop's Grove (Bottom Right Corner)
+  { x: 0.85, y: 0.60 }, // W4  Knight's Mountains
+  { x: 0.65, y: 0.52 }, // W5  The Paired Path
+  { x: 0.40, y: 0.55 }, // W6  Queen's Realm (Center Left)
+  { x: 0.15, y: 0.50 }, // W7  Starfield Frontier
+  { x: 0.12, y: 0.32 }, // W8  The Shadow Pieces (Middle Left)
+  { x: 0.30, y: 0.22 }, // W9  The First Board
+  { x: 0.55, y: 0.28 }, // W10 The Pawn's Crown
+  { x: 0.80, y: 0.35 }, // W11 The First Check (Middle Right)
+  { x: 0.88, y: 0.15 }, // W12 The Grand Finale (High Right)
+  { x: 0.65, y: 0.08 }, // W13 The Dark Sector (Top Center)
+  { x: 0.45, y: 0.15 }, // W14 The Blind Spot (Final Mystery)
+];
+
 // ─── All worlds ───────────────────────────────────────────────────────────────
 
-export const WORLDS: WorldDef[] = [
+const RAW_WORLDS: Omit<WorldDef, 'mapPos'>[] = [
   {
     id: 0,
     name: "The King's Start",
@@ -58,7 +80,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Pawn's Farm",
       nextTeaserEmoji: '🌾',
     },
-    mapPos: { x: 0.18, y: 0.90 },
   },
   {
     id: 1,
@@ -80,7 +101,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Rook's Roads",
       nextTeaserEmoji: '🛤️',
     },
-    mapPos: { x: 0.52, y: 0.80 },
   },
   {
     id: 2,
@@ -102,7 +122,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Bishop's Grove",
       nextTeaserEmoji: '🌲',
     },
-    mapPos: { x: 0.83, y: 0.72 },
   },
   {
     id: 3,
@@ -124,7 +143,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Knight's Mountains",
       nextTeaserEmoji: '⛰️',
     },
-    mapPos: { x: 0.65, y: 0.62 },
   },
   {
     id: 4,
@@ -146,7 +164,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Paired Path',
       nextTeaserEmoji: '🤝',
     },
-    mapPos: { x: 0.84, y: 0.51 },
   },
   {
     id: 5,
@@ -168,7 +185,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "Queen's Realm",
       nextTeaserEmoji: '👑',
     },
-    mapPos: { x: 0.64, y: 0.40 },
   },
   {
     id: 6,
@@ -191,7 +207,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Starfield Frontier',
       nextTeaserEmoji: '🌌',
     },
-    mapPos: { x: 0.88, y: 0.27 },
   },
   {
     id: 7,
@@ -215,7 +230,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Shadow Pieces',
       nextTeaserEmoji: '👥',
     },
-    mapPos: { x: 0.72, y: 0.20 },
   },
   {
     id: 8,
@@ -238,7 +252,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The First Board',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.22, y: 0.08 },
   },
   {
     id: 9,
@@ -261,7 +274,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: "The Pawn's Crown",
       nextTeaserEmoji: '👑',
     },
-    mapPos: { x: 0.08, y: 0.17 },
   },
   {
     id: 10,
@@ -284,7 +296,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The First Check',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.20, y: 0.25 },
   },
   {
     id: 11,
@@ -307,7 +318,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Grand Finale',
       nextTeaserEmoji: '♟️',
     },
-    mapPos: { x: 0.38, y: 0.30 },
   },
   {
     id: 12,
@@ -331,7 +341,6 @@ export const WORLDS: WorldDef[] = [
       nextTeaser: 'The Dark Sector',
       nextTeaserEmoji: '🛸',
     },
-    mapPos: { x: 0.52, y: 0.12 },
   },
   {
     id: 13,
@@ -355,7 +364,6 @@ export const WORLDS: WorldDef[] = [
         "That's the real game. You just played it.",
       ],
     },
-    mapPos: { x: 0.75, y: 0.06 },
   },
   {
     id: 14,
@@ -377,9 +385,10 @@ export const WORLDS: WorldDef[] = [
         'Every piece has a blind spot. Now you know them all.',
       ],
     },
-    mapPos: { x: 0.62, y: 0.18 },
   },
 ];
+
+export const WORLDS: WorldDef[] = RAW_WORLDS.map((w, i) => ({ ...w, mapPos: MAP_POSITIONS[i] }));
 
 // ─── Unlock logic ─────────────────────────────────────────────────────────────
 
