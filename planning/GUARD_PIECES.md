@@ -3,6 +3,33 @@
 
 ---
 
+## Status (as of 2026-03-22)
+
+### ✅ Infrastructure — COMPLETE
+- `guardPieces?: Array<{ pieceType, position }>` on `Level` and `DuoLevel`
+- `computeGuardThreat(guards, rows, cols, obstacles)` in `src/utils/threatZone.ts`
+  - **Note:** `obstacles` param was added post-plan so sliding guards respect rivers/fences/food
+- `BoardShell`, `DuoBoard`, `ScrollBoard` all render guard icons + threat zones
+
+### ⚠️ Behavior changed from original plan
+The original plan made guard-threatened squares **impassable** (merged into rivers). The shipped behavior is different:
+- Guard-threatened squares are **passable red dots** — landing triggers catch+reset ("That square is guarded!")
+- This was intentional: it teaches consequences without hard-blocking paths
+- `huntTarget` threats remain as rivers (impassable) — that IS the mechanic for World 14
+
+### ✅ Level migrations — COMPLETE (with exceptions below)
+- `firstcheck.ts` P1a–P5a: migrated to `guardPieces`; specific guard positions may differ from the designs below (designs were iterative)
+- `queen.ts` Q7: king guard at (2,2) — exact match, unchanged
+- `OracleMode.tsx` inline oracle level: rook guard replaces watchedSquares row
+
+### 🔁 Intentionally deferred
+- **Q8, Q9** (`DuoLevel`): still use `watchedSquares` (rendered as red dots). Large rectangular blocked zones don't map cleanly to any guard piece. Kept as-is until a clean guard design emerges.
+- `watchedSquares` is NOT removed from `DuoLevel` — Q8/Q9 depend on it
+
+The detailed level designs below were written as a starting point. Treat them as reference, not ground truth — actual implementation iterated during playtesting.
+
+---
+
 ## Why
 
 `watchedSquares` is a list of arbitrary impassable squares tagged with a 👁 emoji. The child sees red cells but has no idea what's watching them or why. Guard pieces replace this with a visible enemy piece sitting on the board — the child can see the rook in that column and understand exactly why those squares are off-limits.
