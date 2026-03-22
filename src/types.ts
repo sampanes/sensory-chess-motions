@@ -14,10 +14,14 @@ export type Fence = {
   side: Direction; // which side of the cell the fence is on
 };
 
-// A river occupies a full cell — impassable unless a bridge exists
+// Visual kind of an impassable cell (all block movement the same way; knight can jump but not land)
+export type BlockKind = 'river' | 'tree' | 'rock' | 'hole';
+
+// A blocking cell — impassable unless a bridge exists (bridges only apply to rivers visually)
 export type RiverCell = {
   row: number;
   col: number;
+  kind?: BlockKind; // default = 'river'
 };
 
 // A bridge sits on a river cell and makes it passable (but not landable)
@@ -39,10 +43,14 @@ export type PatrolPiece = {
   routeMode?: 'pingpong' | 'loop';
 };
 
+// Visual kind of a food item (all behave identically in movement logic)
+export type FoodKind = 'apple' | 'broccoli' | 'blueberry' | 'strawberry' | 'carrot';
+
 // A food item occupies a cell — sliding pieces stop on it (consuming it), then can pass next turn
 export type Food = {
   row: number;
   col: number;
+  kind?: FoodKind; // default = 'apple'
 };
 
 // An enemy piece — acts as capturable food; landing on it removes it from the board

@@ -201,12 +201,106 @@ const ORACLE_QUESTIONS: OracleQuestion[] = [
       boardHeight: 8, boardWidth: 8, starThresholds: { three: 1, two: 2 }, obstacles: EMPTY,
     },
   },
+
+  // ── Reading 4 — Sentinels & Hunters ──────────────────────────────────────
+  {
+    // Q13: Knight — rook sentinel seals the entire middle rank (guard at 2,0 + rivers 2,1–2,4).
+    // Knight hops row 3→row 1, never landing on row 2.
+    // Path: (4,2)→(3,4)→(1,3)→(0,1)
+    optimalPiece: 'knight',
+    optimalMoves: [{ row: 3, col: 4 }, { row: 1, col: 3 }, { row: 0, col: 1 }],
+    level: {
+      name: 'The Watchtower',
+      description: 'A sentinel seals the middle rank. One piece leaps from one side to the other without ever touching it.',
+      pieceType: 'knight',
+      start: { row: 4, col: 2 }, goal: { row: 0, col: 1 },
+      boardHeight: 5, boardWidth: 5, starThresholds: { three: 3, two: 5 },
+      obstacles: {
+        fences: [],
+        rivers: [{ row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 }],
+        bridges: [], food: [],
+      },
+      guardPieces: [{ pieceType: 'rook', position: { row: 2, col: 0 } }],
+    },
+  },
+  {
+    // Q14: Rook — enemy bishop controls only diagonals; straight column is invisible to it.
+    // Bishop enemy at (0,0); its one diagonal (1,1)–(4,4) is blocked by rivers.
+    // Rook walks straight up col 0 in 1 move.
+    optimalPiece: 'rook',
+    optimalMoves: [{ row: 0, col: 0 }],
+    level: {
+      name: "The Bishop's Blind Eye",
+      description: 'The enemy watches every diagonal — but straight lines are invisible to it.',
+      pieceType: 'rook',
+      start: { row: 4, col: 0 }, goal: { row: 0, col: 0 },
+      boardHeight: 5, boardWidth: 5, starThresholds: { three: 1, two: 2 },
+      obstacles: {
+        fences: [],
+        rivers: [{ row: 1, col: 1 }, { row: 2, col: 2 }, { row: 3, col: 3 }, { row: 4, col: 4 }],
+        bridges: [], food: [],
+      },
+      enemies: [{ row: 0, col: 0, pieceType: 'bishop' }],
+    },
+  },
+  {
+    // Q15: Bishop — enemy rook controls its row and column; diagonal approach is the blind side.
+    // Rivers block row 0 (except goal) and col 4 (except goal) — straight lines into the target.
+    // Bishop walks the clean diagonal in 1 move: (4,0)→(0,4).
+    optimalPiece: 'bishop',
+    optimalMoves: [{ row: 0, col: 4 }],
+    level: {
+      name: 'The Blind Side',
+      description: 'The target controls every row and column leading to it. Approach from the angle it cannot see.',
+      pieceType: 'bishop',
+      start: { row: 4, col: 0 }, goal: { row: 0, col: 4 },
+      boardHeight: 5, boardWidth: 5, starThresholds: { three: 1, two: 2 },
+      obstacles: {
+        fences: [],
+        rivers: [
+          { row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 },
+          { row: 1, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 }, { row: 4, col: 4 },
+        ],
+        bridges: [], food: [],
+      },
+      enemies: [{ row: 0, col: 4, pieceType: 'rook' }],
+    },
+  },
+  {
+    // Q16: Knight — queen enemy controls every row, col, and diagonal through (0,2).
+    // Rivers block all of those lines, leaving only L-shaped gaps.
+    // Knight slips through: (4,4)→(2,3)→(0,2).
+    optimalPiece: 'knight',
+    optimalMoves: [{ row: 2, col: 3 }, { row: 0, col: 2 }],
+    level: {
+      name: "The Queen's Secret",
+      description: "The queen sees every direction — except the L-shape. That's always been the knight's secret.",
+      pieceType: 'knight',
+      start: { row: 4, col: 4 }, goal: { row: 0, col: 2 },
+      boardHeight: 5, boardWidth: 5, starThresholds: { three: 2, two: 4 },
+      obstacles: {
+        fences: [],
+        rivers: [
+          // row 0 (except goal at (0,2))
+          { row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 3 }, { row: 0, col: 4 },
+          // col 2 (except goal)
+          { row: 1, col: 2 }, { row: 2, col: 2 }, { row: 3, col: 2 }, { row: 4, col: 2 },
+          // diagonals through (0,2): down-right (1,3),(2,4) and down-left (1,1),(2,0)
+          { row: 1, col: 3 }, { row: 2, col: 4 },
+          { row: 1, col: 1 }, { row: 2, col: 0 },
+        ],
+        bridges: [], food: [],
+      },
+      enemies: [{ row: 0, col: 2, pieceType: 'queen' }],
+    },
+  },
 ];
 
 const READING_TITLES = [
   { title: 'Reading 1', subtitle: 'Movement Basics' },
   { title: 'Reading 2', subtitle: 'Terrain Traps' },
   { title: 'Reading 3', subtitle: 'The Big Board' },
+  { title: 'Reading 4', subtitle: 'Sentinels & Hunters' },
 ];
 
 const PIECE_COLORS: Record<PieceType, string> = {
@@ -312,6 +406,7 @@ export function OracleMode({ onBack }: OracleModeProps) {
             {readingIndex === 0 && "The Oracle doesn't ask what you've memorized. It asks what you feel. Point at the piece that belongs here."}
             {readingIndex === 1 && "The terrain changes. Which piece reads it best?"}
             {readingIndex === 2 && "The real 8×8 board. Everything you've learned still works here."}
+            {readingIndex === 3 && "Guards have eyes — but every guard has a blind spot. So does every enemy. Your job: find the angle they cannot see."}
           </p>
         </motion.div>
         <motion.button

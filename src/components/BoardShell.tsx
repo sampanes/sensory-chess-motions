@@ -5,6 +5,7 @@ import { Level, PieceType, Position, Food, Enemy, PatrolPiece } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { getSentinelThreat, getAllThreats, computeGuardThreat } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from '../utils/terrain';
 import { ChessPieceIcon } from './ChessPieceIcon';
 
 
@@ -141,8 +142,14 @@ export function BoardShell({
   const isFoodConsumed = (pos: Position) =>
     consumedFood.some(f => f.row === pos.row && f.col === pos.col);
 
+  const getBlockKind = (r: number, c: number) =>
+    level.obstacles.rivers.find(rv => rv.row === r && rv.col === c)?.kind;
+
   const getSquareClasses = (r: number, c: number) => {
-    if (isRiver(r, c) && !isBridge(r, c)) return spaceTheme ? 'bg-slate-950' : 'bg-blue-400';
+    if (isRiver(r, c) && !isBridge(r, c)) {
+      if (spaceTheme) return 'bg-slate-950';
+      return getBlockBgClass(getBlockKind(r, c));
+    }
     if (isRiver(r, c) && isBridge(r, c))  return spaceTheme ? 'bg-slate-900' : 'bg-amber-500';
     if (spaceTheme) return (r + c) % 2 === 0 ? 'bg-slate-800' : 'bg-slate-700';
     return (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
@@ -469,7 +476,7 @@ export function BoardShell({
                   </div>
                 )}
 
-                {river && !bridge && !spaceTheme && (
+                {river && !bridge && !spaceTheme && isRiverKind(getBlockKind(r, c)) && (
                   <div className="absolute inset-0 overflow-hidden">
                     <motion.div
                       className="absolute inset-0"
@@ -487,6 +494,12 @@ export function BoardShell({
                     >
                       {(r + c) % 3 === 0 ? '🐟' : '〰️'}
                     </motion.div>
+                  </div>
+                )}
+
+                {river && !bridge && !spaceTheme && !isRiverKind(getBlockKind(r, c)) && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ fontSize: squareSize * 0.6 }}>
+                    {getBlockEmoji(getBlockKind(r, c))}
                   </div>
                 )}
 
@@ -569,21 +582,24 @@ export function BoardShell({
                 </AnimatePresence>
 
                 <AnimatePresence>
-                  {level.obstacles.food.some(f => f.row === r && f.col === c)
-                    && !isFoodConsumed({ row: r, col: c })
-                    && !(level.goal.row === r && level.goal.col === c)
-                    && (
-                      <motion.span
-                        key={`food-${r}-${c}`}
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
-                        initial={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 1.8, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        style={{ fontSize: squareSize * 0.7 }}
-                      >
-                        {spaceTheme ? '⚡' : '🍎'}
-                      </motion.span>
-                    )}
+                  {(() => {
+                    const foodItem = level.obstacles.food.find(f => f.row === r && f.col === c);
+                    return foodItem
+                      && !isFoodConsumed({ row: r, col: c })
+                      && !(level.goal.row === r && level.goal.col === c)
+                      && (
+                        <motion.span
+                          key={`food-${r}-${c}`}
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
+                          initial={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 1.8, opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          style={{ fontSize: squareSize * 0.7 }}
+                        >
+                          {spaceTheme ? '⚡' : getFoodEmoji(foodItem.kind)}
+                        </motion.span>
+                      );
+                  })()}
                 </AnimatePresence>
 
                 {goal && !piece && (

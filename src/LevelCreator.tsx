@@ -1,23 +1,39 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Position, PieceType, Direction, Fence, RiverCell, Bridge, Food, Level } from './types';
+import { Position, PieceType, Direction, Fence, RiverCell, Bridge, Food, Level, BlockKind, FoodKind } from './types';
 import { ChessPieceIcon } from './components/ChessPieceIcon';
 import { Flag } from 'lucide-react';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from './utils/terrain';
 
 const BOARD_SIZE = 5;
 const DESKTOP_SQUARE_SIZE = 88;
 const MOBILE_MIN_BOARD_SIZE = 300;
 const MOBILE_SIDE_PADDING = 20;
 
-type Tool = 'goal' | 'piece' | 'river' | 'bridge' | 'food' | 'fence' | 'erase';
+type Tool = 'goal' | 'piece' | 'block' | 'bridge' | 'food' | 'fence' | 'erase';
 
 const TOOLS: { id: Tool; label: string; emoji: string }[] = [
   { id: 'goal',   label: 'Goal',   emoji: '🚩' },
   { id: 'piece',  label: 'Piece',  emoji: '♟️' },
-  { id: 'river',  label: 'River',  emoji: '🌊' },
+  { id: 'block',  label: 'Block',  emoji: '🌊' },
   { id: 'bridge', label: 'Bridge', emoji: '🌉' },
   { id: 'food',   label: 'Food',   emoji: '🍎' },
   { id: 'fence',  label: 'Fence',  emoji: '🪵' },
   { id: 'erase',  label: 'Erase',  emoji: '🧹' },
+];
+
+const BLOCK_KINDS: { kind: BlockKind; label: string; emoji: string }[] = [
+  { kind: 'river', label: 'River', emoji: '🌊' },
+  { kind: 'tree',  label: 'Tree',  emoji: '🌲' },
+  { kind: 'rock',  label: 'Rock',  emoji: '🪨' },
+  { kind: 'hole',  label: 'Hole',  emoji: '🕳️' },
+];
+
+const FOOD_KINDS: { kind: FoodKind; label: string; emoji: string }[] = [
+  { kind: 'apple',      label: 'Apple',      emoji: '🍎' },
+  { kind: 'broccoli',   label: 'Broccoli',   emoji: '🥦' },
+  { kind: 'blueberry',  label: 'Blueberry',  emoji: '🫐' },
+  { kind: 'strawberry', label: 'Strawberry', emoji: '🍓' },
+  { kind: 'carrot',     label: 'Carrot',     emoji: '🥕' },
 ];
 
 const FENCE_SIDES: Direction[] = ['top', 'right', 'bottom', 'left'];
@@ -73,6 +89,10 @@ export function LevelCreator() {
   const [fenceChecked, setFenceChecked] = useState<Record<Direction, boolean>>({ top: false, right: false, bottom: false, left: false });
   const [pieceCell,    setPieceCell]    = useState<Position | null>(null);
   const [pieceModalType, setPieceModalType] = useState<PieceType>('queen');
+  const [blockCell,    setBlockCell]    = useState<Position | null>(null);
+  const [blockModalKind, setBlockModalKind] = useState<BlockKind>('river');
+  const [foodCell,     setFoodCell]     = useState<Position | null>(null);
+  const [foodModalKind, setFoodModalKind] = useState<FoodKind>('apple');
 
   // --- Copy state ---
   const [copied, setCopied] = useState(false);
@@ -101,9 +121,11 @@ export function LevelCreator() {
   }, []);
 
   // --- Helpers ---
-  const isRiver  = (r: number, c: number) => rivers.some(x => x.row === r && x.col === c);
-  const isBridge = (r: number, c: number) => bridges.some(x => x.row === r && x.col === c);
-  const isFood   = (r: number, c: number) => food.some(x => x.row === r && x.col === c);
+  const isRiver    = (r: number, c: number) => rivers.some(x => x.row === r && x.col === c);
+  const isBridge   = (r: number, c: number) => bridges.some(x => x.row === r && x.col === c);
+  const isFood     = (r: number, c: number) => food.some(x => x.row === r && x.col === c);
+  const getRvKind  = (r: number, c: number) => rivers.find(x => x.row === r && x.col === c)?.kind;
+  const getFdKind  = (r: number, c: number) => food.find(x => x.row === r && x.col === c)?.kind;
   const hasFence = (r: number, c: number, side: Direction) => fences.some(f => f.row === r && f.col === c && f.side === side);
   const isStart  = (r: number, c: number) => start?.row === r && start?.col === c;
   const isGoal   = (r: number, c: number) => goal?.row === r && goal?.col === c;
@@ -119,12 +141,11 @@ export function LevelCreator() {
         if (start?.row === row && start?.col === col) setStart(null);
         if (goal?.row === row && goal?.col === col) setGoal(null);
         break;
-      case 'river':
-        setRivers(p =>
-          p.some(x => x.row === row && x.col === col)
-            ? p.filter(x => !(x.row === row && x.col === col))
-            : [...p, { row, col }]
-        );
+      case 'block':
+        // Remove existing block at this cell (any kind), then open picker
+        setRivers(p => p.filter(x => !(x.row === row && x.col === col)));
+        setBlockModalKind(blockModalKind);
+        setBlockCell({ row, col });
         break;
       case 'bridge':
         setBridges(p =>
@@ -134,11 +155,10 @@ export function LevelCreator() {
         );
         break;
       case 'food':
-        setFood(p =>
-          p.some(x => x.row === row && x.col === col)
-            ? p.filter(x => !(x.row === row && x.col === col))
-            : [...p, { row, col }]
-        );
+        // Remove existing food at this cell (any kind), then open picker
+        setFood(p => p.filter(x => !(x.row === row && x.col === col)));
+        setFoodModalKind(foodModalKind);
+        setFoodCell({ row, col });
         break;
       case 'fence':
         setFenceChecked({
@@ -180,6 +200,20 @@ export function LevelCreator() {
     setPieceCell(null);
   };
 
+  // --- Block modal confirm ---
+  const handleBlockConfirm = () => {
+    if (!blockCell) return;
+    setRivers(p => [...p.filter(x => !(x.row === blockCell.row && x.col === blockCell.col)), { row: blockCell.row, col: blockCell.col, kind: blockModalKind }]);
+    setBlockCell(null);
+  };
+
+  // --- Food modal confirm ---
+  const handleFoodConfirm = () => {
+    if (!foodCell) return;
+    setFood(p => [...p.filter(x => !(x.row === foodCell.row && x.col === foodCell.col)), { row: foodCell.row, col: foodCell.col, kind: foodModalKind }]);
+    setFoodCell(null);
+  };
+
   // --- Clear all ---
   const handleClear = () => {
     setRivers([]); setBridges([]); setFood([]); setFences([]);
@@ -203,6 +237,24 @@ export function LevelCreator() {
       return `[\n${sorted.map(x => `        { row: ${x.row}, col: ${x.col} },`).join('\n')}\n      ]`;
     };
 
+    const fmtRivers = () => {
+      if (rivers.length === 0) return '[]';
+      const sorted = [...rivers].sort((a, b) => a.row - b.row || a.col - b.col);
+      return `[\n${sorted.map(x => {
+        const kindPart = x.kind && x.kind !== 'river' ? `, kind: '${x.kind}'` : '';
+        return `        { row: ${x.row}, col: ${x.col}${kindPart} },`;
+      }).join('\n')}\n      ]`;
+    };
+
+    const fmtFood = () => {
+      if (food.length === 0) return '[]';
+      const sorted = [...food].sort((a, b) => a.row - b.row || a.col - b.col);
+      return `[\n${sorted.map(x => {
+        const kindPart = x.kind && x.kind !== 'apple' ? `, kind: '${x.kind}'` : '';
+        return `        { row: ${x.row}, col: ${x.col}${kindPart} },`;
+      }).join('\n')}\n      ]`;
+    };
+
     const parsedThree = Math.max(1, parseInt(threeStars) || 1);
     const parsedTwo   = Math.max(1, parseInt(twoStars)   || 1);
     return `{
@@ -213,13 +265,14 @@ export function LevelCreator() {
   goal: ${fmtPos(goal)},
   obstacles: {
     fences: ${fmtFences()},
-    rivers: ${fmtCells(rivers)},
+    rivers: ${fmtRivers()},
     bridges: ${fmtCells(bridges)},
-    food: ${fmtCells(food)},
+    food: ${fmtFood()},
   },
   starThresholds: { three: ${parsedThree}, two: ${parsedTwo} },
   hint: '${escapeQuotes(hint)}',
 },`;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fences, rivers, bridges, food, start, goal, pieceType, levelName, description, hint, threeStars, twoStars]);
 
   const handleCopy = async () => {
@@ -283,6 +336,8 @@ export function LevelCreator() {
       <p className="text-xs text-emerald-600 font-medium -mt-2">
         Active: {TOOLS.find(t => t.id === tool)?.emoji} {TOOLS.find(t => t.id === tool)?.label}
         {tool === 'piece' && ` (${pieceType})`}
+        {tool === 'block' && ` (${BLOCK_KINDS.find(b => b.kind === blockModalKind)?.emoji} ${blockModalKind})`}
+        {tool === 'food' && ` (${FOOD_KINDS.find(f => f.kind === foodModalKind)?.emoji} ${foodModalKind})`}
       </p>
 
       {/* Grid */}
@@ -305,7 +360,7 @@ export function LevelCreator() {
             const decoration = !river && !bridge && !goalCell && !piece ? getDecoration(r, c) : null;
 
             let bgClass = '';
-            if (river && !bridge) bgClass = 'bg-blue-400';
+            if (river && !bridge) bgClass = getBlockBgClass(getRvKind(r, c));
             else if (bridge)      bgClass = 'bg-amber-500';
             else                  bgClass = (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
 
@@ -321,8 +376,8 @@ export function LevelCreator() {
                   <div className={`absolute inset-0 ${(r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400'}`} />
                 )}
 
-                {/* River */}
-                {river && !bridge && (
+                {/* River / Block */}
+                {river && !bridge && isRiverKind(getRvKind(r, c)) && (
                   <div className="absolute inset-0 overflow-hidden">
                     <div
                       className="absolute inset-0"
@@ -334,6 +389,11 @@ export function LevelCreator() {
                     <div className="absolute inset-0 flex items-center justify-center text-xl opacity-30 pointer-events-none">
                       {(r + c) % 3 === 0 ? '🐟' : '〰️'}
                     </div>
+                  </div>
+                )}
+                {river && !bridge && !isRiverKind(getRvKind(r, c)) && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ fontSize: squareSize * 0.6 }}>
+                    {getBlockEmoji(getRvKind(r, c))}
                   </div>
                 )}
 
@@ -366,7 +426,7 @@ export function LevelCreator() {
                     className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
                     style={{ fontSize: squareSize * 0.6 }}
                   >
-                    🍎
+                    {getFoodEmoji(getFdKind(r, c))}
                   </div>
                 )}
 
@@ -561,6 +621,86 @@ export function LevelCreator() {
             </div>
             <button
               onClick={handlePieceConfirm}
+              className="w-full py-2.5 bg-emerald-700 text-white rounded-xl font-semibold active:bg-emerald-900 transition-colors"
+            >
+              Place
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Block Modal */}
+      {blockCell && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setBlockCell(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 shadow-2xl w-64"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-bold text-lg text-emerald-900 mb-1">Place block</h2>
+            <p className="text-xs text-emerald-600 mb-4">
+              Cell ({blockCell.row}, {blockCell.col})
+            </p>
+            <div className="flex flex-col gap-3 mb-6">
+              {BLOCK_KINDS.map(({ kind, label, emoji }) => (
+                <label key={kind} className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="radio"
+                    name="blockKind"
+                    value={kind}
+                    checked={blockModalKind === kind}
+                    onChange={() => setBlockModalKind(kind)}
+                    className="w-5 h-5 accent-emerald-600"
+                  />
+                  <span className="text-2xl">{emoji}</span>
+                  <span className="text-emerald-900 font-medium">{label}</span>
+                </label>
+              ))}
+            </div>
+            <button
+              onClick={handleBlockConfirm}
+              className="w-full py-2.5 bg-emerald-700 text-white rounded-xl font-semibold active:bg-emerald-900 transition-colors"
+            >
+              Place
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Food Modal */}
+      {foodCell && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setFoodCell(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 shadow-2xl w-64"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-bold text-lg text-emerald-900 mb-1">Place food</h2>
+            <p className="text-xs text-emerald-600 mb-4">
+              Cell ({foodCell.row}, {foodCell.col})
+            </p>
+            <div className="flex flex-col gap-3 mb-6">
+              {FOOD_KINDS.map(({ kind, label, emoji }) => (
+                <label key={kind} className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="radio"
+                    name="foodKind"
+                    value={kind}
+                    checked={foodModalKind === kind}
+                    onChange={() => setFoodModalKind(kind)}
+                    className="w-5 h-5 accent-emerald-600"
+                  />
+                  <span className="text-2xl">{emoji}</span>
+                  <span className="text-emerald-900 font-medium">{label}</span>
+                </label>
+              ))}
+            </div>
+            <button
+              onClick={handleFoodConfirm}
               className="w-full py-2.5 bg-emerald-700 text-white rounded-xl font-semibold active:bg-emerald-900 transition-colors"
             >
               Place

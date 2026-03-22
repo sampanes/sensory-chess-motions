@@ -1,4 +1,8 @@
-# Level Creator Plan
+# Level Creator Plan ✅ COMPLETE
+
+*All steps shipped. Accessible at `?creator` URL param. Kept for historical reference.*
+
+---
 
 ## Overview
 

@@ -26,6 +26,7 @@ import { DuoLevel } from '../adventure/duoLevelDef';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { ChessPieceIcon } from './ChessPieceIcon';
+import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind } from '../utils/terrain';
 
 // ─── Viewport constants (mirrors ScrollBoard) ─────────────────────────────────
 
@@ -283,8 +284,11 @@ export function DuoBoard({
   const isFoodConsumed = (pos: Position) =>
     consumedFood.some(f => f.row === pos.row && f.col === pos.col);
 
+  const getBlockKind = (r: number, c: number) =>
+    level.obstacles.rivers.find(rv => rv.row === r && rv.col === c)?.kind;
+
   const getSquareClasses = (r: number, c: number) => {
-    if (isRiverCell(r, c) && !isBridgeCell(r, c)) return 'bg-blue-400';
+    if (isRiverCell(r, c) && !isBridgeCell(r, c)) return getBlockBgClass(getBlockKind(r, c));
     if (isRiverCell(r, c) &&  isBridgeCell(r, c)) return 'bg-amber-500';
     return (r + c) % 2 === 0 ? 'bg-emerald-200' : 'bg-emerald-400';
   };
@@ -333,7 +337,7 @@ export function DuoBoard({
             </div>
           )}
 
-          {river && !bridge && (
+          {river && !bridge && isRiverKind(getBlockKind(r, c)) && (
             <div className="absolute inset-0 overflow-hidden">
               <motion.div
                 className="absolute inset-0"
@@ -348,6 +352,12 @@ export function DuoBoard({
               >
                 {(r + c) % 3 === 0 ? '🐟' : '〰️'}
               </motion.div>
+            </div>
+          )}
+
+          {river && !bridge && !isRiverKind(getBlockKind(r, c)) && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ fontSize: squareSize * 0.6 }}>
+              {getBlockEmoji(getBlockKind(r, c))}
             </div>
           )}
 
@@ -387,21 +397,24 @@ export function DuoBoard({
 
           {/* Food */}
           <AnimatePresence>
-            {level.obstacles.food.some(f => f.row === r && f.col === c)
-              && !isFoodConsumed({ row: r, col: c })
-              && !anyGoal
-              && (
-                <motion.span
-                  key={`food-${r}-${c}`}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
-                  initial={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 1.8, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  style={{ fontSize: squareSize * 0.7 }}
-                >
-                  🍎
-                </motion.span>
-              )}
+            {(() => {
+              const foodItem = level.obstacles.food.find(f => f.row === r && f.col === c);
+              return foodItem
+                && !isFoodConsumed({ row: r, col: c })
+                && !anyGoal
+                && (
+                  <motion.span
+                    key={`food-${r}-${c}`}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
+                    initial={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 1.8, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ fontSize: squareSize * 0.7 }}
+                  >
+                    {getFoodEmoji(foodItem.kind)}
+                  </motion.span>
+                );
+            })()}
           </AnimatePresence>
 
           {/* Goal for piece A — red flag */}
