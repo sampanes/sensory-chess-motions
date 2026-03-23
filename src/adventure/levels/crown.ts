@@ -83,6 +83,7 @@ const c4: Level = {
   goal:  { row: 0, col: 4 },
   boardHeight: 6,
   boardWidth:  5,
+  scrollAxis: 'vertical',
   starThresholds: { three: 5, two: 7 },
   obstacles: EMPTY,
   enemies: [
@@ -107,7 +108,8 @@ const c5: Level = {
   start: { row: 7, col: 3 },
   goal:  { row: 0, col: 3 },
   boardHeight: 8,
-  boardWidth:  8,
+  boardWidth:  5,
+  scrollAxis: 'vertical',
   starThresholds: { three: 7, two: 10 },
   obstacles: EMPTY,
   enemies: [

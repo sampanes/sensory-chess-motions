@@ -441,9 +441,10 @@ export function ScrollBoard({
       try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     }
 
-    // For vertical (piece goes down / frontier=high): dragging UP (neg delta) peeks toward top
-    // For horizontal (piece goes right / frontier=high): dragging LEFT (neg delta) peeks toward right
-    const rawPeekDelta = axis === 'vertical' ? -rawDelta : rawDelta;
+    // Drag toward the trailing edge to peek ahead — same convention for both axes.
+    // Vertical: drag DOWN (pos delta) → grid shifts down → see rows above (ahead for frontier='low').
+    // Horizontal: drag LEFT (neg delta) → grid shifts left → see cols to the right (ahead for frontier='high').
+    const rawPeekDelta = rawDelta;
     const newPeek = dragStartRef.current.peek + rawPeekDelta;
 
     // Clamp so the total grid offset stays within world boundaries
