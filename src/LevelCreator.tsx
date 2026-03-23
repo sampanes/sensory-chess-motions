@@ -24,14 +24,14 @@ const TOOLS: { id: Tool; label: string; emoji: string }[] = [
 const BLOCK_KINDS: { kind: BlockKind; label: string; emoji: string }[] = [
   { kind: 'river', label: 'River', emoji: '🌊' },
   { kind: 'tree',  label: 'Tree',  emoji: '🌲' },
-  { kind: 'rock',  label: 'Rock',  emoji: '🪨' },
+  { kind: 'rock',  label: 'Rock',  emoji: '⬛' },
   { kind: 'hole',  label: 'Hole',  emoji: '🕳️' },
 ];
 
 const FOOD_KINDS: { kind: FoodKind; label: string; emoji: string }[] = [
   { kind: 'apple',      label: 'Apple',      emoji: '🍎' },
   { kind: 'broccoli',   label: 'Broccoli',   emoji: '🥦' },
-  { kind: 'blueberry',  label: 'Blueberry',  emoji: '🫐' },
+  { kind: 'blueberry',  label: 'Blueberry',  emoji: '🍇' },
   { kind: 'strawberry', label: 'Strawberry', emoji: '🍓' },
   { kind: 'carrot',     label: 'Carrot',     emoji: '🥕' },
 ];
