@@ -57,7 +57,7 @@ export const act1KingLevels: Level[] = [
     pieceType: 'king',
     start: { row: 4, col: 0 },
     goal: { row: 0, col: 4 },
-    starThresholds: { three: 4, two: 6 },
+    starThresholds: { three: 5, two: 6 },
     obstacles: {
       fences: [
         { row: 2, col: 1, side: 'top' },
