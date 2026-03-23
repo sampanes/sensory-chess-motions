@@ -62,7 +62,7 @@ export const act1KingLevels: Level[] = [
       fences: [
         { row: 2, col: 1, side: 'top' },
         { row: 2, col: 2, side: 'top' },
-        { row: 2, col: 3, side: 'top' },
+        { row: 1, col: 3, side: 'bottom' },
       ],
       rivers: [],
       bridges: [],
