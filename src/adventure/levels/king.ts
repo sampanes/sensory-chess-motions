@@ -103,7 +103,7 @@ export const act1KingLevels: Level[] = [
     hint: 'The king can move diagonally — you don\'t have to go straight across!',
     pieceType: 'king',
     axis: 'horizontal',
-    starThresholds: { three: 7, two: 9 },
+    starThresholds: { three: 8, two: 9 },
     strips: [
       // strips[i] = col i  (each strip is [row0, row1, row2, row3, row4])
       ['S', 0,   0,   0,   0  ],   // col 0 — start at top-left
