@@ -165,6 +165,9 @@ export function isInCheck(color: PieceColor, pieces: GamePiece[]): boolean {
 // Legal moves for a piece — raw moves filtered to exclude self-check.
 function getLegalMovesFromPieces(piece: GamePiece, pieces: GamePiece[]): Position[] {
   return getRawMoves(piece, pieces).filter(target => {
+    const targetPiece = pieceAt(target.row, target.col, pieces);
+    if (targetPiece?.pieceType === 'king') return false;
+
     const next = applyPiecesMove(piece, target, pieces);
     return !isInCheck(piece.color, next);
   });

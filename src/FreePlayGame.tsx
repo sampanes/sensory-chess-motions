@@ -27,6 +27,10 @@ function getSquareSize(): number {
 
 const PROMOTION_PIECES: PieceType[] = ['queen', 'rook', 'bishop', 'knight'];
 
+function getPromotingColor(state: ChessGameState) {
+  return state.turn === 'white' ? 'black' : 'white';
+}
+
 function PromotionPicker({ squareSize, onChoose }: { squareSize: number; onChoose: (p: PieceType) => void }) {
   return (
     <motion.div
@@ -125,13 +129,11 @@ export function FreePlayGame() {
   // AI plays black — fires after each state update where it's black's turn.
   // Also handles black pawn promotion: always promotes to queen.
   useEffect(() => {
-    if (gameState.turn !== 'black') return;
     if (gameState.phase === 'checkmate' || gameState.phase === 'stalemate') return;
-    // Clear any opponent preview when it's the AI's turn
-    setOpponentPreviewId(null);
-    setOpponentTargets([]);
 
     if (gameState.phase === 'promotion') {
+      if (getPromotingColor(gameState) !== 'black') return;
+
       // Black promoted — auto-pick queen, then play sounds for resulting phase
       const t = setTimeout(() => {
         const newState = applyPromotion('queen', gameState);
@@ -142,6 +144,12 @@ export function FreePlayGame() {
       }, 300);
       return () => clearTimeout(t);
     }
+
+    if (gameState.turn !== 'black') return;
+
+    // Clear any opponent preview when it's the AI's turn
+    setOpponentPreviewId(null);
+    setOpponentTargets([]);
 
     const t = setTimeout(() => {
       const move = getAIMove(gameState);
@@ -310,7 +318,7 @@ export function FreePlayGame() {
                 onSquareClick={handleSquareClick}
               />
 
-              {phase === 'promotion' && (
+              {phase === 'promotion' && getPromotingColor(gameState) === 'white' && (
                 <PromotionPicker squareSize={squareSize} onChoose={choice => {
                   const newState = applyPromotion(choice, gameState);
                   playChessPromotion();

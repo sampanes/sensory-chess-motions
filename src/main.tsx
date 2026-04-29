@@ -32,7 +32,8 @@ const isFreePlay  = params.has('freeplay');
 // Register service worker for PWA / offline support
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => { /* ignore in dev */ });
+    const swUrl = new URL('sw.js', window.location.href);
+    navigator.serviceWorker.register(swUrl).catch(() => { /* ignore in dev */ });
   });
 }
 

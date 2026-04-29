@@ -3455,7 +3455,7 @@ function TitleScreen({ onBegin }: { onBegin: () => void }) {
       </motion.div>
 
       <motion.a
-        href="/"
+        href="./"
         className="absolute bottom-6 left-6 text-sm font-medium"
         style={{ color: 'rgba(255,255,255,0.65)' }}
         initial={{ opacity: 0 }}

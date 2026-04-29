@@ -30,6 +30,29 @@ export function computeGuardThreat(
   return result;
 }
 
+export function getPatrolRouteIndex(patrol: PatrolPiece, stepIndex?: number): number {
+  const len = patrol.route.length;
+  if (len === 0) return -1;
+
+  const rawStep = Number.isFinite(stepIndex)
+    ? Math.trunc(stepIndex as number)
+    : (patrol.startIndex ?? 0);
+
+  if (len === 1) return 0;
+  if (patrol.routeMode === 'loop') {
+    return ((rawStep % len) + len) % len;
+  }
+
+  const full = 2 * (len - 1);
+  const mirrorStep = ((rawStep % full) + full) % full;
+  return mirrorStep < len ? mirrorStep : 2 * (len - 1) - mirrorStep;
+}
+
+export function getPatrolPosition(patrol: PatrolPiece, stepIndex?: number): Position | null {
+  const routeIndex = getPatrolRouteIndex(patrol, stepIndex);
+  return routeIndex >= 0 ? patrol.route[routeIndex] : null;
+}
+
 /**
  * Returns all squares threatened by one patrol piece at a specific step.
  * Reuses getValidMoves — valid moves from a position IS the threat zone.
@@ -37,11 +60,12 @@ export function computeGuardThreat(
  */
 export function getSentinelThreat(
   patrol: PatrolPiece,
-  stepIndex: number,
+  stepIndex: number | undefined,
   boardRows: number,
   boardCols: number,
 ): Position[] {
-  const pos = patrol.route[stepIndex % patrol.route.length];
+  const pos = getPatrolPosition(patrol, stepIndex);
+  if (!pos) return [];
   return getValidMoves(patrol.pieceType, pos, EMPTY_OBS, [], boardRows, boardCols);
 }
 

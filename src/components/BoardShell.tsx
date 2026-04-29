@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flag } from 'lucide-react';
 import { Level, PieceType, Position, Food, Enemy, PatrolPiece } from '../types';
 import { getValidMoves, isValidMove } from '../utils/moveCalculator';
-import { getSentinelThreat, getAllThreats, computeGuardThreat } from '../utils/threatZone';
+import { getSentinelThreat, getAllThreats, computeGuardThreat, getPatrolPosition } from '../utils/threatZone';
 import { playCrunchSound, playWompSound, playMoveSound } from '../utils/sounds';
 import { getFoodEmoji, getBlockBgClass, getBlockEmoji, isRiverKind, isGrassBlock } from '../utils/terrain';
 import { ChessPieceIcon } from './ChessPieceIcon';
@@ -397,7 +397,9 @@ export function BoardShell({
     }
 
     const capturedEnemy = liveEnemies.find(e => e.row === row && e.col === col);
-    const eatenFood = level.obstacles.food.find(f => f.row === row && f.col === col);
+    const eatenFood = level.obstacles.food.find(
+      f => f.row === row && f.col === col && !isFoodConsumed(f),
+    );
     if (capturedEnemy) {
       playCrunchSound();
     } else if (eatenFood) {
@@ -733,8 +735,8 @@ export function BoardShell({
                   if (!patrol.route.some(wp => wp.row === r && wp.col === c)) return null;
                   // Hide waypoint when sentinel is standing here (don't draw dot under piece)
                   const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
-                  const sentinelHere = patrol.route[stepIdx % patrol.route.length];
-                  if (patrol.route.length > 1 && sentinelHere.row === r && sentinelHere.col === c) return null;
+                  const sentinelHere = getPatrolPosition(patrol, stepIdx);
+                  if (patrol.route.length > 1 && sentinelHere?.row === r && sentinelHere.col === c) return null;
                   return (
                     <div
                       key={`wp-${si}`}
@@ -873,7 +875,8 @@ export function BoardShell({
         {/* ── Sentinel pieces ── */}
         {(patrolPieces ?? []).map((patrol, si) => {
           const stepIdx = sentinelSteps[si] ?? (patrol.startIndex ?? 0);
-          const pos = patrol.route[stepIdx % patrol.route.length];
+          const pos = getPatrolPosition(patrol, stepIdx);
+          if (!pos) return null;
           return (
             <div
               key={`sentinel-${si}`}
