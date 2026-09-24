@@ -14,8 +14,10 @@ const maker = params.has('maker');
 
 if (!maker) {
   // iOS Safari ignores touch-action for pinch zoom; a toddler's pinch should
-  // never shrink or blow up the board. The maker (grown-ups only) may zoom.
-  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  // never shrink or blow up a kid screen. Grown-ups still need to zoom text.
+  document.addEventListener('gesturestart', (e) => {
+    if (e.target instanceof Element && e.target.closest('.screen')) e.preventDefault();
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

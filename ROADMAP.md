@@ -46,6 +46,8 @@ the app. The game installs and plays offline.
 - The grown-up panel no longer closes the moment the finger holding the gear lifts. That was a
   touch-only bug.
 - An offline service worker (network first) and PNG / maskable / apple-touch icons are in place.
+- The service worker requires the game shell before activating, keeps cache failures away from online
+  play, and only cleans up caches owned by Tiny Hops.
 - The grown-up panel has tips for Guided Access and App pinning.
 - Treats were already told apart by shape, and hop spots are dots or rings, so no color-only cues.
 
@@ -64,6 +66,12 @@ Right now a new friend shows up with no introduction.
 
 **Done when:** a kid who has never seen the game finishes the first puzzle of every world
 without an adult showing them how.
+
+**Status (2026-09-24):** the meet-the-friend intro is built and move-rule checked. The first time
+a world opens, every friend in it demonstrates legal moves on an empty board and waits for a tap.
+The introduction is remembered on the device; existing completed worlds do not replay it.
+
+Still open: the first-run tap/hop/munch tutorial, the world-unlock wake-up moment, and kid testing.
 
 ## M3 -- More puzzles, a smoother climb
 

@@ -26,6 +26,8 @@ export interface BoardProps {
   nudgeKey: number;
   /** Bumps when a friend is tapped, so it does a little jump. */
   pokeKey: number;
+  /** False while a board is only demonstrating and should not claim fingers. */
+  interactive?: boolean;
   onPress: (pos: number) => void;
   onRelease: (pos: number) => void;
 }
@@ -72,6 +74,7 @@ export function Board(props: BoardProps) {
   }, []);
 
   const down = (e: PointerEvent<HTMLDivElement>) => {
+    if (props.interactive === false) return;
     if (e.button > 0) return; // right or middle mouse button
     if (active.current !== null) return; // a second finger or a palm while one is down
     e.preventDefault();

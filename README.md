@@ -8,6 +8,7 @@ like one, so kids learn how every piece moves without ever being told it's chess
 
 ## How it plays
 
+- The first time a world opens, its friend shows how it moves, then a little hand invites a tap.
 - Tap a friend (or drag it). Glowing spots show every square it can reach. Tap one to hop there.
 - Eat every treat to finish the puzzle. Each treat plays the next note of a little tune.
 - There are no words, no scores, no timers and no way to lose. If a puzzle can no longer be

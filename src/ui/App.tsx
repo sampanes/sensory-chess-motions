@@ -5,13 +5,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { WORLDS } from '../content/worlds.ts';
-import { markDone } from '../core/progress.ts';
+import { markDone, markWorldMet, needsFriendIntro } from '../core/progress.ts';
 import { mustParse } from '../core/puzzle.ts';
 import { StarIcon } from './art.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { Home } from './Home.tsx';
+import { MeetFriend } from './MeetFriend.tsx';
 import { PlayScreen } from './PlayScreen.tsx';
-import { useProgress } from './useProgress.ts';
+import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
 
 type Route = { screen: 'home' } | { screen: 'world'; wi: number } | { screen: 'play'; wi: number; li: number };
@@ -41,6 +42,20 @@ export function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  if (route.screen !== 'home') {
+    const world = WORLDS[route.wi];
+    if (needsFriendIntro(progress, world.id, WORLD_LEVEL_IDS[route.wi])) {
+      return (
+        <MeetFriend
+          key={world.id}
+          world={world}
+          onMet={() => update((p) => markWorldMet(p, world.id))}
+          onHome={() => go('#/')}
+        />
+      );
+    }
+  }
 
   if (route.screen === 'play') {
     return <Level key={`${route.wi}-${route.li}`} wi={route.wi} li={route.li} progress={progress.done} onDone={(id) => update((p) => markDone(p, id))} />;

@@ -4,6 +4,7 @@
 
 export interface Progress {
   done: string[];
+  metWorlds: string[];
   unlockAll: boolean;
   muted: boolean;
 }
@@ -16,7 +17,7 @@ export interface KeyValueStore {
 export const STORAGE_KEY = 'tiny-hops-progress-v1';
 
 export function emptyProgress(): Progress {
-  return { done: [], unlockAll: false, muted: false };
+  return { done: [], metWorlds: [], unlockAll: false, muted: false };
 }
 
 export function loadProgress(store: KeyValueStore | null): Progress {
@@ -26,6 +27,9 @@ export function loadProgress(store: KeyValueStore | null): Progress {
     const data = JSON.parse(raw) as Partial<Progress>;
     return {
       done: Array.isArray(data.done) ? data.done.filter((x): x is string => typeof x === 'string') : [],
+      metWorlds: Array.isArray(data.metWorlds)
+        ? data.metWorlds.filter((x): x is string => typeof x === 'string')
+        : [],
       unlockAll: data.unlockAll === true,
       muted: data.muted === true,
     };
@@ -44,6 +48,15 @@ export function saveProgress(store: KeyValueStore | null, p: Progress): void {
 
 export function markDone(p: Progress, levelId: string): Progress {
   return p.done.includes(levelId) ? p : { ...p, done: [...p.done, levelId] };
+}
+
+export function markWorldMet(p: Progress, worldId: string): Progress {
+  return p.metWorlds.includes(worldId) ? p : { ...p, metWorlds: [...p.metWorlds, worldId] };
+}
+
+/** Completed levels are legacy evidence that this world was already opened. */
+export function needsFriendIntro(p: Progress, worldId: string, levelIds: readonly string[]): boolean {
+  return !p.metWorlds.includes(worldId) && !levelIds.some((id) => p.done.includes(id));
 }
 
 /** Level ids of each world, in order. */

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { WORLDS } from '../src/content/worlds.ts';
 import {
-  emptyProgress, isLevelOpen, isWorldOpen, loadProgress, markDone, saveProgress, STORAGE_KEY,
+  emptyProgress, isLevelOpen, isWorldOpen, loadProgress, markDone, markWorldMet, needsFriendIntro,
+  saveProgress, STORAGE_KEY,
   type KeyValueStore,
 } from '../src/core/progress.ts';
 import { toGrid } from '../src/core/puzzle.ts';
@@ -33,17 +34,20 @@ function memoryStore(initial: Record<string, string> = {}): KeyValueStore & { da
 
 test('progress survives a save and load', () => {
   const store = memoryStore();
-  const p = markDone(markDone(emptyProgress(), 'king-1'), 'king-1');
+  const p = markWorldMet(markDone(markDone(emptyProgress(), 'king-1'), 'king-1'), 'king');
   assert.deepEqual(p.done, ['king-1']);
+  assert.deepEqual(p.metWorlds, ['king']);
   saveProgress(store, { ...p, muted: true });
-  assert.deepEqual(loadProgress(store), { done: ['king-1'], unlockAll: false, muted: true });
+  assert.deepEqual(loadProgress(store), { done: ['king-1'], metWorlds: ['king'], unlockAll: false, muted: true });
 });
 
 test('garbage or missing storage falls back to a fresh start', () => {
   assert.deepEqual(loadProgress(null), emptyProgress());
   assert.deepEqual(loadProgress(memoryStore({ [STORAGE_KEY]: '{not json' })), emptyProgress());
-  assert.deepEqual(loadProgress(memoryStore({ [STORAGE_KEY]: '{"done":[1,"a"],"unlockAll":"yes"}' })), {
-    done: ['a'], unlockAll: false, muted: false,
+  assert.deepEqual(loadProgress(memoryStore({
+    [STORAGE_KEY]: '{"done":[1,"a"],"metWorlds":[false,"king"],"unlockAll":"yes"}',
+  })), {
+    done: ['a'], metWorlds: ['king'], unlockAll: false, muted: false,
   });
   const throwing: KeyValueStore = {
     getItem: () => { throw new Error('blocked'); },
@@ -51,6 +55,20 @@ test('garbage or missing storage falls back to a fresh start', () => {
   };
   assert.deepEqual(loadProgress(throwing), emptyProgress());
   assert.doesNotThrow(() => saveProgress(throwing, emptyProgress()));
+});
+
+test('friend intros are remembered and legacy completed worlds do not replay them', () => {
+  const fresh = emptyProgress();
+  assert.ok(needsFriendIntro(fresh, 'king', ['king-1', 'king-2']));
+
+  const met = markWorldMet(markWorldMet(fresh, 'king'), 'king');
+  assert.deepEqual(met.metWorlds, ['king']);
+  assert.equal(markWorldMet(met, 'king'), met);
+  assert.ok(!needsFriendIntro(met, 'king', ['king-1', 'king-2']));
+
+  const legacy = markDone(fresh, 'king-1');
+  assert.ok(!needsFriendIntro(legacy, 'king', ['king-1', 'king-2']));
+  assert.ok(needsFriendIntro(legacy, 'rook', ['rook-1', 'rook-2']));
 });
 
 test('worlds open after half of the previous world, levels open in order', () => {

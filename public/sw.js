@@ -5,17 +5,22 @@
 // copy is only served when the network fails or is very slow. The whole game
 // is one HTML file, so saving the page saves everything.
 
-const CACHE = 'tiny-hops-v2';
+const CACHE_PREFIX = 'tiny-hops-';
+const CACHE = 'tiny-hops-v3';
+const LEGACY_CACHE = 'tbk-v1';
 const SLOW_MS = 4000;
 const scoped = (path) => new URL(path, self.registration.scope).href;
-const SHELL = ['./', 'favicon.svg', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
+const ROOT = scoped('./');
+const OPTIONAL_SHELL = ['favicon.svg', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE);
-      // One missing file must not stop the game from working offline.
-      await Promise.all(SHELL.map((p) => cache.add(scoped(p)).catch(() => {})));
+      // Do not activate a fresh worker unless the actual game is safely saved.
+      await cache.add(ROOT);
+      // Optional install art should not prevent the game itself from working.
+      await Promise.all(OPTIONAL_SHELL.map((p) => cache.add(scoped(p)).catch(() => {})));
       await self.skipWaiting();
     })(),
   );
@@ -24,9 +29,10 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // Also clears caches left behind by the older versions of this app.
+      // CacheStorage is origin-wide on GitHub Pages. Delete only our caches.
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+      const old = keys.filter((k) => (k.startsWith(CACHE_PREFIX) || k === LEGACY_CACHE) && k !== CACHE);
+      await Promise.all(old.map((k) => caches.delete(k)));
       await self.clients.claim();
     })(),
   );
@@ -37,16 +43,18 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
 
   // Every page visit (?p=..., ?maker, plain) is the same single HTML file.
-  const key = req.mode === 'navigate' ? scoped('./') : req;
+  const key = req.mode === 'navigate' ? ROOT : req;
 
-  const network = fetch(req).then(async (res) => {
+  const network = fetch(req);
+  const update = network.then(async (res) => {
     if (res.ok && res.type === 'basic') {
+      const copy = res.clone();
       const cache = await caches.open(CACHE);
-      await cache.put(key, res.clone());
+      await cache.put(key, copy);
     }
-    return res;
   });
-  event.waitUntil(network.catch(() => {}));
+  // Storage can be full or blocked. That must never discard a good response.
+  event.waitUntil(update.catch(() => {}));
 
   event.respondWith(
     (async () => {
@@ -56,7 +64,13 @@ self.addEventListener('fetch', (event) => {
           new Promise((_, reject) => setTimeout(() => reject(new Error('slow')), SLOW_MS)),
         ]);
       } catch {
-        const saved = await caches.match(key);
+        let saved;
+        try {
+          const cache = await caches.open(CACHE);
+          saved = await cache.match(key);
+        } catch {
+          // A broken cache should not mask a network request still in flight.
+        }
         return saved || network; // nothing saved yet: keep waiting for the network
       }
     })(),
