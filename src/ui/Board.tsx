@@ -54,9 +54,28 @@ export function Board(props: BoardProps) {
     return r * cols + c;
   };
 
+  // One finger at a time, tracked by the board itself. The browser's
+  // "primary" pointer is not enough: a thumb resting on the edge of a tablet
+  // becomes primary and would make every tap on the board be ignored.
+  const active = useRef<number | null>(null);
+  useEffect(() => {
+    // Safety net for when capture failed and the finger lifted off the board.
+    const end = (e: globalThis.PointerEvent) => {
+      if (e.pointerId === active.current) active.current = null;
+    };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, []);
+
   const down = (e: PointerEvent<HTMLDivElement>) => {
-    if (!e.isPrimary) return; // ignore extra fingers and palms
+    if (e.button > 0) return; // right or middle mouse button
+    if (active.current !== null) return; // a second finger or a palm while one is down
     e.preventDefault();
+    active.current = e.pointerId;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
@@ -67,9 +86,16 @@ export function Board(props: BoardProps) {
   };
 
   const up = (e: PointerEvent<HTMLDivElement>) => {
-    if (!e.isPrimary) return;
+    if (e.pointerId !== active.current) return;
+    active.current = null;
     const pos = posFromEvent(e);
     if (pos !== null) props.onRelease(pos);
+  };
+
+  // The browser took the touch away (a system gesture, an alert, a lost
+  // capture): forget it so the next tap works, but do not count it as a drop.
+  const cancel = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerId === active.current) active.current = null;
   };
 
   const dotColor = selected !== null && state.friends[selected] ? PALETTE[state.friends[selected].kind] : PALETTE.king;
@@ -85,6 +111,8 @@ export function Board(props: BoardProps) {
         className="board-layer"
         onPointerDown={down}
         onPointerUp={up}
+        onPointerCancel={cancel}
+        onLostPointerCapture={cancel}
         onContextMenu={(e) => e.preventDefault()}
       >
         <div className="squares">

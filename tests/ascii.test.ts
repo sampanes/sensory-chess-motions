@@ -4,10 +4,12 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-const ROOTS = ['src', 'tests', 'scripts', 'public', 'index.html', 'README.md', 'package.json', 'vite.config.ts'];
+const ROOTS = ['src', 'tests', 'scripts', 'public', 'index.html', 'README.md', 'ROADMAP.md', 'package.json', 'vite.config.ts'];
+
+const BINARY = /\.(png|jpe?g|webp|ico)$/i;
 
 function files(path: string): string[] {
-  if (!statSync(path).isDirectory()) return [path];
+  if (!statSync(path).isDirectory()) return BINARY.test(path) ? [] : [path];
   return readdirSync(path).flatMap((name) => files(join(path, name)));
 }
 

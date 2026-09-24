@@ -33,6 +33,9 @@ A friend wakes up once half of the previous friend's puzzles are done. Progress 
 - **Puzzle maker**: [`?maker`](https://sampanes.github.io/sensory-chess-motions/?maker). Paint a board;
   it tells you instantly whether the puzzle can be finished and in how many moves. "Copy share link"
   gives a `?p=...` link that opens straight into the puzzle.
+- **Offline and home screen**: after one visit the game works without internet, and it can be
+  added to a home screen so it opens full screen. The service worker (`public/sw.js`) is network
+  first, so an online visit always gets the newest version.
 - **Jump to any screen** with the URL hash: `#/w/rook` (the rook's puzzles), `#/w/rook/3` (rook puzzle 3).
   World ids: `king rook bishop queen knight pawn friends`.
 

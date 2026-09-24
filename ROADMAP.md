@@ -39,6 +39,18 @@ The game works in a desktop browser. Next it has to survive real toddlers on rea
 **Done when:** three kids each play ten minutes with no adult help and never get stuck or leave
 the app. The game installs and plays offline.
 
+**Status (2026-09-24):** everything that can be built and checked without a real child is done:
+- Board touch is tracked per finger, so a resting thumb no longer blocks taps. A second finger or a
+  palm is ignored, and the board can't get stuck.
+- Pinch zoom is off on kid screens.
+- The grown-up panel no longer closes the moment the finger holding the gear lifts. That was a
+  touch-only bug.
+- An offline service worker (network first) and PNG / maskable / apple-touch icons are in place.
+- The grown-up panel has tips for Guided Access and App pinning.
+- Treats were already told apart by shape, and hop spots are dots or rings, so no color-only cues.
+
+Still open: the play-tests on real devices and with real kids.
+
 ## M2 -- Meet the friends
 
 Right now a new friend shows up with no introduction.

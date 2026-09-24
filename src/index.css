@@ -35,6 +35,7 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   display: flex;
   flex-direction: column;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  touch-action: pan-x pan-y;          /* kid screens: scrolling yes, pinch zoom no */
 }
 
 .screen.center { align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
@@ -343,6 +344,8 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .grownups-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .grownups h1 { font-size: 20px; margin: 0; }
 .muted { color: #64748b; }
+.grownups h2 { font-size: 17px; margin: 20px 0 6px; }
+.tips { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 8px; line-height: 1.45; }
 .grownup-note { max-width: 420px; color: #475569; }
 
 .lessons { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 10px; }
