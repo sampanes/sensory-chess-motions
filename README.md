@@ -73,8 +73,6 @@ maker's "Grid text" box gives you lines ready to paste.
 
 Pushing to `main` runs the tests and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
 
-## Ideas for later
+## Roadmap
 
-- Daily puzzle: generate a fresh, solver-checked puzzle from the date.
-- "Meet the friend" intro: the new friend demonstrates its move on an empty board.
-- Sleepy guards: a piece whose reachable squares must be avoided (a gentle intro to "attacked squares").
+Milestones and long-term goals are in [ROADMAP.md](ROADMAP.md).
