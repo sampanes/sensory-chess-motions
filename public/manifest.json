@@ -1,21 +1,21 @@
 {
-  "name": "The Borrowed Kingdom",
-  "short_name": "Borrowed Kingdom",
-  "description": "A chess adventure game for young learners. Guide the king, recruit allies, and restore the kingdom.",
-  "start_url": "./?adventure",
+  "name": "Tiny Hops",
+  "short_name": "Tiny Hops",
+  "description": "Hop, munch, giggle. Little ones collect treats with friendly chess pieces and learn how every piece moves.",
+  "start_url": "./",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#fef9c3",
-  "theme_color": "#f59e0b",
-  "orientation": "portrait-primary",
+  "background_color": "#dff3ff",
+  "theme_color": "#7cc4f5",
+  "orientation": "any",
   "icons": [
     {
       "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
-  "categories": ["games", "education"],
+  "categories": ["games", "education", "kids"],
   "lang": "en"
 }

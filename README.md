@@ -1,79 +1,80 @@
-# Sensory Chess Motions
+# Tiny Hops
 
-A visually engaging, interactive chess adventure designed to teach the fundamental movements of chess pieces through a series of "nature trail" puzzles. 
+A puzzle game for 2-4 year olds who can't read yet. Friendly characters hop around a
+little board munching treats. Each character is a real chess piece and moves exactly
+like one, so kids learn how every piece moves without ever being told it's chess.
 
-**[Live Demo](https://sampanes.github.io/sensory-chess-motions/)** — Play the game, one level at a time
+**[Play it](https://sampanes.github.io/sensory-chess-motions/)**
 
-**[Cheat Mode](https://sampanes.github.io/sensory-chess-motions/?cheat)** — start with all levels unlocked
+## How it plays
 
-**[Level Creator](https://sampanes.github.io/sensory-chess-motions/?creator)** — build and export custom levels
+- Tap a friend (or drag it). Glowing spots show every square it can reach. Tap one to hop there.
+- Eat every treat to finish the puzzle. Each treat plays the next note of a little tune.
+- There are no words, no scores, no timers and no way to lose. If a puzzle can no longer be
+  finished (a pawn walked past its treats), the friend looks puzzled and everything gently rewinds.
+- After a few quiet seconds, a hand taps the next move of a shortest solution.
 
-**[Adventure Mode](https://sampanes.github.io/sensory-chess-motions/?adventure)** — The Friendship Kingdom chess story
+| Friend | Moves like | Treat |
+|--------|-----------|-------|
+| Crown friend | King: one step any direction | berries |
+| Tower friend | Rook: slides straight | stars |
+| Pointy-hat friend | Bishop: slides diagonally | candy |
+| Sparkle friend | Queen: slides any direction | cupcakes |
+| Horse friend | Knight: jumps in an L, over anything | carrots |
+| Little friend | Pawn: steps up, eats diagonally, becomes a Queen at the top | apples |
+| Two friends | Tap to choose who moves; they block each other | cookies |
 
----
+A friend wakes up once half of the previous friend's puzzles are done. Progress is saved in the browser.
 
-## 👨 Dad Cheat — Testing & Debug Routes
+## For grown-ups
 
-All routes below unlock everything and skip the Trial mastery checks, so you can jump straight to any level for testing.
+- **Grown-up panel**: on the home screen, press and hold the gear (bottom right) for 2 seconds.
+  It has what each friend teaches, sound on/off, "open everything", and reset.
+- **Puzzle maker**: [`?maker`](https://sampanes.github.io/sensory-chess-motions/?maker). Paint a board;
+  it tells you instantly whether the puzzle can be finished and in how many moves. "Copy share link"
+  gives a `?p=...` link that opens straight into the puzzle.
+- **Jump to any screen** with the URL hash: `#/w/rook` (the rook's puzzles), `#/w/rook/3` (rook puzzle 3).
+  World ids: `king rook bishop queen knight pawn friends`.
 
-| URL | What it does |
-|-----|-------------|
-| `/?adventure&dadcheat` | Adventure mode with all worlds unlocked, all trials skipped. Starts at the title screen. |
-| `/?adventure&dadcheat&world=0` | Jump straight into **World 0 — The King's Start** (level 1) |
-| `/?adventure&dadcheat&world=1` | Jump straight into **World 1 — Pawn's Farm** (level 1) |
-| `/?adventure&dadcheat&world=2` | Jump straight into **World 2 — Rook's Roads** (level 1) |
-| `/?adventure&dadcheat&world=3` | Jump straight into **World 3 — Bishop's Grove** (level 1) |
-| `/?adventure&dadcheat&world=4` | Jump straight into **World 4 — Knight's Mountains** (level 1) |
-| `/?adventure&dadcheat&world=5` | Jump straight into **World 5 — Queen's Realm** (level 1) |
-| `/?adventure&dadcheat&world=2&level=7` | Jump to **World 2, Level 7** (R7 — The Moat) |
-| `/?adventure&dadcheat&world=2&level=8` | Jump to **World 2, Level 8** (R8 — Road's End scroll level) |
+## Development
 
-**Level numbers are 1-indexed** (level 1 = first level of that world).
-
-While in dad cheat mode, **◀ Prev level** and **Next level ▶** buttons appear on the intro card so you can step through levels without returning to the world map.
-
-## 🧩 The Game
-Navigate your chess piece across a 5x5 grid to reach the red flag. Each level introduces different terrains and obstacles that test your understanding of how pieces move.
-
-### Features
-- **Progressive Learning**: Start with basic moves and advance to complex puzzles.
-- **Interactive Feedback**: Valid moves are highlighted as you play.
-- **Star System**: Earn up to 3 stars per level by finding the most efficient path.
-- **Diverse Terrains**: Navigate across grass, over bridges, through rivers, and around fences.
-- **Sensory Experience**: Smooth animations and a vibrant, child-friendly aesthetic.
-
-### Piece Guide
-- **🏰 Rook**: Slides in straight lines — up, down, left, and right.
-- **⛪ Bishop**: Slides diagonally — corner to corner.
-- **🐴 Knight**: Jumps in an "L-shape" (two squares one way, one square the other) — the only piece that can jump over obstacles!
-
-## 🚀 GitHub Pages Deployment
-
-This project is configured to deploy automatically to GitHub Pages using **GitHub Actions**.
-
-### Setup Instructions
-1. **Push to Main**: Any changes pushed to the `main` branch will trigger the `Deploy static content to Pages` workflow.
-2. **Enable Actions for Pages**:
-   - Go to your repository on GitHub.
-   - Click **Settings** > **Pages**.
-   - Under **Build and deployment** > **Source**, ensure **"GitHub Actions"** is selected.
-3. **View Live**: Your site will be available at `https://<your-username>.github.io/sensory-chess-motions/`.
-
-### Local Development
-```bash
-# Install dependencies
+```
 npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
+npm run dev        (dev server; Ctrl+C to stop)
+npm test           (rules, solver, every level, share links, progress, ASCII check)
+npm run build      (typecheck + single-file build into dist/)
 ```
 
-## 🛠️ Tech Stack
-- **React 19** & **TypeScript**
-- **Vite** (Build tool)
-- **Framer Motion** (Animations)
-- **Tailwind CSS** (Styling)
-- **Lucide React** (Icons)
+Tests use Node's built-in test runner and need Node 22.18+ (Node 24 recommended); no test packages.
+
+### Adding a puzzle
+
+Puzzles are ASCII grids in `src/content/worlds.ts`:
+
+```
+'..*..',     .  grass    #  rock    *  treat
+'.###.',     K Q R B N P  king queen rook bishop knight pawn
+'..K..',
+```
+
+Boards are 3x3 to 6x6, up to 3 friends and 10 treats. Pawns walk toward the top row.
+`npm test` runs a solver over every level and fails if one can't be finished or needs more
+than 10 moves. `node scripts/solve-all.ts` prints the move count of every level. The puzzle
+maker's "Grid text" box gives you lines ready to paste.
+
+### Layout
+
+| Path | What |
+|------|------|
+| `src/core/` | Pure game logic, no React: puzzle parsing, move rules, BFS solver, share codes, progress |
+| `src/content/worlds.ts` | Every built-in puzzle |
+| `src/ui/` | React screens, SVG art, synthesized sounds |
+| `tests/` | `node --test` suites |
+
+Pushing to `main` runs the tests and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
+
+## Ideas for later
+
+- Daily puzzle: generate a fresh, solver-checked puzzle from the date.
+- "Meet the friend" intro: the new friend demonstrates its move on an empty board.
+- Sleepy guards: a piece whose reachable squares must be avoided (a gentle intro to "attacked squares").

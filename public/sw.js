@@ -1,35 +1,16 @@
-// The Borrowed Kingdom — Service Worker
-// Caches the app shell for offline play.
+// Retired service worker. Older versions of the game cached files here; this
+// version clears those caches and removes itself so everyone gets fresh code.
 
-const CACHE_NAME = 'tbk-v1';
+self.addEventListener('install', () => self.skipWaiting());
 
-// Install: cache everything the browser fetches
-self.addEventListener('install', () => {
-  self.skipWaiting();
-});
-
-// Activate: claim clients immediately
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
-});
-
-// Fetch: network-first with cache fallback
-self.addEventListener('fetch', event => {
-  // Only handle same-origin GET requests
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // Cache successful responses (not opaque, not errors)
-        if (response && response.status === 200 && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+      await self.registration.unregister();
+      const windows = await self.clients.matchAll({ type: 'window' });
+      windows.forEach((w) => w.navigate(w.url));
+    })(),
   );
 });
