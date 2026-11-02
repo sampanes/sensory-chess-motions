@@ -1,7 +1,12 @@
 # Tuck the King into Bed: drag-and-drop checkmate mode (plan)
 
-Status: **planned, nothing built.** This expands the M4 row "Tuck the grumpy king into bed" in
-`ROADMAP.md`. Every rule in "Rules that never change" still applies.
+Status (2026-11-02): **first version built and live** as "bedtime puzzles", the night-sky bubble on
+the home screen. Always open: new modes never wait for the friend worlds to be finished (John).
+Rules in `src/core/mate.ts` (tested in `tests/mate.test.ts`), 8 puzzles in
+`src/content/bedtime.ts`, screens `src/ui/BedtimeScreen.tsx` and `src/ui/BedtimeWorld.tsx`. Built
+with the proposed defaults below: red only around the king, rocks as walls, mate in one later.
+Not yet: kid testing, the fill flash, a lullaby win tune. Every rule in "Rules that never change"
+still applies.
 
 ## The idea in one paragraph
 
@@ -100,7 +105,7 @@ Each has a proposed default, so building can start without waiting on them.
 2. **What walls the king in?** Rocks (proposed default: simple, rule-safe), or the king's own real
    pawns, as in a true back-rank mate. Real pawns need a full "can the defender capture or block
    the check" test, so they come later if at all.
-3. **Where does the mode live?** A new world bubble after the pawn and friends worlds (proposed
-   default), or a separate bubble on the home screen that opens a different kind of puzzle.
+3. **Where does the mode live?** Decided (John, 2026-11-02): its own bubble on the home screen,
+   always open, so nobody has to "graduate" from the friend worlds to see it.
 4. **Mate in one later?** A follow-up where the friends already stand on the board and the kid
    moves one of them, instead of dropping from a tray.

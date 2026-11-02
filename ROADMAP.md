@@ -113,6 +113,14 @@ own world, solver support and tests.
 | Walk the pawn home: move a little friend all the way up past guards | Pawn races and promotion |
 | Cross with a team (older kids, about 8): get every friend across a field where each stretch suits a different friend; the queen is earned (plan: `docs/TEAM_CROSSING.md`) | What each piece is good and bad at; the knight lands where rook and bishop can't |
 
+New modes get their own always-open bubble on the home screen: nobody has to finish the friend
+worlds to reach them (John, 2026-11-02).
+
+**Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked
+checkmates, drag or tap-to-place from a tray, red preview of watched squares, the king shoos an
+unprotected friend, and the friends float back if they are all placed without a checkmate.
+Still open: kid testing, and the other mechanics in the table.
+
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.
 

@@ -80,5 +80,5 @@ in a hole the reach map leaves dark.
    mode might want a few words, or a "par" number of hops. Proposed default: keep it wordless and
    score-free, and decide again after it is built.
 2. **How the queen is earned:** promotion (proposed default) or rook plus bishop.
-3. **Where it lives:** a separate "big kids" area behind the grown-up gate, or worlds after the
-   toddler ones.
+3. **Where it lives:** decided (John, 2026-11-02): its own always-open bubble on the home screen,
+   like the bedtime puzzles. Nobody has to "graduate" from the friend worlds to reach a new mode.

@@ -2,12 +2,17 @@
 //   #/              home
 //   #/w/rook        a friend's puzzles
 //   #/w/rook/3      puzzle 3 of that friend
+//   #/bed           bedtime puzzles (always open)
+//   #/bed/2         bedtime puzzle 2
 
 import { useEffect, useMemo, useState } from 'react';
+import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { WORLDS } from '../content/worlds.ts';
 import { markDone, markWorldMet, needsFriendIntro } from '../core/progress.ts';
 import { mustParse } from '../core/puzzle.ts';
 import { StarIcon } from './art.tsx';
+import { BedtimeScreen } from './BedtimeScreen.tsx';
+import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { Home } from './Home.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
@@ -15,9 +20,19 @@ import { PlayScreen } from './PlayScreen.tsx';
 import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
 
-type Route = { screen: 'home' } | { screen: 'world'; wi: number } | { screen: 'play'; wi: number; li: number };
+type Route =
+  | { screen: 'home' }
+  | { screen: 'world'; wi: number }
+  | { screen: 'play'; wi: number; li: number }
+  | { screen: 'bedtime' }
+  | { screen: 'bed'; li: number };
 
 function parseHash(hash: string): Route {
+  const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);
+  if (bed) {
+    const li = bed[1] ? Number(bed[1]) - 1 : -1;
+    return li >= 0 && li < BEDTIME_LEVELS.length ? { screen: 'bed', li } : { screen: 'bedtime' };
+  }
   const m = /^#\/w\/([a-z]+)(?:\/(\d+))?$/.exec(hash);
   const wi = m ? WORLDS.findIndex((w) => w.id === m[1]) : -1;
   if (wi < 0) return { screen: 'home' };
@@ -42,6 +57,31 @@ export function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  if (route.screen === 'bedtime') {
+    return <BedtimeWorld progress={progress} onPlay={(li) => go(`#/bed/${li + 1}`)} onHome={() => go('#/')} />;
+  }
+
+  if (route.screen === 'bed') {
+    const li = route.li;
+    const level = BEDTIME_LEVELS[li];
+    const last = li === BEDTIME_LEVELS.length - 1;
+    return (
+      <BedtimeScreen
+        key={level.id}
+        grid={level.grid}
+        tray={level.tray}
+        sky={BEDTIME_SKY}
+        eagerHint={li === 0}
+        dots={BEDTIME_LEVELS.map((l, i) => (
+          <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
+        ))}
+        onWin={() => update((p) => markDone(p, level.id))}
+        onNext={() => go(last ? '#/bed' : `#/bed/${li + 2}`, true)}
+        onHome={() => go('#/bed')}
+      />
+    );
+  }
 
   if (route.screen !== 'home') {
     const world = WORLDS[route.wi];
@@ -76,7 +116,12 @@ export function App() {
 
   return (
     <>
-      <Home progress={progress} onOpenWorld={(id) => go(`#/w/${id}`)} onGrownUps={() => setGrownUps(true)} />
+      <Home
+        progress={progress}
+        onOpenWorld={(id) => go(`#/w/${id}`)}
+        onBedtime={() => go('#/bed')}
+        onGrownUps={() => setGrownUps(true)}
+      />
       {grownUps && <GrownUps progress={progress} update={update} onClose={() => setGrownUps(false)} />}
     </>
   );

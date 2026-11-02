@@ -112,6 +112,15 @@ export const sfx = {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => note(f, i * 0.12, 0.3, { type: 'triangle', vol: 0.18 }));
     [523.25, 659.25, 783.99].forEach((f) => note(f, 0.55, 0.9, { type: 'sine', vol: 0.1 }));
   },
+  /** A square around the grumpy king becomes watched: rising chimes. */
+  cover(nth: number) {
+    note(PENTA[nth % PENTA.length], 0, 0.2, { type: 'sine', vol: 0.16 });
+  },
+  /** The grumpy king shoos a lonely friend away. */
+  shoo() {
+    note(200, 0, 0.16, { type: 'triangle', vol: 0.16, glideTo: 150 });
+    note(170, 0.14, 0.2, { type: 'triangle', vol: 0.14, glideTo: 120 });
+  },
   snore() {
     note(150, 0, 0.5, { type: 'triangle', vol: 0.12, glideTo: 110 });
   },

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { TreatKind } from '../content/worlds.ts';
 import { startState } from '../core/puzzle.ts';
 import { applyMove, friendIndexAt, hopsFor, isWon } from '../core/rules.ts';
@@ -9,6 +9,7 @@ import { Board, type FriendMood } from './Board.tsx';
 import { Confetti } from './Confetti.tsx';
 import { moveDuration, REWIND_MS } from './motion.ts';
 import { sfx, wakeAudio } from './sound.ts';
+import { useTimers } from './timers.ts';
 
 export interface PlayScreenProps {
   puzzle: Puzzle;
@@ -27,15 +28,6 @@ export interface PlayScreenProps {
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const FOLLOW_UP_HINT_MS = 1200;
-
-/** setTimeout that is cancelled automatically when the screen goes away. */
-function useTimers() {
-  const ids = useRef<number[]>([]);
-  useEffect(() => () => ids.current.forEach((id) => window.clearTimeout(id)), []);
-  return useCallback((fn: () => void, ms: number) => {
-    ids.current.push(window.setTimeout(fn, ms));
-  }, []);
-}
 
 export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext, onHome }: PlayScreenProps) {
   const later = useTimers();

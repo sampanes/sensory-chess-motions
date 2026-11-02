@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react';
 import { WORLDS } from '../content/worlds.ts';
 import { emptyProgress, type Progress } from '../core/progress.ts';
-import { FriendArt } from './art.tsx';
+import { BEDTIME_LEVELS } from '../content/bedtime.ts';
+import { FriendArt, GRUMPY } from './art.tsx';
 
 export function GrownUps({ progress, update, onClose }: {
   progress: Progress;
@@ -52,6 +53,17 @@ export function GrownUps({ progress, update, onClose }: {
               <span>{w.lesson}</span>
             </li>
           ))}
+          <li>
+            <div className="lesson-faces">
+              <FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="lesson-friend" />
+            </div>
+            <span>
+              Bedtime puzzles (the night-sky bubble, always open): drag friends from the tray until the grumpy king is
+              in check and every square he could step to is watched. That is checkmate. Red squares show what a
+              friend would watch before you let go. Finished {BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length}{' '}
+              of {BEDTIME_LEVELS.length}.
+            </span>
+          </li>
         </ul>
 
         <h2>Handing it to a little one</h2>

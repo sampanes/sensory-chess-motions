@@ -14,7 +14,10 @@ export const PALETTE: Record<Kind, { fill: string; dark: string }> = {
   pawn: { fill: '#86efac', dark: '#15803d' },
 };
 
-export type Mood = 'happy' | 'sleepy' | 'wow';
+export type Mood = 'happy' | 'sleepy' | 'wow' | 'grumpy';
+
+/** The grumpy king of the bedtime puzzles: night-time colors, never a friend's. */
+export const GRUMPY = { fill: '#cbd5e1', dark: '#475569' };
 
 const INK = '#1f2937';
 
@@ -27,20 +30,32 @@ function Eyes({ mood, cx = [43, 57], cy = 60 }: { mood: Mood; cx?: number[]; cy?
     );
   }
   return (
-    <g className="blink">
-      {cx.map((x) => (
-        <g key={x}>
-          <ellipse cx={x} cy={cy} rx={3.6} ry={mood === 'wow' ? 4.8 : 4.2} fill={INK} />
-          <circle cx={x + 1.2} cy={cy - 1.6} r={1.3} fill="#fff" />
+    <>
+      <g className="blink">
+        {cx.map((x) => (
+          <g key={x}>
+            <ellipse cx={x} cy={cy} rx={3.6} ry={mood === 'wow' ? 4.8 : 4.2} fill={INK} />
+            <circle cx={x + 1.2} cy={cy - 1.6} r={1.3} fill="#fff" />
+          </g>
+        ))}
+      </g>
+      {mood === 'grumpy' && (
+        <g stroke={INK} strokeWidth={2.6} strokeLinecap="round">
+          {cx.map((x, i) => (
+            <path key={x} d={i === 0 ? `M${x - 5} ${cy - 9} L${x + 4} ${cy - 6}` : `M${x - 4} ${cy - 6} L${x + 5} ${cy - 9}`} />
+          ))}
         </g>
-      ))}
-    </g>
+      )}
+    </>
   );
 }
 
 function Mouth({ mood, x = 50, y = 67 }: { mood: Mood; x?: number; y?: number }) {
   if (mood === 'wow') return <ellipse cx={x} cy={y + 2} rx={4} ry={4.5} fill={INK} />;
   if (mood === 'sleepy') return <circle cx={x} cy={y + 2} r={2} fill={INK} />;
+  if (mood === 'grumpy') {
+    return <path d={`M${x - 5} ${y + 3} Q${x} ${y - 2} ${x + 5} ${y + 3}`} stroke={INK} strokeWidth={2.6} fill="none" strokeLinecap="round" />;
+  }
   return (
     <path d={`M${x - 5} ${y} Q${x} ${y + 5.5} ${x + 5} ${y}`} stroke={INK} strokeWidth={2.6} fill="none" strokeLinecap="round" />
   );
@@ -101,8 +116,14 @@ function Top({ kind }: { kind: Kind }) {
   }
 }
 
-export function FriendArt({ kind, mood = 'happy', className }: { kind: Kind; mood?: Mood; className?: string }) {
-  const { fill, dark } = PALETTE[kind];
+export function FriendArt({ kind, mood = 'happy', className, colors }: {
+  kind: Kind;
+  mood?: Mood;
+  className?: string;
+  /** Override the friend's own colors (the grumpy king). */
+  colors?: { fill: string; dark: string };
+}) {
+  const { fill, dark } = colors ?? PALETTE[kind];
   const knight = kind === 'knight';
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">

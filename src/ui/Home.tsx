@@ -1,13 +1,15 @@
 import { useRef, useState } from 'react';
+import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
 import { doneCount, isWorldOpen, type Progress } from '../core/progress.ts';
-import { FriendArt, GearIcon, StarIcon } from './art.tsx';
+import { FriendArt, GearIcon, GRUMPY, StarIcon } from './art.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 import { WORLD_LEVEL_IDS } from './useProgress.ts';
 
-export function Home({ progress, onOpenWorld, onGrownUps }: {
+export function Home({ progress, onOpenWorld, onBedtime, onGrownUps }: {
   progress: Progress;
   onOpenWorld: (worldId: string) => void;
+  onBedtime: () => void;
   onGrownUps: () => void;
 }) {
   const open = WORLDS.map((_, wi) => isWorldOpen(progress, WORLD_LEVEL_IDS, wi));
@@ -28,6 +30,7 @@ export function Home({ progress, onOpenWorld, onGrownUps }: {
             onOpen={() => onOpenWorld(w.id)}
           />
         ))}
+        <BedtimeBubble done={BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onBedtime} />
       </div>
       <HoldButton onHeld={onGrownUps} />
     </div>
@@ -70,6 +73,26 @@ function WorldBubble({ world, open, bounce, done, onOpen }: {
       </div>
       <div className="bubble-stars">
         {world.levels.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
+      </div>
+    </button>
+  );
+}
+
+/** Bedtime puzzles live beside the friend worlds and are always open. */
+function BedtimeBubble({ done, onOpen }: { done: number; onOpen: () => void }) {
+  return (
+    <button
+      className="world-bubble"
+      onClick={() => { wakeAudio(); sfx.snore(); onOpen(); }}
+      aria-label="Bedtime puzzles"
+    >
+      <div className="bubble night">
+        <div className="bubble-moon" />
+        {/* Awake and grumpy: on this screen a sleeping face means "not open yet". */}
+        <FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="bubble-friend" />
+      </div>
+      <div className="bubble-stars">
+        {BEDTIME_LEVELS.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
       </div>
     </button>
   );
