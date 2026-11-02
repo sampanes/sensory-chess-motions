@@ -3,7 +3,7 @@
 //   - give the idle "tap here" hint (first move of a shortest solution),
 //   - notice when a puzzle can no longer be finished, so the game can rewind.
 
-import { applyMove, hopsFor, isWon } from './rules.ts';
+import { applyHop, hopsFor, isWon } from './rules.ts';
 import type { GameState, Kind, Move, Puzzle } from './types.ts';
 import { KINDS } from './types.ts';
 
@@ -38,7 +38,7 @@ export function solve(p: Puzzle, start: GameState, stateLimit = DEFAULT_STATE_LI
       for (let fi = 0; fi < state.friends.length; fi++) {
         for (const to of hopsFor(p, state, fi)) {
           const move = { friend: fi, to };
-          const res = applyMove(p, state, move)!;
+          const res = applyHop(p, state, move);
           const k = keyOf(res.state);
           if (seen.has(k)) continue;
           seen.add(k);

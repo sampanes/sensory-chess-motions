@@ -14,13 +14,15 @@ export function setMuted(value: boolean): void {
 function audio(): AudioContext | null {
   if (muted) return null;
   try {
-    if (!ctx) {
+    if (!ctx || ctx.state === 'closed') {
       const w = window as unknown as { webkitAudioContext?: typeof AudioContext };
       const Ctor = window.AudioContext ?? w.webkitAudioContext;
       if (!Ctor) return null;
       ctx = new Ctor();
     }
-    if (ctx.state === 'suspended') void ctx.resume();
+    // 'suspended' before the first tap; iOS also reports 'interrupted' after a
+    // call or app switch, and stays silent until resumed from a tap.
+    if (ctx.state !== 'running') ctx.resume().catch(() => {});
     return ctx;
   } catch {
     return null;

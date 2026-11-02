@@ -2,6 +2,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Visible height. A custom property cannot fall back by repeating it (the
+   last one always wins, even if the browser lacks dvh), hence @supports. */
+:root { --vh: 100vh; }
+@supports (height: 100dvh) { :root { --vh: 100dvh; } }
+
 html, body, #root { margin: 0; height: 100%; }
 
 body {
@@ -37,6 +42,8 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   touch-action: pan-x pan-y;          /* kid screens: scrolling yes, pinch zoom no */
 }
+
+.screen.play { overflow: hidden; }    /* flying confetti must not make the page scroll */
 
 .screen.center { align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
 
@@ -82,8 +89,10 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 }
 
 .board {
-  --cell: min(calc((100vw - 44px) / var(--cols)), calc((100vh - 236px) / var(--rows)), 116px);
-  --cell: min(calc((100vw - 44px) / var(--cols)), calc((100dvh - 236px) / var(--rows)), 116px);
+  /* Room left over after the bars, paddings and the notch / home-bar insets. */
+  --free-w: calc(100vw - 44px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  --free-h: calc(var(--vh) - 236px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  --cell: min(calc(var(--free-w) / var(--cols)), calc(var(--free-h) / var(--rows)), 116px);
   width: calc(var(--cell) * var(--cols) + 16px);
   height: calc(var(--cell) * var(--rows) + 16px);
   padding: 8px;
@@ -109,7 +118,9 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   background: radial-gradient(circle at 35% 30%, #86efac, #16a34a);
   box-shadow: 0 7px 0 #15803d, 0 12px 24px rgba(22, 163, 74, 0.45);
   animation: pop-in 0.35s cubic-bezier(.3, 1.6, .5, 1) both, go-pulse 1.3s 0.4s ease-in-out infinite;
+  transition: scale 0.1s;
 }
+.go-btn:active { scale: 0.9; }
 
 /* Treats */
 .treat { z-index: 1; pointer-events: none; }
@@ -243,9 +254,9 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   box-shadow: 0 6px 0 rgba(15, 23, 42, 0.12), 0 10px 22px rgba(15, 23, 42, 0.12);
   display: grid;
   place-items: center;
-  transition: transform 0.12s;
+  transition: scale 0.12s;
 }
-.world-bubble:active .bubble { transform: scale(0.94); }
+.world-bubble:active .bubble { scale: 0.94; }   /* `scale`, not transform: keeps working mid-bounce */
 .bubble-friend { width: 72%; height: 72%; grid-area: 1 / 1; }
 .bubble-friend.pair-0 { width: 58%; height: 58%; transform: translateX(-24%); }
 .bubble-friend.pair-1 { width: 58%; height: 58%; transform: translateX(24%); }
@@ -302,9 +313,9 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   border: 5px solid #fff;
   overflow: hidden;
   box-shadow: 0 6px 0 rgba(15, 23, 42, 0.12);
-  transition: transform 0.12s;
+  transition: scale 0.12s;
 }
-.level-tile:active { transform: scale(0.94); }
+.level-tile:active { scale: 0.94; }
 .level-tile.locked { opacity: 0.4; filter: grayscale(0.6); }
 .level-tile.suggest { border-color: #facc15; animation: hop-here 1.5s ease-in-out infinite; }
 .level-tile.wobble { animation: wobble 0.5s ease-in-out; }
@@ -419,6 +430,26 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .verdict.bad { background: #fee2e2; color: #991b1b; }
 .maker-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .maker pre { background: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; }
+
+/* ==== Phone on its side ================================================
+   Stacked bars leave a 5x5 board about 30px squares on a landscape phone.
+   Put the buttons beside the board instead, so it can use the full height. */
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .screen.play { flex-direction: row; }
+  .play .topbar {
+    flex-direction: column;
+    padding: 12px 4px 12px 12px;
+  }
+  .play .dots-row { flex-direction: column; flex-wrap: nowrap; }
+  .play .dot-star { width: 20px; height: 20px; }
+  .play .dot-star.current { width: 30px; height: 30px; }
+  .play .bottombar { width: 124px; height: auto; }
+  .board {
+    --free-w: calc(100vw - 242px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    --free-h: calc(var(--vh) - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
 
 /* ==== Keyframes ======================================================== */
 

@@ -99,7 +99,14 @@ export interface MoveResult {
 export function applyMove(p: Puzzle, s: GameState, m: Move): MoveResult | null {
   if (m.friend < 0 || m.friend >= s.friends.length) return null;
   if (!hopsFor(p, s, m.friend).includes(m.to)) return null;
+  return applyHop(p, s, m);
+}
 
+/**
+ * Apply a move already known to be legal (one returned by hopsFor). The
+ * solver uses this so it does not recompute every hop list a second time.
+ */
+export function applyHop(p: Puzzle, s: GameState, m: Move): MoveResult {
   const ate = treatIndexAt(p, s, m.to);
   const mover = s.friends[m.friend];
   const promoted = mover.kind === 'pawn' && Math.floor(m.to / p.cols) === 0;

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import type { TreatKind } from '../content/worlds.ts';
 import { startState } from '../core/puzzle.ts';
 import { applyMove, friendIndexAt, hopsFor, isWon } from '../core/rules.ts';
-import { solve } from '../core/solver.ts';
-import type { Puzzle } from '../core/types.ts';
+import { solve, type SolveResult } from '../core/solver.ts';
+import type { GameState, Move, Puzzle } from '../core/types.ts';
 import { AgainIcon, GoIcon, HomeIcon } from './art.tsx';
 import { Board, type FriendMood } from './Board.tsx';
 import { Confetti } from './Confetti.tsx';
@@ -55,6 +55,16 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
   const [pokeKey, setPokeKey] = useState(0);
   const dragFrom = useRef<number | null>(null);
 
+  // The latest known way to finish from a given state. A kid who follows it
+  // (or the hint hand) never waits on another search; only a detour does.
+  const plan = useRef<{ state: GameState; moves: readonly Move[] } | null>(null);
+  const planFrom = (s: GameState): SolveResult => {
+    if (plan.current?.state === s) return { status: 'solved', moves: [...plan.current.moves] };
+    const res = solve(puzzle, s);
+    plan.current = res.status === 'solved' ? { state: s, moves: res.moves } : null;
+    return res;
+  };
+
   const hops = useMemo(
     () => (busy || won || !game.friends[selected] ? [] : hopsFor(puzzle, game, selected)),
     [busy, won, puzzle, game, selected],
@@ -66,7 +76,7 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
     if (won || busy) return;
     const wait = hintSoon ? FOLLOW_UP_HINT_MS : eagerHint ? EAGER_HINT_MS : HINT_MS;
     const t = window.setTimeout(() => {
-      const res = solve(puzzle, game);
+      const res = planFrom(game);
       if (res.status !== 'solved' || res.moves.length === 0) return;
       const m = res.moves[0];
       setHint(m.friend === selected ? m.to : game.friends[m.friend].at);
@@ -85,6 +95,11 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
       Math.abs(Math.floor(from.at / puzzle.cols) - Math.floor(to / puzzle.cols)),
     );
     const travel = moveDuration(from.kind, dist);
+
+    const known = plan.current;
+    if (known?.state === game && known.moves[0]?.friend === fi && known.moves[0].to === to) {
+      plan.current = { state: res.state, moves: known.moves.slice(1) };
+    }
     const arrive = Math.round(travel * 0.85);
 
     setGame(res.state);
@@ -110,7 +125,7 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
         later(() => setShowGo(true), 1100);
         return;
       }
-      if (solve(puzzle, res.state).status === 'stuck') {
+      if (planFrom(res.state).status === 'stuck') {
         // No way to finish from here (a pawn walked past its treats).
         // Never a "you lose": a puzzled wiggle, then everything floats home.
         setMood('confused');
