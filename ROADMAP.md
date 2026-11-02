@@ -90,6 +90,14 @@ The game has 45 hand-made puzzles. Aim for about 120, with difficulty that rises
 **Done when:** there are at least 15 puzzles per world. The curve test passes. The daily puzzle
 has been solvable for 365 dates in a row in a test.
 
+**Status (2026-11-02):** the difficulty score is built (`src/core/difficulty.ts`, printed by
+`node scripts/solve-all.ts`): fewest moves, plus "guess bits" (how much luck a random tapper needs
+to stay on a shortest route, so tempting wrong hops and hops into dead ends both raise it), plus
+the share of dead-end positions. Score = moves + guess bits, to be tuned by watching kids. First
+reading: 7 levels score lower than the level before them (king-6, bishop-6, queen-4, knight-6,
+pawn-2, pawn-6, friends-4), and king-5 and queen-3 are spikes. Careful when reordering: a level's
+id is its position (`king-3`), and saved stars are kept by id.
+
 ## M4 -- Chess ideas, secretly
 
 Bring in real chess ideas one at a time, each disguised as a new game mechanic. Each one gets its
@@ -103,6 +111,7 @@ own world, solver support and tests.
 | Stay safe: a treat sits on a watched square, so eat it with the right friend | Which captures are safe |
 | Tuck the grumpy king into bed: drag friends from a tray and watch the squares they cover turn red until the king has nowhere to step (plan: `docs/CHECKMATE_MODE.md`) | Checkmate patterns |
 | Walk the pawn home: move a little friend all the way up past guards | Pawn races and promotion |
+| Cross with a team (older kids, about 8): get every friend across a field where each stretch suits a different friend; the queen is earned (plan: `docs/TEAM_CROSSING.md`) | What each piece is good and bad at; the knight lands where rook and bishop can't |
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.
