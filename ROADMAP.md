@@ -101,7 +101,7 @@ own world, solver support and tests.
 | Friends block each other (already in the game) | Blocking and paths |
 | Shoo the grumpy guard: hop onto a guard to send it home | Captures |
 | Stay safe: a treat sits on a watched square, so eat it with the right friend | Which captures are safe |
-| Tuck the grumpy king into bed: take away every square he can step to | Checkmate patterns (mate in one) |
+| Tuck the grumpy king into bed: drag friends from a tray and watch the squares they cover turn red until the king has nowhere to step (plan: `docs/CHECKMATE_MODE.md`) | Checkmate patterns |
 | Walk the pawn home: move a little friend all the way up past guards | Pawn races and promotion |
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
