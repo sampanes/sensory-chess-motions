@@ -61,9 +61,16 @@ function Top({ kind }: { kind: Kind }) {
     case 'king':
       return (
         <>
-          <rect x={46} y={5} width={8} height={24} rx={3} />
-          <rect x={39} y={10} width={22} height={8} rx={3} />
-          <path d="M34 47 Q30 31 42 27 Q50 23 58 27 Q70 31 66 47 Z" />
+          {/* A crown with a cross on top. A rounded dome here read as a pawn's head. */}
+          <rect x={46} y={2} width={8} height={18} rx={3} />
+          <rect x={39} y={6} width={22} height={7} rx={3} />
+          <path d="M33 47 L29 18 L40 27 L50 16 L60 27 L71 18 L67 47 Z" />
+          <path d="M31 31 H69" fill="none" />
+          <g stroke="none">
+            <circle cx={41} cy={37} r={2.6} fill="#ef4444" />
+            <circle cx={50} cy={37} r={2.6} fill="#60a5fa" />
+            <circle cx={59} cy={37} r={2.6} fill="#ef4444" />
+          </g>
         </>
       );
     case 'queen':
