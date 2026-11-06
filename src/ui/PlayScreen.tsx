@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { pickLook, PLAIN_MUSIC } from '../content/looks.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import { startState } from '../core/puzzle.ts';
 import { applyMove, friendIndexAt, hopsFor, isWon } from '../core/rules.ts';
@@ -8,13 +9,16 @@ import { AgainIcon, GoIcon, HomeIcon } from './art.tsx';
 import { Board, type FriendMood } from './Board.tsx';
 import { Confetti } from './Confetti.tsx';
 import { moveDuration, REWIND_MS } from './motion.ts';
-import { sfx, wakeAudio } from './sound.ts';
+import { setMusic, sfx, wakeAudio } from './sound.ts';
 import { useTimers } from './timers.ts';
 
 export interface PlayScreenProps {
   puzzle: Puzzle;
+  /** The world's own treat and sky, used the first time a puzzle is played. */
   treat: TreatKind;
   sky: string;
+  /** Already finished before: start with a surprise treat, board and music. */
+  replay?: boolean;
   /** Show the hint hand sooner (first level of a world). */
   eagerHint?: boolean;
   /** Little row of dots showing where you are in the world. */
@@ -29,8 +33,14 @@ const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const FOLLOW_UP_HINT_MS = 1200;
 
-export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext, onHome }: PlayScreenProps) {
+export function PlayScreen({ puzzle, treat, sky, replay, eagerHint, dots, onWin, onNext, onHome }: PlayScreenProps) {
   const later = useTimers();
+  // Every play after a win rolls a new surprise look (src/content/looks.ts).
+  const [look, setLook] = useState(() => pickLook({ treat, sky }, replay === true));
+  useEffect(() => {
+    setMusic(look.music);
+  }, [look]);
+  useEffect(() => () => setMusic(PLAIN_MUSIC), []);
   const [game, setGame] = useState(() => startState(puzzle));
   const [selected, setSelected] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -148,6 +158,7 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
   const again = () => {
     wakeAudio();
     if (busy && !won) return;
+    if (won) setLook(pickLook({ treat, sky }, true));
     setWon(false);
     setShowGo(false);
     rewind();
@@ -186,7 +197,7 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
   };
 
   return (
-    <div className="screen play" style={{ background: sky }}>
+    <div className="screen play" style={{ background: look.sky }}>
       <div className="topbar">
         <button className="round-btn" onClick={() => { sfx.tap(); onHome(); }} aria-label="Home">
           <HomeIcon className="icon" />
@@ -201,7 +212,8 @@ export function PlayScreen({ puzzle, treat, sky, eagerHint, dots, onWin, onNext,
         <Board
           puzzle={puzzle}
           state={game}
-          treat={treat}
+          treat={look.treat}
+          theme={look.board}
           selected={selected}
           hops={hops}
           hint={hint}

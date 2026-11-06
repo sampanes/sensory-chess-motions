@@ -142,6 +142,7 @@ function Level({ wi, li, progress, onDone }: { wi: number; li: number; progress:
       puzzle={puzzle}
       treat={world.treat}
       sky={world.sky}
+      replay={progress.includes(level.id)}
       eagerHint={li === 0}
       dots={dots}
       onWin={() => onDone(level.id)}

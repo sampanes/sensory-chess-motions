@@ -2,10 +2,17 @@
 // One shared AudioContext (browsers cap how many you can make), created on the
 // first tap because mobile browsers refuse to start audio without a gesture.
 
+import { PLAIN_MUSIC, type Music } from '../content/looks.ts';
 import type { Kind } from '../core/types.ts';
 
 let ctx: AudioContext | null = null;
 let muted = false;
+let music: Music = PLAIN_MUSIC;
+
+/** Key and instrument for the munch notes and win tune (replays get a surprise). */
+export function setMusic(value: Music): void {
+  music = value;
+}
 
 export function setMuted(value: boolean): void {
   muted = value;
@@ -64,6 +71,25 @@ function note(freq: number, delay: number, dur: number, { type = 'sine', vol = 0
 // C major pentatonic: any sequence of these sounds pleasant together.
 const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760];
 
+/** One musical note in the current key and instrument. */
+function tone(freq: number, delay: number, dur: number, vol: number): void {
+  const f = freq * 2 ** (music.key / 12);
+  switch (music.voice) {
+    case 'sine':
+      note(f, delay, dur, { type: 'sine', vol: vol * 1.1 });
+      break;
+    case 'bell':
+      note(f, delay, dur * 1.6, { type: 'sine', vol: vol * 0.9 });
+      note(f * 2, delay, dur * 0.8, { type: 'sine', vol: vol * 0.35 });
+      break;
+    case 'pluck':
+      note(f, delay, dur * 0.55, { type: 'triangle', vol: vol * 1.1, glideTo: f * 0.985 });
+      break;
+    default:
+      note(f, delay, dur, { type: 'triangle', vol });
+  }
+}
+
 const VOICE: Record<Kind, number> = {
   king: 392,
   queen: 523.25,
@@ -92,7 +118,7 @@ export const sfx = {
   },
   /** Each treat in a puzzle plays the next note up, so finishing sounds like a tune. */
   munch(nth: number) {
-    note(PENTA[nth % PENTA.length], 0, 0.22, { type: 'triangle', vol: 0.2 });
+    tone(PENTA[nth % PENTA.length], 0, 0.22, 0.2);
     note(320, 0, 0.08, { type: 'sine', vol: 0.12, glideTo: 140 });
   },
   nudge() {
@@ -109,8 +135,9 @@ export const sfx = {
     [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) => note(f, i * 0.06, 0.25, { type: 'triangle', vol: 0.14 }));
   },
   win() {
-    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => note(f, i * 0.12, 0.3, { type: 'triangle', vol: 0.18 }));
-    [523.25, 659.25, 783.99].forEach((f) => note(f, 0.55, 0.9, { type: 'sine', vol: 0.1 }));
+    const k = 2 ** (music.key / 12);
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.12, 0.3, 0.18));
+    [523.25, 659.25, 783.99].forEach((f) => note(f * k, 0.55, 0.9, { type: 'sine', vol: 0.1 }));
   },
   /** A square around the grumpy king becomes watched: rising chimes. */
   cover(nth: number) {

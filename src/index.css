@@ -97,8 +97,8 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   height: calc(var(--cell) * var(--rows) + 16px);
   padding: 8px;
   border-radius: 24px;
-  background: #7cb65a;
-  box-shadow: 0 8px 0 #5d9442, 0 14px 30px rgba(15, 23, 42, 0.18);
+  background: var(--rim, #7cb65a);
+  box-shadow: 0 8px 0 var(--rim-dark, #5d9442), 0 14px 30px rgba(15, 23, 42, 0.18);
 }
 
 .board-layer { position: relative; width: 100%; height: 100%; touch-action: none; }

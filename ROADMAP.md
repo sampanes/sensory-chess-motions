@@ -105,7 +105,11 @@ has been solvable for 365 dates in a row in a test.
   friend is needed, few positions are dead ends, and it is not a long walk across an empty board
   (the score rates empty boards as hard, but they are just dull). 60 of the levels came from it.
 
-Still open: kid testing of the new levels, the daily puzzle, and replay variety.
+- **Replays stay lively** (`src/content/looks.ts`): the first play of a puzzle always looks like its
+  world. Every play after that (and every "again" after a win) rolls a surprise treat, one of 7
+  board themes (frame, squares and sky), and a key and instrument for the munch notes and win tune.
+
+Still open: kid testing of the new levels, and the daily puzzle.
 
 ## M4 -- Chess ideas, secretly
 

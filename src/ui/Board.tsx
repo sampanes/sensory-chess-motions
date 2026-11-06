@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { MEADOW, type BoardTheme } from '../content/looks.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import type { Friend, GameState, Kind, Puzzle } from '../core/types.ts';
 import { FriendArt, HandIcon, PALETTE, RockArt, TreatArt } from './art.tsx';
@@ -10,6 +11,8 @@ export interface BoardProps {
   puzzle: Puzzle;
   state: GameState;
   treat: TreatKind;
+  /** Square colors (default: the meadow). */
+  theme?: BoardTheme;
   selected: number | null;
   /** Squares the selected friend can move to (shown as glowing dots). */
   hops: readonly number[];
@@ -32,12 +35,10 @@ export interface BoardProps {
   onRelease: (pos: number) => void;
 }
 
-const LIGHT = '#eaf7d8';
-const DARK = '#bfe6a4';
-
 export function Board(props: BoardProps) {
   const { puzzle, state, treat, selected, hops, hint, mood, gulp, round, nudgeKey } = props;
   const { rows, cols } = puzzle;
+  const { light, dark, rim, rimDark } = props.theme ?? MEADOW;
   const layer = useRef<HTMLDivElement>(null);
 
   const cellStyle = (pos: number): CSSProperties => ({
@@ -107,7 +108,7 @@ export function Board(props: BoardProps) {
   return (
     <div
       className="board"
-      style={{ '--rows': rows, '--cols': cols } as CSSProperties}
+      style={{ '--rows': rows, '--cols': cols, '--rim': rim, '--rim-dark': rimDark } as CSSProperties}
     >
       <div
         ref={layer}
@@ -123,7 +124,7 @@ export function Board(props: BoardProps) {
             const r = Math.floor(pos / cols);
             const c = pos % cols;
             return (
-              <div key={`sq${pos}`} className="square" style={{ ...cellStyle(pos), background: (r + c) % 2 ? DARK : LIGHT }}>
+              <div key={`sq${pos}`} className="square" style={{ ...cellStyle(pos), background: (r + c) % 2 ? dark : light }}>
                 {puzzle.rocks[pos] && <RockArt className="fill" />}
               </div>
             );
