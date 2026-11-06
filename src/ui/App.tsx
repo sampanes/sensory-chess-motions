@@ -5,6 +5,7 @@
 //   #/bed           bedtime puzzles (always open)
 //   #/bed/2         bedtime puzzle 2
 //   #/today         today's puzzle (always open, new every day)
+//   #/lab           the lab: prototypes of new ideas (#/lab/3/dots = puzzle 3, a variant)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -16,11 +17,14 @@ import { BedtimeScreen } from './BedtimeScreen.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { Home } from './Home.tsx';
+import { LabScreen } from './LabScreen.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
 import { PlayScreen } from './PlayScreen.tsx';
 import { today, TODAY_SKY } from './today.ts';
 import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
+import type { Peek } from './TiptoeScreen.tsx';
+import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 
 type Route =
   | { screen: 'home' }
@@ -28,10 +32,16 @@ type Route =
   | { screen: 'play'; wi: number; li: number }
   | { screen: 'bedtime' }
   | { screen: 'bed'; li: number }
-  | { screen: 'today' };
+  | { screen: 'today' }
+  | { screen: 'lab'; li: number; peek: Peek };
 
 function parseHash(hash: string): Route {
   if (hash === '#/today') return { screen: 'today' };
+  const lab = /^#\/lab(?:\/(\d+))?(?:\/(never|dots|always))?$/.exec(hash);
+  if (lab) {
+    const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), TIPTOE_LEVELS.length - 1);
+    return { screen: 'lab', li, peek: (lab[2] as Peek | undefined) ?? 'never' };
+  }
   const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);
   if (bed) {
     const li = bed[1] ? Number(bed[1]) - 1 : -1;
@@ -85,6 +95,10 @@ export function App() {
         onHome={() => go('#/bed')}
       />
     );
+  }
+
+  if (route.screen === 'lab') {
+    return <LabScreen li={route.li} peek={route.peek} go={(li, peek) => go(`#/lab/${li + 1}/${peek}`, true)} />;
   }
 
   if (route.screen === 'today') {

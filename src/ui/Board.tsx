@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { MEADOW, type BoardTheme } from '../content/looks.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import type { Friend, GameState, Kind, Puzzle } from '../core/types.ts';
@@ -31,6 +31,10 @@ export interface BoardProps {
   pokeKey: number;
   /** False while a board is only demonstrating and should not claim fingers. */
   interactive?: boolean;
+  /** More things on the board, drawn above the squares (lab modes: guards, watched squares). */
+  extra?: ReactNode;
+  /** Hop targets that get a ring like a treat (something to boop there). */
+  rings?: readonly number[];
   onPress: (pos: number) => void;
   onRelease: (pos: number) => void;
 }
@@ -131,6 +135,8 @@ export function Board(props: BoardProps) {
           })}
         </div>
 
+        {props.extra}
+
         {puzzle.treats.map((sq, i) => {
           const present = (state.left >> i) & 1;
           const eating = !present && gulp?.index === i;
@@ -150,7 +156,7 @@ export function Board(props: BoardProps) {
         {hops.map((sq) => (
           <div key={`h${sq}-${nudgeKey}`} className={nudgeKey ? 'hop-spot nudge' : 'hop-spot'} style={cellStyle(sq)}>
             <div
-              className={treatSquares.has(sq) ? 'hop-ring' : 'hop-dot'}
+              className={treatSquares.has(sq) || props.rings?.includes(sq) ? 'hop-ring' : 'hop-dot'}
               style={{ '--dot': dotColor.fill, '--dot-dark': dotColor.dark } as CSSProperties}
             />
           </div>

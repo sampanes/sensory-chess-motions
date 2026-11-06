@@ -142,6 +142,18 @@ own world, solver support and tests.
 New modes get their own always-open bubble on the home screen: nobody has to finish the friend
 worlds to reach them (John, 2026-11-02).
 
+**The lab.** A new mechanic is first built as a prototype at `#/lab` (one link, nothing to unlock or
+navigate), with a thin grown-up strip to switch puzzles and compare variants. It moves to a home
+bubble only once it plays well. An earlier sleepy-guard attempt (March 2026, an older codebase) made
+watched squares into red walls and was not a game; the lab is how we avoid repeating that.
+
+**Status (2026-11-06):** in the lab now: tiptoe puzzles (sleepy guards, rules in
+`src/core/sneak.ts`, 8 puzzles in `src/content/tiptoe.ts`). Guards watch the squares they attack in
+real chess. Landing on one wakes the guard: he shows what he watches and the friend scurries back.
+Landing ON a guard from a square he does not watch boops him home (a capture), unless another guard
+watches him. Variants to compare: surprise (nothing shown), warn hops (stripes under hops that would
+wake), show all.
+
 **Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked
 checkmates, drag or tap-to-place from a tray, red preview of watched squares, the king shoos an
 unprotected friend, and the friends float back if they are all placed without a checkmate.

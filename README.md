@@ -39,7 +39,7 @@ A friend wakes up once half of the previous friend's puzzles are done (four at m
   first, so an online visit always gets the newest version.
 - **Jump to any screen** with the URL hash: `#/w/rook` (the rook's puzzles), `#/w/rook/3` (rook puzzle 3).
   World ids: `king rook bishop queen knight pawn friends`. Also `#/bed` (bedtime puzzles) and
-  `#/today` (today's puzzle).
+  `#/today` (today's puzzle), and `#/lab` (prototypes of new ideas, not on the home screen).
 
 ## Development
 

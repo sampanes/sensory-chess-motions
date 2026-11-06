@@ -616,3 +616,52 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ==== Lab: tiptoe puzzles ============================================== */
+
+.lab-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  font: 600 13px/1 system-ui, sans-serif;
+  color: #3f6212;
+}
+.lab-strip button {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #3f6212;
+  font: inherit;
+}
+.lab-strip button.on { background: #65a30d; color: #fff; }
+.lab-gap { width: 6px; }
+
+.guard { position: absolute; z-index: 1; pointer-events: none; }
+.guard > svg { transform: scale(1.1); transform-origin: 50% 80%; }
+.guard.awake { animation: guard-hey 0.5s ease-in-out 2; }
+.guard.booped { animation: guard-home 0.6s ease-in forwards; }
+@keyframes guard-hey {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -6% -8%; }
+  75% { translate: 6% -8%; }
+}
+@keyframes guard-home {
+  0% { scale: 1; rotate: 0deg; opacity: 1; }
+  40% { scale: 1.25; rotate: -20deg; opacity: 1; }
+  100% { scale: 0.2; rotate: 200deg; translate: 0 -160%; opacity: 0; }
+}
+
+.watch-zone { position: absolute; z-index: 0; pointer-events: none; }
+.watch-zone.quiet {
+  background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.16) 0 6px, transparent 6px 12px);
+}
+.watch-zone.dot {
+  background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.32) 0 6px, transparent 6px 12px);
+}
+.watch-zone.awake {
+  background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.55) 0 7px, rgba(239, 68, 68, 0.2) 7px 14px);
+  animation: zone-flash 0.5s ease-out;
+}
+@keyframes zone-flash { from { opacity: 0; } to { opacity: 1; } }
