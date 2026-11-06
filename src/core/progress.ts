@@ -66,16 +66,23 @@ export function doneCount(p: Progress, levelIds: readonly string[]): number {
   return levelIds.filter((id) => p.done.includes(id)).length;
 }
 
-/** A world opens once half of the previous world is done. */
+/** Finishing this many levels of a world always opens the next one, however big the world is. */
+export const UNLOCK_AFTER = 4;
+
+/** A world opens once half of the previous world is done (or UNLOCK_AFTER levels, if fewer). */
 export function isWorldOpen(p: Progress, worlds: WorldLevelIds, wi: number): boolean {
   if (wi === 0 || p.unlockAll) return true;
   const prev = worlds[wi - 1];
-  return isWorldOpen(p, worlds, wi - 1) && doneCount(p, prev) >= Math.ceil(prev.length / 2);
+  const needed = Math.min(UNLOCK_AFTER, Math.ceil(prev.length / 2));
+  return isWorldOpen(p, worlds, wi - 1) && doneCount(p, prev) >= needed;
 }
 
-/** Levels inside an open world unlock one after another. */
+/**
+ * Levels inside an open world unlock one after another. A level already
+ * finished stays open even if levels were reordered around it.
+ */
 export function isLevelOpen(p: Progress, worlds: WorldLevelIds, wi: number, li: number): boolean {
   if (!isWorldOpen(p, worlds, wi)) return false;
   if (li === 0 || p.unlockAll) return true;
-  return p.done.includes(worlds[wi][li - 1]);
+  return p.done.includes(worlds[wi][li]) || p.done.includes(worlds[wi][li - 1]);
 }

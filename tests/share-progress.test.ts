@@ -88,3 +88,22 @@ test('worlds open after half of the previous world, levels open in order', () =>
   assert.ok(isWorldOpen(p, ids, 2));
   assert.ok(isLevelOpen({ ...emptyProgress(), unlockAll: true }, ids, 2, 0));
 });
+
+test('a big world opens the next one after four levels, not half', () => {
+  const big = Array.from({ length: 15 }, (_, i) => `a-${i + 1}`);
+  const ids = [big, ['b-1']];
+  let p = emptyProgress();
+  for (const id of big.slice(0, 3)) p = markDone(p, id);
+  assert.ok(!isWorldOpen(p, ids, 1));
+  p = markDone(p, 'a-4');
+  assert.ok(isWorldOpen(p, ids, 1));
+});
+
+test('a finished level stays open after the levels are reordered', () => {
+  // a-3 was finished, then moved after a level that is not done yet.
+  const ids = [['a-1', 'a-9', 'a-3']];
+  const p = markDone(markDone(emptyProgress(), 'a-1'), 'a-3');
+  assert.ok(isLevelOpen(p, ids, 0, 1), 'next after a done level');
+  assert.ok(isLevelOpen(p, ids, 0, 2), 'done itself');
+  assert.ok(!isLevelOpen(markDone(emptyProgress(), 'a-1'), ids, 0, 2));
+});

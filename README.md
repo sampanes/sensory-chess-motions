@@ -25,7 +25,7 @@ like one, so kids learn how every piece moves without ever being told it's chess
 | Little friend | Pawn: steps up, eats diagonally, becomes a Queen at the top | apples |
 | Two friends | Tap to choose who moves; they block each other | cookies |
 
-A friend wakes up once half of the previous friend's puzzles are done. Progress is saved in the browser.
+A friend wakes up once half of the previous friend's puzzles are done (four at most). Progress is saved in the browser.
 
 ## For grown-ups
 
@@ -63,8 +63,16 @@ Puzzles are ASCII grids in `src/content/worlds.ts`:
 
 Boards are 3x3 to 6x6, up to 3 friends and 10 treats. Pawns walk toward the top row.
 `npm test` runs a solver over every level and fails if one can't be finished or needs more
-than 10 moves. `node scripts/solve-all.ts` prints the move count of every level. The puzzle
-maker's "Grid text" box gives you lines ready to paste.
+than 10 moves, and checks that each world gets harder in order, in small steps.
+`node scripts/solve-all.ts` prints every level's difficulty. The puzzle maker's "Grid text" box
+gives you lines ready to paste.
+
+Each level has a permanent id (`lv('rook-9', ...)`), because saved stars are kept by id: never
+rename or reuse one. To add levels:
+
+- `node scripts/generate.ts <world> [how-many] [--seed N] [--write]` makes new levels aimed at the
+  widest gaps in that world's climb, and with `--write` adds them to `worlds.ts`.
+- `node scripts/sort-levels.ts` then puts every world back in order, easiest first.
 
 ### Layout
 

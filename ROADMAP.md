@@ -75,7 +75,7 @@ Still open: the first-run tap/hop/munch tutorial, the world-unlock wake-up momen
 
 ## M3 -- More puzzles, a smoother climb
 
-The game has 45 hand-made puzzles. Aim for about 120, with difficulty that rises steadily.
+The game started with 45 hand-made puzzles. Aim for about 120, with difficulty that rises steadily.
 
 - **Difficulty score from the solver**, based on the fewest moves needed, how many tempting wrong
   hops there are, and how many dead ends a puzzle has. `scripts/solve-all.ts` prints it for
@@ -90,13 +90,22 @@ The game has 45 hand-made puzzles. Aim for about 120, with difficulty that rises
 **Done when:** there are at least 15 puzzles per world. The curve test passes. The daily puzzle
 has been solvable for 365 dates in a row in a test.
 
-**Status (2026-11-02):** the difficulty score is built (`src/core/difficulty.ts`, printed by
-`node scripts/solve-all.ts`): fewest moves, plus "guess bits" (how much luck a random tapper needs
-to stay on a shortest route, so tempting wrong hops and hops into dead ends both raise it), plus
-the share of dead-end positions. Score = moves + guess bits, to be tuned by watching kids. First
-reading: 7 levels score lower than the level before them (king-6, bishop-6, queen-4, knight-6,
-pawn-2, pawn-6, friends-4), and king-5 and queen-3 are spikes. Careful when reordering: a level's
-id is its position (`king-3`), and saved stars are kept by id.
+**Status (2026-11-06):** the climb is built. Every world has 15 levels (105 in all, up from 45):
+- **Difficulty score** (`src/core/difficulty.ts`, printed by `node scripts/solve-all.ts`): fewest
+  moves, plus "guess bits" (how much luck a random tapper needs to stay on a shortest route), plus
+  the share of dead-end positions. Score = moves + guess bits, to be tuned by watching kids.
+- **Permanent level ids.** Saved stars are kept by id, so ids are names now, not positions
+  (`lv('king-9', ...)` in `worlds.ts`). Levels moved freely and every star stayed on its puzzle. A
+  finished level stays open wherever it moves, and a world opens after half of the one before it,
+  or four levels, whichever is fewer (so 15-level worlds open as fast as the old 7-level ones).
+- **Curve test** (`tests/curve.test.ts`): each world is in score order and no step is bigger than
+  4 points. `node scripts/sort-levels.ts` puts the worlds back in order.
+- **Generator** (`src/core/generate.ts`, `node scripts/generate.ts <world>`): seeded random boards
+  aimed at the widest gaps in a world's climb. It keeps a board only if every rock matters, every
+  friend is needed, few positions are dead ends, and it is not a long walk across an empty board
+  (the score rates empty boards as hard, but they are just dull). 60 of the levels came from it.
+
+Still open: kid testing of the new levels, the daily puzzle, and replay variety.
 
 ## M4 -- Chess ideas, secretly
 
@@ -109,7 +118,7 @@ own world, solver support and tests.
 | Friends block each other (already in the game) | Blocking and paths |
 | Shoo the grumpy guard: hop onto a guard to send it home | Captures |
 | Stay safe: a treat sits on a watched square, so eat it with the right friend | Which captures are safe |
-| Tuck the grumpy king into bed: drag friends from a tray and watch the squares they cover turn red until the king has nowhere to step (plan: `docs/CHECKMATE_MODE.md`) | Checkmate patterns |
+| Tuck the grumpy king into bed (the falling-block style checkmate idea, built as "bedtime puzzles"): drag friends from a tray and watch the squares they cover turn red until the king has nowhere to step (plan: `docs/CHECKMATE_MODE.md`) | Checkmate patterns |
 | Walk the pawn home: move a little friend all the way up past guards | Pawn races and promotion |
 | Cross with a team (older kids, about 8): get every friend across a field where each stretch suits a different friend; the queen is earned (plan: `docs/TEAM_CROSSING.md`) | What each piece is good and bad at; the knight lands where rook and bishop can't |
 
@@ -119,6 +128,8 @@ worlds to reach them (John, 2026-11-02).
 **Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked
 checkmates, drag or tap-to-place from a tray, red preview of watched squares, the king shoos an
 unprotected friend, and the friends float back if they are all placed without a checkmate.
+What it is for (John): a wiggly kid who won't settle gets one quick puzzle that feels like
+staying up late, and learns a checkmate while she's at it.
 Still open: kid testing, and the other mechanics in the table.
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
@@ -144,14 +155,14 @@ This is for parents and teachers. All of it lives behind the gear-hold gate and 
 
 - **What they know.** For each piece, show how many puzzles the kid solved without the hint hand.
   Nothing is uploaded.
-- **Bedtime mode.** After a playtime the adult chooses, the friends yawn and fall asleep and the
-  game winds down. There is no hard cutoff.
 - **Maker upgrades.** Add undo, starter templates, a "make it harder" suggestion from the solver,
   and a way to play a short series of shared puzzles from a single link.
 - **Classroom share.** A link opens a set of puzzles a teacher picked, in order.
 
-**Done when:** a parent can answer "does my kid know how the knight moves?" from the panel, and
-can hand the tablet over for a set amount of time without tears when it ends.
+**Done when:** a parent can answer "does my kid know how the knight moves?" from the panel.
+
+Dropped (John, 2026-11-06): a "wind down after a set playtime" timer. It would guess wrong about
+when a kid is done more often than it helped.
 
 ## M7 -- Wider reach (someday)
 
