@@ -121,8 +121,8 @@ has been solvable for 365 dates in a row in a test.
   look (treat, board, music) that is also picked by the date. `tests/daily.test.ts` checks 365
   dates in a row.
 
-Every "done when" box is checked except watching real kids play. Still open: kid testing, and
-whether a friend a kid has not met yet should get its intro before appearing in today's puzzle.
+Every "done when" box is checked except watching real kids play. Today's puzzle may star a friend
+the kid has not met yet, with no intro first; that is fine (John, 2026-11-06).
 
 ## M4 -- Chess ideas, secretly
 
