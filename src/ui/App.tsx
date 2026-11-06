@@ -7,7 +7,7 @@
 //   #/today         today's puzzle (always open, new every day)
 //   #/tiptoe        tiptoe puzzles: sneak past sleepy guards (always open)
 //   #/tiptoe/2      tiptoe puzzle 2
-//   #/lab           the lab: prototypes of new ideas (#/lab/3/dots = puzzle 3, a variant)
+//   #/lab           the lab: prototypes of new ideas, now the pawn walk (#/lab/3/dots = puzzle 3, a variant)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -19,7 +19,7 @@ import { BedtimeScreen } from './BedtimeScreen.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { Home } from './Home.tsx';
-import { LabScreen } from './LabScreen.tsx';
+import { LAB_LEVELS, LabScreen } from './LabScreen.tsx';
 import { TiptoeScreen } from './TiptoeScreen.tsx';
 import { TiptoeWorld } from './TiptoeWorld.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
@@ -50,7 +50,7 @@ function parseHash(hash: string): Route {
   }
   const lab = /^#\/lab(?:\/(\d+))?(?:\/(never|dots|always))?$/.exec(hash);
   if (lab) {
-    const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), TIPTOE_LEVELS.length - 1);
+    const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), LAB_LEVELS.length - 1);
     return { screen: 'lab', li, peek: (lab[2] as Peek | undefined) ?? 'never' };
   }
   const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);

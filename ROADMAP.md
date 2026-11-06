@@ -148,13 +148,20 @@ bubble only once it plays well. An earlier sleepy-guard attempt (March 2026, an 
 watched squares into red walls and was not a game; the lab is how we avoid repeating that.
 
 **Status (2026-11-06):** tiptoe puzzles graduated from the lab to their own always-open home bubble
-(the green one; John: "worked great as is"), with nothing shown before a guard wakes. The lab still
-has them with the variants. Tiptoe puzzles (sleepy guards, rules in
+(the green one; John: "worked great as is"), with nothing shown before a guard wakes. Tiptoe puzzles (sleepy guards, rules in
 `src/core/sneak.ts`, 8 puzzles in `src/content/tiptoe.ts`). Guards watch the squares they attack in
 real chess. Landing on one wakes the guard: he shows what he watches and the friend scurries back.
 Landing ON a guard from a square he does not watch boops him home (a capture), unless another guard
-watches him. Variants to compare: surprise (nothing shown), warn hops (stripes under hops that would
-wake), show all.
+watches him.
+
+**Status (2026-11-06):** walk the pawn home is in the lab (`#/lab`), 8 puzzles in
+`src/content/pawnwalk.ts`, same engine as tiptoe (`src/core/sneak.ts`, goal `home`). The pawn
+friend walks straight up, eats diagonally, and becomes a queen on the gold top row. In race puzzles
+a gray guard pawn is awake and walks one square down after every hop toward its own gray row; if it
+gets there first, everyone starts over (a lost race plays out so the kid sees why). Helpers stop it
+by booping it or by standing in front of it (a blockade: pawns only watch diagonally). Tests prove
+every helper friend is needed. Variants to compare: surprise (nothing shown), warn hops (stripes
+under hops that would wake), show all.
 
 **Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked
 checkmates, drag or tap-to-place from a tray, red preview of watched squares, the king shoos an

@@ -1,12 +1,14 @@
-// Tiptoe puzzles: sneak past sleepy guards to the treats.
-// Rules live in src/core/sneak.ts. Land where a guard is watching and he wakes
-// up, shows what he watches, and your friend scurries back. Boop a guard by
-// landing on him from a square he does not watch.
+// Sneak screens: tiptoe puzzles (sneak past sleepy guards to the treats) and
+// the pawn walk (get the little pawn home to the gold top row, sometimes
+// racing a gray guard pawn to the bottom). Rules live in src/core/sneak.ts.
+// Land where a guard is watching and he wakes up, shows what he watches, and
+// your friend scurries back. Boop a guard by landing on him from a square he
+// does not watch.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
-  mustParseSneak, sneakHop, sneakHops, sneakStart, sneakWon, solveSneak, watchedSquares,
-  type SneakState,
+  isRacer, mustParseSneak, stillRacing, sneakHop, sneakHops, sneakStart, sneakWon, solveSneak, watchedSquares,
+  type SneakRules, type SneakState,
 } from '../core/sneak.ts';
 import { TIPTOE_SKY } from '../content/tiptoe.ts';
 import { AgainIcon, FriendArt, GoIcon, GRUMPY, HomeIcon } from './art.tsx';
@@ -22,9 +24,14 @@ export type Peek = 'never' | 'dots' | 'always';
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const WAKE_MS = 1500;
+/** A racing gray pawn takes its step this long after the friend lands. */
+const STEP_MS = 250;
 
-export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome }: {
+export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, top, onWin, onNext, onHome }: {
   grid: readonly string[];
+  /** Default: tiptoe (eat every treat, guards stay put). */
+  rules?: Partial<SneakRules>;
+  sky?: string;
   peek: Peek;
   eagerHint?: boolean;
   /** Middle of the top bar (the lab puts its controls here). */
@@ -34,7 +41,9 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
   onHome: () => void;
 }) {
   const later = useTimers();
-  const puzzle = useMemo(() => mustParseSneak(grid), [grid]);
+  const goal = rules?.goal;
+  const race = rules?.race;
+  const puzzle = useMemo(() => mustParseSneak(grid, { goal, race }), [grid, goal, race]);
   const [game, setGame] = useState<SneakState>(() => sneakStart(puzzle));
   /** What the board draws: the real game, or the friend caught on a watched square. */
   const [shown, setShown] = useState<SneakState | null>(null);
@@ -47,6 +56,8 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
   const [round, setRound] = useState(0);
   const [gulp, setGulp] = useState<{ index: number; delay: number } | null>(null);
   const [awake, setAwake] = useState<{ guards: number[]; squares: number[] } | null>(null);
+  /** Racing guard pawns that just got home first. */
+  const [cheer, setCheer] = useState<number[]>([]);
   const [booped, setBooped] = useState<number | null>(null);
   const [hint, setHint] = useState<number | null>(null);
   const [idleKey, setIdleKey] = useState(0);
@@ -63,7 +74,7 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
     [peek, hops, puzzle, game, selected],
   );
   const guardRings = useMemo(
-    () => puzzle.guards.flatMap((g, gi) => ((game.guards >> gi) & 1 ? [g.at] : [])),
+    () => puzzle.guards.flatMap((_, gi) => ((game.guards >> gi) & 1 ? [game.gpos[gi]] : [])),
     [puzzle, game],
   );
 
@@ -93,29 +104,43 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
     setPokeKey(0);
     sfx.hop(from.kind);
 
+    if (res.kind === 'beaten') {
+      // Hop there, the gray pawn takes its last step home and cheers, and everyone starts over.
+      setShown(res.hopped);
+      later(() => { setShown(res.shown); sfx.hop('pawn'); }, arrive + STEP_MS);
+      later(() => { setCheer(res.by); setMood('confused'); sfx.uhoh(); }, arrive + 2 * STEP_MS);
+      later(() => rewind(), arrive + 2 * STEP_MS + 1300);
+      return;
+    }
+
     if (res.kind === 'wake') {
-      // Hop there (nothing gets eaten), the guard wakes and shows his lines, the friend scurries home.
-      setShown({ ...game, friends: game.friends.map((f, i) => (i === fi ? { ...f, at: to } : f)) });
+      // Hop there (nothing gets eaten), maybe a gray pawn steps, the guard wakes and shows his
+      // lines, and the friend scurries home.
+      const step = res.walked.length > 0 ? STEP_MS : 0;
+      setShown(step ? { ...res.shown, gpos: game.gpos } : res.shown);
+      if (step) later(() => { setShown(res.shown); sfx.hop('pawn'); }, arrive + step);
       later(() => {
         setAwake({ guards: res.by, squares: res.watched });
         setMood('confused');
         sfx.shoo();
-      }, arrive);
+      }, arrive + step);
       later(() => {
         setShown(null);
         setMood('idle');
         sfx.hop(from.kind);
-      }, arrive + 700);
+      }, arrive + step + 700);
       later(() => {
         setAwake(null);
         sfx.snore();
         setBusy(false);
         setIdleKey((n) => n + 1);
-      }, arrive + WAKE_MS);
+      }, arrive + step + WAKE_MS);
       return;
     }
 
-    setGame(res.state);
+    const step = res.walked.length > 0 ? STEP_MS : 0;
+    setGame(step ? res.hopped : res.state);
+    if (step) later(() => { setGame(res.state); sfx.hop('pawn'); }, arrive + step);
     if (res.ate >= 0) {
       setGulp({ index: res.ate, delay: arrive });
       later(() => sfx.munch(puzzle.treats.length - popCount(res.state.left) - 1), arrive);
@@ -126,7 +151,7 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
     if (res.promoted) later(() => sfx.promote(), travel);
     later(() => {
       setBooped(null);
-      if (sneakWon(res.state)) {
+      if (sneakWon(puzzle, res.state)) {
         setWon(true);
         setMood('dance');
         sfx.win();
@@ -134,14 +159,14 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
         later(() => setShowGo(true), 1100);
         return;
       }
-      if (solveSneak(puzzle, res.state).status === 'stuck') {
+      if (solveSneak(puzzle, res.state).status === 'stuck' && !stillRacing(puzzle, res.state)) {
         setMood('confused');
         sfx.uhoh();
         later(() => rewind(), 1000);
         return;
       }
       setBusy(false);
-    }, travel + 450);
+    }, travel + 450 + step);
   };
 
   const rewind = () => {
@@ -150,6 +175,7 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
     setGame(sneakStart(puzzle));
     setShown(null);
     setAwake(null);
+    setCheer([]);
     setSelected(0);
     setGulp(null);
     setHint(null);
@@ -210,18 +236,27 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
   });
 
   const quiet = peek === 'always' && !busy && !won ? [...watchedSquares(puzzle, game)] : [];
+  const board = shown ?? game;
+  const band = (row: number): CSSProperties => ({
+    left: 0, width: '100%', top: `${(row * 100) / puzzle.rows}%`, height: `${100 / puzzle.rows}%`,
+  });
   const extra = (
     <>
+      {puzzle.goal === 'home' && <div className="home-row" style={band(0)} />}
+      {puzzle.race && <div className="home-row rival" style={band(puzzle.rows - 1)} />}
       {quiet.map((sq) => <div key={`q${sq}`} className="watch-zone quiet" style={cell(sq)} />)}
       {awake?.squares.map((sq) => <div key={`w${sq}`} className="watch-zone awake" style={cell(sq)} />)}
       {[...wakers].map((sq) => <div key={`z${sq}`} className="watch-zone dot" style={cell(sq)} />)}
       {puzzle.guards.map((g, gi) => {
-        const here = ((game.guards >> gi) & 1) === 1;
+        const here = ((board.guards >> gi) & 1) === 1;
         if (!here && booped !== gi) return null;
         const isAwake = awake?.guards.includes(gi) ?? false;
+        const cheering = cheer.includes(gi);
+        const cls = `guard ${isRacer(puzzle, gi) ? 'racer' : ''} ${isAwake ? 'awake' : ''} ${cheering ? 'cheer' : ''} ${booped === gi ? 'booped' : ''}`;
+        const face = isAwake ? 'grumpy' : cheering ? 'wow' : isRacer(puzzle, gi) ? 'happy' : 'sleepy';
         return (
-          <div key={`g${round}-${gi}`} className={`guard ${isAwake ? 'awake' : ''} ${booped === gi ? 'booped' : ''}`} style={cell(g.at)}>
-            <FriendArt kind={g.kind} colors={GRUMPY} mood={isAwake ? 'grumpy' : 'sleepy'} className="fill" />
+          <div key={`g${gi}`} className={cls} style={cell(board.gpos[gi])}>
+            <FriendArt kind={g.kind} colors={GRUMPY} mood={face} className="fill" />
           </div>
         );
       })}
@@ -229,7 +264,7 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
   );
 
   return (
-    <div className="screen play" style={{ background: TIPTOE_SKY }}>
+    <div className="screen play" style={{ background: sky }}>
       <div className="topbar">
         <button className="round-btn" onClick={() => { sfx.tap(); onHome(); }} aria-label="Home">
           <HomeIcon className="icon" />
