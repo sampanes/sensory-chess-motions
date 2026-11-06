@@ -147,7 +147,9 @@ navigate), with a thin grown-up strip to switch puzzles and compare variants. It
 bubble only once it plays well. An earlier sleepy-guard attempt (March 2026, an older codebase) made
 watched squares into red walls and was not a game; the lab is how we avoid repeating that.
 
-**Status (2026-11-06):** in the lab now: tiptoe puzzles (sleepy guards, rules in
+**Status (2026-11-06):** tiptoe puzzles graduated from the lab to their own always-open home bubble
+(the green one; John: "worked great as is"), with nothing shown before a guard wakes. The lab still
+has them with the variants. Tiptoe puzzles (sleepy guards, rules in
 `src/core/sneak.ts`, 8 puzzles in `src/content/tiptoe.ts`). Guards watch the squares they attack in
 real chess. Landing on one wakes the guard: he shows what he watches and the friend scurries back.
 Landing ON a guard from a square he does not watch boops him home (a capture), unless another guard

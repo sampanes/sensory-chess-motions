@@ -5,6 +5,8 @@
 //   #/bed           bedtime puzzles (always open)
 //   #/bed/2         bedtime puzzle 2
 //   #/today         today's puzzle (always open, new every day)
+//   #/tiptoe        tiptoe puzzles: sneak past sleepy guards (always open)
+//   #/tiptoe/2      tiptoe puzzle 2
 //   #/lab           the lab: prototypes of new ideas (#/lab/3/dots = puzzle 3, a variant)
 
 import { useEffect, useMemo, useState } from 'react';
@@ -18,6 +20,8 @@ import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { Home } from './Home.tsx';
 import { LabScreen } from './LabScreen.tsx';
+import { TiptoeScreen } from './TiptoeScreen.tsx';
+import { TiptoeWorld } from './TiptoeWorld.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
 import { PlayScreen } from './PlayScreen.tsx';
 import { today, TODAY_SKY } from './today.ts';
@@ -33,10 +37,17 @@ type Route =
   | { screen: 'bedtime' }
   | { screen: 'bed'; li: number }
   | { screen: 'today' }
+  | { screen: 'tiptoe' }
+  | { screen: 'tip'; li: number }
   | { screen: 'lab'; li: number; peek: Peek };
 
 function parseHash(hash: string): Route {
   if (hash === '#/today') return { screen: 'today' };
+  const tip = /^#\/tiptoe(?:\/(\d+))?$/.exec(hash);
+  if (tip) {
+    const li = tip[1] ? Number(tip[1]) - 1 : -1;
+    return li >= 0 && li < TIPTOE_LEVELS.length ? { screen: 'tip', li } : { screen: 'tiptoe' };
+  }
   const lab = /^#\/lab(?:\/(\d+))?(?:\/(never|dots|always))?$/.exec(hash);
   if (lab) {
     const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), TIPTOE_LEVELS.length - 1);
@@ -101,6 +112,30 @@ export function App() {
     return <LabScreen li={route.li} peek={route.peek} go={(li, peek) => go(`#/lab/${li + 1}/${peek}`, true)} />;
   }
 
+  if (route.screen === 'tiptoe') {
+    return <TiptoeWorld progress={progress} onPlay={(li) => go(`#/tiptoe/${li + 1}`)} onHome={() => go('#/')} />;
+  }
+
+  if (route.screen === 'tip') {
+    const li = route.li;
+    const level = TIPTOE_LEVELS[li];
+    const last = li === TIPTOE_LEVELS.length - 1;
+    return (
+      <TiptoeScreen
+        key={level.id}
+        grid={level.grid}
+        peek="never"
+        eagerHint={li === 0}
+        top={TIPTOE_LEVELS.map((l, i) => (
+          <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
+        ))}
+        onWin={() => update((p) => markDone(p, level.id))}
+        onNext={() => go(last ? '#/tiptoe' : `#/tiptoe/${li + 2}`, true)}
+        onHome={() => go('#/tiptoe')}
+      />
+    );
+  }
+
   if (route.screen === 'today') {
     return <TodayLevel progress={progress.done} onDone={(id) => update((p) => markDone(p, id))} />;
   }
@@ -143,6 +178,7 @@ export function App() {
         onOpenWorld={(id) => go(`#/w/${id}`)}
         onBedtime={() => go('#/bed')}
         onToday={() => go('#/today')}
+        onTiptoe={() => go('#/tiptoe')}
         onGrownUps={() => setGrownUps(true)}
       />
       {grownUps && <GrownUps progress={progress} update={update} onClose={() => setGrownUps(false)} />}

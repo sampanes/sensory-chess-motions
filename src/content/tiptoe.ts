@@ -1,8 +1,12 @@
-// Tiptoe puzzles (lab prototype): sneak past sleepy guards to the treats.
+// Tiptoe puzzles: sneak past sleepy guards to the treats. Always open from
+// the home screen (the green bubble); the lab (#/lab) keeps the variants.
 // Rules and grid legend are in src/core/sneak.ts (lowercase letters are
 // guards). tests/sneak.test.ts proves every one can be finished without
 // waking anyone.
 
+export const TIPTOE_SKY = '#ecfccb';
+
+/** Ids are permanent names: saved stars are stored by id. */
 export interface TiptoeLevel {
   id: string;
   grid: readonly string[];

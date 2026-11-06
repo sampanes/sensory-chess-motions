@@ -1,4 +1,4 @@
-// Tiptoe puzzles (lab prototype): sneak past sleepy guards to the treats.
+// Tiptoe puzzles: sneak past sleepy guards to the treats.
 // Rules live in src/core/sneak.ts. Land where a guard is watching and he wakes
 // up, shows what he watches, and your friend scurries back. Boop a guard by
 // landing on him from a square he does not watch.
@@ -8,6 +8,7 @@ import {
   mustParseSneak, sneakHop, sneakHops, sneakStart, sneakWon, solveSneak, watchedSquares,
   type SneakState,
 } from '../core/sneak.ts';
+import { TIPTOE_SKY } from '../content/tiptoe.ts';
 import { AgainIcon, FriendArt, GoIcon, GRUMPY, HomeIcon } from './art.tsx';
 import { Board, type FriendMood } from './Board.tsx';
 import { Confetti } from './Confetti.tsx';
@@ -18,7 +19,6 @@ import { useTimers } from './timers.ts';
 /** How much of what the guards watch is shown before anything wakes up. */
 export type Peek = 'never' | 'dots' | 'always';
 
-const SKY = '#ecfccb';
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const WAKE_MS = 1500;
@@ -229,7 +229,7 @@ export function TiptoeScreen({ grid, peek, eagerHint, top, onWin, onNext, onHome
   );
 
   return (
-    <div className="screen play" style={{ background: SKY }}>
+    <div className="screen play" style={{ background: TIPTOE_SKY }}>
       <div className="topbar">
         <button className="round-btn" onClick={() => { sfx.tap(); onHome(); }} aria-label="Home">
           <HomeIcon className="icon" />

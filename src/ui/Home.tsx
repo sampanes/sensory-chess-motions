@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
+import { TIPTOE_LEVELS, TIPTOE_SKY } from '../content/tiptoe.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
 import { doneCount, isWorldOpen, needsFriendIntro, type Progress } from '../core/progress.ts';
 import { FriendArt, GearIcon, GRUMPY, StarIcon, SunIcon } from './art.tsx';
@@ -7,11 +8,12 @@ import { sfx, wakeAudio } from './sound.ts';
 import { today, type Today } from './today.ts';
 import { WORLD_LEVEL_IDS } from './useProgress.ts';
 
-export function Home({ progress, onOpenWorld, onBedtime, onToday, onGrownUps }: {
+export function Home({ progress, onOpenWorld, onBedtime, onToday, onTiptoe, onGrownUps }: {
   progress: Progress;
   onOpenWorld: (worldId: string) => void;
   onBedtime: () => void;
   onToday: () => void;
+  onTiptoe: () => void;
   onGrownUps: () => void;
 }) {
   const open = WORLDS.map((_, wi) => isWorldOpen(progress, WORLD_LEVEL_IDS, wi));
@@ -34,6 +36,7 @@ export function Home({ progress, onOpenWorld, onBedtime, onToday, onGrownUps }: 
           />
         ))}
         <BedtimeBubble done={BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onBedtime} />
+        <TiptoeBubble done={TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onTiptoe} />
         <TodayBubble progress={progress} onOpen={onToday} />
       </div>
       <HoldButton onHeld={onGrownUps} />
@@ -87,6 +90,25 @@ function WorldBubble({ world, open, bounce, waking, done, onOpen }: {
       </div>
       <div className="bubble-stars">
         {world.levels.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
+      </div>
+    </button>
+  );
+}
+
+/** Tiptoe puzzles: a happy friend sneaking past a sleepy gray guard. Always open. */
+function TiptoeBubble({ done, onOpen }: { done: number; onOpen: () => void }) {
+  return (
+    <button
+      className="world-bubble"
+      onClick={() => { wakeAudio(); sfx.select('king'); onOpen(); }}
+      aria-label="Tiptoe puzzles"
+    >
+      <div className="bubble" style={{ background: TIPTOE_SKY }}>
+        <FriendArt kind="rook" colors={GRUMPY} mood="sleepy" className="bubble-friend pair-0" />
+        <FriendArt kind="king" className="bubble-friend pair-1 tiptoe" />
+      </div>
+      <div className="bubble-stars">
+        {TIPTOE_LEVELS.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
       </div>
     </button>
   );

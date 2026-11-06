@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { WORLDS } from '../content/worlds.ts';
 import { emptyProgress, type Progress } from '../core/progress.ts';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
+import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
 
 export function GrownUps({ progress, update, onClose }: {
@@ -64,6 +65,18 @@ export function GrownUps({ progress, update, onClose }: {
               in check and every square he could step to is watched. That is checkmate. Red squares show what a
               friend would watch before you let go. Finished {BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length}{' '}
               of {BEDTIME_LEVELS.length}.
+            </span>
+          </li>
+          <li>
+            <div className="lesson-faces">
+              <FriendArt kind="rook" colors={GRUMPY} mood="sleepy" className="lesson-friend" />
+            </div>
+            <span>
+              Tiptoe puzzles (the green bubble, always open): sneak past sleepy gray guards to the treats. A guard
+              watches the squares it attacks in real chess. Stop on one and it wakes up, shows what it watches, and
+              your friend scurries back. Land right on a guard from a square it does not watch to send it home (a
+              capture). Finished {TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} of{' '}
+              {TIPTOE_LEVELS.length}.
             </span>
           </li>
           <li>
