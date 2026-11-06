@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { PAWN_LEVELS, PAWN_RULES } from '../src/content/pawnwalk.ts';
 import {
-  mustParseSneak, parseSneak, sneakHop, sneakStart, sneakWon, solveSneak, type SneakPuzzle,
+  mustParseSneak, parseSneak, sneakHop, sneakStart, sneakWon, solveSneak, watchers, type SneakPuzzle,
 } from '../src/core/sneak.ts';
 
 const HOME = { goal: 'home', race: false } as const;
@@ -58,15 +58,31 @@ test('a friend standing in front of a racing pawn stops it (a blockade)', () => 
   assert.equal(again.state.gpos[0], sq(5, 1, 1));
 });
 
-test('a racing pawn that steps next to a friend wakes instead, and the hop is undone', () => {
-  // After the hop the gray pawn would step to (2,1) and watch (3,0) and (3,2): where the rook just went.
+test('a racing pawn may step next to a friend: then it is your move, and you must answer', () => {
+  // After the hop the gray pawn steps to (2,1) and watches (3,0) and (3,2): where the rook just went.
   const p = mustParseSneak(['.....', '.p...', '.....', 'R....', '....P'], RACE);
   const res = sneakHop(p, sneakStart(p), { friend: 0, to: sq(5, 3, 2) });
-  assert.equal(res.kind, 'wake');
-  if (res.kind === 'wake') {
-    assert.deepEqual(res.walked, [0]);
-    assert.equal(res.shown.gpos[0], sq(5, 2, 1));
-  }
+  assert.equal(res.kind, 'ok', 'no waking on their step: it is your move now');
+  if (res.kind !== 'ok') return;
+  assert.equal(res.state.gpos[0], sq(5, 2, 1));
+  assert.deepEqual(watchers(p, res.state), [0]);
+  assert.equal(sneakHop(p, res.state, { friend: 1, to: sq(5, 3, 4) }).kind, 'wake', 'leaving the rook watched wakes him');
+  assert.equal(sneakHop(p, res.state, { friend: 0, to: sq(5, 3, 3) }).kind, 'ok', 'moving the rook away is fine');
+});
+
+test('a gray pawn that steps next to your pawn can be eaten, like in chess', () => {
+  const p = mustParseSneak(['.....', '..p..', '.....', '.....', '...P.'], RACE);
+  const res = sneakHop(p, sneakStart(p), { friend: 0, to: sq(5, 3, 3) });
+  assert.equal(res.kind, 'ok');
+  if (res.kind !== 'ok') return;
+  assert.equal(res.state.gpos[0], sq(5, 2, 2), 'it stepped next to the pawn');
+  const eat = sneakHop(p, res.state, { friend: 0, to: sq(5, 2, 2) });
+  assert.equal(eat.kind, 'ok');
+  if (eat.kind === 'ok') assert.equal(eat.booped, 0);
+  // Walking past it instead loses the race.
+  const past = sneakHop(p, res.state, { friend: 0, to: sq(5, 2, 3) });
+  assert.equal(past.kind, 'ok');
+  if (past.kind === 'ok') assert.equal(solveSneak(p, past.state).status, 'stuck');
 });
 
 test('pawn walk grids are checked', () => {

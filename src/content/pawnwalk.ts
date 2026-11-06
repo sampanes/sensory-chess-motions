@@ -27,8 +27,8 @@ export const PAWN_LEVELS: readonly PawnLevel[] = [
   { id: 'pawn-walk-4', race: true, grid: ['.p...', '.....', '.....', '.....', '...P.'] },
   // The gray pawn is closer to home. The rook stands in its way (a blockade).
   { id: 'pawn-walk-5', race: true, grid: ['.....', '.p...', '.....', '.....', 'R..P.'] },
-  // The bishop boops the gray pawn on its way down.
-  { id: 'pawn-walk-6', race: true, grid: ['.....', '..p..', '.....', '.....', 'B..P.'] },
+  // The gray pawn walks up next to you. Your move: eat it, like in chess.
+  { id: 'pawn-walk-6', race: true, grid: ['.....', '..p..', '.....', '.....', '...P.'] },
   // The knight boops the racer; the pawn boops the rook guard diagonally.
   { id: 'pawn-walk-7', race: true, grid: ['.....', '.rp..', '.....', '.....', 'P..N.'] },
   // The queen catches the racer right away; the pawn boops the rook guard on its way home.

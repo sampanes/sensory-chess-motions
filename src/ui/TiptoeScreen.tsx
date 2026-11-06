@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
-  isRacer, mustParseSneak, stillRacing, sneakHop, sneakHops, sneakStart, sneakWon, solveSneak, watchedSquares,
+  isRacer, mustParseSneak, stillRacing, watchedBy, watchers, sneakHop, sneakHops, sneakStart, sneakWon, solveSneak, watchedSquares,
   type SneakRules, type SneakState,
 } from '../core/sneak.ts';
 import { TIPTOE_SKY } from '../content/tiptoe.ts';
@@ -73,6 +73,15 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
     () => new Set(peek === 'dots' ? hops.filter((to) => sneakHop(puzzle, game, { friend: selected, to }).kind === 'wake') : []),
     [peek, hops, puzzle, game, selected],
   );
+  // A gray pawn stepped next to a friend: it is the kid's move, so show the threat until it is answered.
+  const threat = useMemo(() => {
+    if (busy || won) return null;
+    const by = watchers(puzzle, game);
+    if (by.length === 0) return null;
+    const lines = watchedBy(puzzle, game);
+    const squares = game.friends.map((f) => f.at).filter((at) => by.some((gi) => lines.get(gi)?.includes(at)));
+    return { by, squares };
+  }, [busy, won, puzzle, game]);
   const guardRings = useMemo(
     () => puzzle.guards.flatMap((_, gi) => ((game.guards >> gi) & 1 ? [game.gpos[gi]] : [])),
     [puzzle, game],
@@ -114,27 +123,24 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
     }
 
     if (res.kind === 'wake') {
-      // Hop there (nothing gets eaten), maybe a gray pawn steps, the guard wakes and shows his
-      // lines, and the friend scurries home.
-      const step = res.walked.length > 0 ? STEP_MS : 0;
-      setShown(step ? { ...res.shown, gpos: game.gpos } : res.shown);
-      if (step) later(() => { setShown(res.shown); sfx.hop('pawn'); }, arrive + step);
+      // Hop there (nothing gets eaten), the guard wakes and shows his lines, the friend scurries home.
+      setShown(res.shown);
       later(() => {
         setAwake({ guards: res.by, squares: res.watched });
         setMood('confused');
         sfx.shoo();
-      }, arrive + step);
+      }, arrive);
       later(() => {
         setShown(null);
         setMood('idle');
         sfx.hop(from.kind);
-      }, arrive + step + 700);
+      }, arrive + 700);
       later(() => {
         setAwake(null);
         sfx.snore();
         setBusy(false);
         setIdleKey((n) => n + 1);
-      }, arrive + step + WAKE_MS);
+      }, arrive + WAKE_MS);
       return;
     }
 
@@ -246,6 +252,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
       {puzzle.race && <div className="home-row rival" style={band(puzzle.rows - 1)} />}
       {quiet.map((sq) => <div key={`q${sq}`} className="watch-zone quiet" style={cell(sq)} />)}
       {awake?.squares.map((sq) => <div key={`w${sq}`} className="watch-zone awake" style={cell(sq)} />)}
+      {threat?.squares.map((sq) => <div key={`x${sq}`} className="watch-zone threat" style={cell(sq)} />)}
       {[...wakers].map((sq) => <div key={`z${sq}`} className="watch-zone dot" style={cell(sq)} />)}
       {puzzle.guards.map((g, gi) => {
         const here = ((board.guards >> gi) & 1) === 1;
@@ -253,7 +260,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
         const isAwake = awake?.guards.includes(gi) ?? false;
         const cheering = cheer.includes(gi);
         const cls = `guard ${isRacer(puzzle, gi) ? 'racer' : ''} ${isAwake ? 'awake' : ''} ${cheering ? 'cheer' : ''} ${booped === gi ? 'booped' : ''}`;
-        const face = isAwake ? 'grumpy' : cheering ? 'wow' : isRacer(puzzle, gi) ? 'happy' : 'sleepy';
+        const face = isAwake || threat?.by.includes(gi) ? 'grumpy' : cheering ? 'wow' : isRacer(puzzle, gi) ? 'happy' : 'sleepy';
         return (
           <div key={`g${gi}`} className={cls} style={cell(board.gpos[gi])}>
             <FriendArt kind={g.kind} colors={GRUMPY} mood={face} className="fill" />

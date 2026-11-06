@@ -24,8 +24,9 @@
 // in front of them (a friend in front is safe: pawns only watch diagonally,
 // so this is a blockade). A guard pawn that reaches the bottom row got home
 // first and you start over. Getting your own pawn home first wins on the
-// spot, before the guard pawn takes its step. If a guard pawn's step would
-// put a friend on a watched square, it wakes instead and the hop is undone.
+// spot, before the guard pawn takes its step. A guard pawn may step next to
+// a friend and watch it: then it is your move, like in chess, and your next
+// hop must leave nobody watched (eat the guard pawn, or move away).
 //
 // Grid text: the usual '.', '#', '*' and capital friends, plus lowercase
 // letters for guards (k q r b n p).
@@ -76,7 +77,7 @@ export type HopResult =
       walked: number[];
     }
   /** A friend ends up on a watched square: these guards wake up, and the hop is undone. */
-  | { kind: 'wake'; by: number[]; watched: number[]; shown: SneakState; walked: number[] }
+  | { kind: 'wake'; by: number[]; watched: number[]; shown: SneakState }
   /** A racing guard pawn reached the bottom row first. */
   | { kind: 'beaten'; by: number[]; shown: SneakState; hopped: SneakState };
 
@@ -211,8 +212,8 @@ function watchedFriends(p: SneakPuzzle, s: SneakState): number[] {
   return s.friends.flatMap((f, i) => (w.has(f.at) ? [i] : []));
 }
 
-/** Guards watching at least one friend. */
-function watchers(p: SneakPuzzle, s: SneakState): number[] {
+/** Guards watching at least one friend (after a gray pawn's step: a threat to answer). */
+export function watchers(p: SneakPuzzle, s: SneakState): number[] {
   const spots = new Set(s.friends.map((f) => f.at));
   const by: number[] = [];
   for (const [gi, squares] of watchedBy(p, s)) if (squares.some((q) => spots.has(q))) by.push(gi);
@@ -275,21 +276,19 @@ export function sneakHop(p: SneakPuzzle, s: SneakState, m: SneakMove): HopResult
     guards: booped >= 0 ? s.guards & ~(1 << booped) : s.guards,
     gpos: s.gpos,
   };
-  const wake = (shown: SneakState, by: number[], walked: number[]): HopResult => {
+  const wake = (shown: SneakState, by: number[]): HopResult => {
     // Show the lines of the guards that woke, as they stand once the friend arrived.
     const lines = watchedBy(p, shown);
-    return { kind: 'wake', by, watched: [...new Set(by.flatMap((gi) => lines.get(gi) ?? []))], shown, walked };
+    return { kind: 'wake', by, watched: [...new Set(by.flatMap((gi) => lines.get(gi) ?? []))], shown };
   };
   const by = watchers(p, hopped);
-  if (by.length > 0) return wake(hopped, by, []);
+  if (by.length > 0) return wake(hopped, by);
   const ok = (state: SneakState, walked: number[]): HopResult =>
     ({ kind: 'ok', state, hopped, ate, booped, promoted, walked });
   if (sneakWon(p, hopped)) return ok(hopped, []);
   const { state, walked } = walk(p, hopped);
   const home = walked.filter((gi) => Math.floor(state.gpos[gi] / p.cols) === p.rows - 1);
   if (home.length > 0) return { kind: 'beaten', by: home, shown: state, hopped };
-  const caught = watchers(p, state);
-  if (caught.length > 0) return wake(state, caught, walked);
   return ok(state, walked);
 }
 

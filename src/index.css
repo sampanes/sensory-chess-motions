@@ -696,6 +696,14 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .watch-zone.dot {
   background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.32) 0 6px, transparent 6px 12px);
 }
+.watch-zone.threat {
+  background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.5) 0 7px, rgba(239, 68, 68, 0.15) 7px 14px);
+  animation: zone-pulse 1s ease-in-out infinite;
+}
+@keyframes zone-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
 .watch-zone.awake {
   background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.55) 0 7px, rgba(239, 68, 68, 0.2) 7px 14px);
   animation: zone-flash 0.5s ease-out;

@@ -159,8 +159,11 @@ watches him.
 friend walks straight up, eats diagonally, and becomes a queen on the gold top row. In race puzzles
 a gray guard pawn is awake and walks one square down after every hop toward its own gray row; if it
 gets there first, everyone starts over (a lost race plays out so the kid sees why). Helpers stop it
-by booping it or by standing in front of it (a blockade: pawns only watch diagonally). Tests prove
-every helper friend is needed. Variants to compare: surprise (nothing shown), warn hops (stripes
+by booping it or by standing in front of it (a blockade: pawns only watch diagonally). When the gray
+pawn steps next to a friend it does not wake anyone: like in chess it is the kid's move, the threat
+shows as pulsing red stripes, and the next hop must answer it (eat the gray pawn or move away). John
+(2026-11-06) caught the first version waking on the gray pawn's step, which made no chess sense.
+Tests prove every helper friend is needed. Variants to compare: surprise (nothing shown), warn hops (stripes
 under hops that would wake), show all.
 
 **Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked
