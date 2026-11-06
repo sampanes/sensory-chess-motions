@@ -148,6 +148,12 @@ export const sfx = {
     note(200, 0, 0.16, { type: 'triangle', vol: 0.16, glideTo: 150 });
     note(170, 0.14, 0.2, { type: 'triangle', vol: 0.14, glideTo: 120 });
   },
+  /** A friend wakes up: a yawn down, then a happy hello up. */
+  wake() {
+    note(520, 0, 0.45, { type: 'sine', vol: 0.12, glideTo: 330 });
+    note(523.25, 0.55, 0.14, { type: 'triangle', vol: 0.15 });
+    note(783.99, 0.68, 0.22, { type: 'triangle', vol: 0.15 });
+  },
   snore() {
     note(150, 0, 0.5, { type: 'triangle', vol: 0.12, glideTo: 110 });
   },

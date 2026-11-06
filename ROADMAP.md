@@ -71,7 +71,13 @@ without an adult showing them how.
 a world opens, every friend in it demonstrates legal moves on an empty board and waits for a tap.
 The introduction is remembered on the device; existing completed worlds do not replay it.
 
-Still open: the first-run tap/hop/munch tutorial, the world-unlock wake-up moment, and kid testing.
+**Status (2026-11-06):** the world-unlock wake-up moment is built. On the home screen, a friend
+whose world just opened (and has not been visited yet) is still asleep for a moment, then stretches
+tall, waves side to side with a yawn-and-hello sound, and wakes up in color. It replays on each visit
+to the home screen until the kid opens that world.
+
+Still open: the first-run tap/hop/munch tutorial (the hint hand already shows after 2.5 seconds on
+the first puzzle of every world), and kid testing.
 
 ## M3 -- More puzzles, a smoother climb
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
-import { doneCount, isWorldOpen, type Progress } from '../core/progress.ts';
+import { doneCount, isWorldOpen, needsFriendIntro, type Progress } from '../core/progress.ts';
 import { FriendArt, GearIcon, GRUMPY, StarIcon, SunIcon } from './art.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 import { today, type Today } from './today.ts';
@@ -28,6 +28,7 @@ export function Home({ progress, onOpenWorld, onBedtime, onToday, onGrownUps }: 
             world={w}
             open={open[wi]}
             bounce={wi === suggested}
+            waking={wi > 0 && open[wi] && !progress.unlockAll && needsFriendIntro(progress, w.id, WORLD_LEVEL_IDS[wi])}
             done={doneCount(progress, WORLD_LEVEL_IDS[wi])}
             onOpen={() => onOpenWorld(w.id)}
           />
@@ -40,14 +41,24 @@ export function Home({ progress, onOpenWorld, onBedtime, onToday, onGrownUps }: 
   );
 }
 
-function WorldBubble({ world, open, bounce, done, onOpen }: {
+function WorldBubble({ world, open, bounce, waking, done, onOpen }: {
   world: World;
   open: boolean;
   bounce: boolean;
+  /** Just woke up and not visited yet: shows the sleeping friend wake up, yawn and wave. */
+  waking: boolean;
   done: number;
   onOpen: () => void;
 }) {
   const [wobble, setWobble] = useState(0);
+  // A newly opened friend is still asleep for a moment, then wakes up.
+  const [dozing, setDozing] = useState(waking);
+  useEffect(() => {
+    if (!waking) return;
+    const id = setTimeout(() => { setDozing(false); sfx.wake(); }, 900);
+    return () => clearTimeout(id);
+  }, [waking]);
+  const looksOpen = open && !dozing;
   const tap = () => {
     wakeAudio();
     if (!open) {
@@ -60,7 +71,7 @@ function WorldBubble({ world, open, bounce, done, onOpen }: {
   };
   return (
     <button
-      className={`world-bubble ${open ? '' : 'asleep'} ${bounce ? 'suggest' : ''}`}
+      className={`world-bubble ${looksOpen ? '' : 'asleep'} ${bounce && looksOpen ? 'suggest' : ''}`}
       onClick={tap}
       aria-label={open ? `Play with ${world.id}` : `${world.id} is sleeping`}
     >
@@ -69,8 +80,8 @@ function WorldBubble({ world, open, bounce, done, onOpen }: {
           <FriendArt
             key={k}
             kind={k}
-            mood={open ? 'happy' : 'sleepy'}
-            className={world.faces.length > 1 ? `bubble-friend pair-${i}` : 'bubble-friend'}
+            mood={looksOpen ? 'happy' : 'sleepy'}
+            className={`${world.faces.length > 1 ? `bubble-friend pair-${i}` : 'bubble-friend'} ${waking && !dozing ? 'waking' : ''}`}
           />
         ))}
       </div>
