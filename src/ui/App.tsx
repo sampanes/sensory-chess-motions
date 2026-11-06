@@ -4,19 +4,21 @@
 //   #/w/rook/3      puzzle 3 of that friend
 //   #/bed           bedtime puzzles (always open)
 //   #/bed/2         bedtime puzzle 2
+//   #/today         today's puzzle (always open, new every day)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { WORLDS } from '../content/worlds.ts';
 import { markDone, markWorldMet, needsFriendIntro } from '../core/progress.ts';
 import { mustParse } from '../core/puzzle.ts';
-import { StarIcon } from './art.tsx';
+import { StarIcon, SunIcon } from './art.tsx';
 import { BedtimeScreen } from './BedtimeScreen.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { Home } from './Home.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
 import { PlayScreen } from './PlayScreen.tsx';
+import { today, TODAY_SKY } from './today.ts';
 import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
 
@@ -25,9 +27,11 @@ type Route =
   | { screen: 'world'; wi: number }
   | { screen: 'play'; wi: number; li: number }
   | { screen: 'bedtime' }
-  | { screen: 'bed'; li: number };
+  | { screen: 'bed'; li: number }
+  | { screen: 'today' };
 
 function parseHash(hash: string): Route {
+  if (hash === '#/today') return { screen: 'today' };
   const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);
   if (bed) {
     const li = bed[1] ? Number(bed[1]) - 1 : -1;
@@ -83,6 +87,10 @@ export function App() {
     );
   }
 
+  if (route.screen === 'today') {
+    return <TodayLevel progress={progress.done} onDone={(id) => update((p) => markDone(p, id))} />;
+  }
+
   if (route.screen !== 'home') {
     const world = WORLDS[route.wi];
     if (needsFriendIntro(progress, world.id, WORLD_LEVEL_IDS[route.wi])) {
@@ -120,6 +128,7 @@ export function App() {
         progress={progress}
         onOpenWorld={(id) => go(`#/w/${id}`)}
         onBedtime={() => go('#/bed')}
+        onToday={() => go('#/today')}
         onGrownUps={() => setGrownUps(true)}
       />
       {grownUps && <GrownUps progress={progress} update={update} onClose={() => setGrownUps(false)} />}
@@ -148,6 +157,23 @@ function Level({ wi, li, progress, onDone }: { wi: number; li: number; progress:
       onWin={() => onDone(level.id)}
       onNext={() => go(last ? '#/' : `#/w/${world.id}/${li + 2}`, true)}
       onHome={() => go(`#/w/${world.id}`)}
+    />
+  );
+}
+
+function TodayLevel({ progress, onDone }: { progress: readonly string[]; onDone: (id: string) => void }) {
+  const t = useMemo(() => today(), []);
+  const puzzle = useMemo(() => mustParse(t.grid), [t]);
+  return (
+    <PlayScreen
+      puzzle={puzzle}
+      treat={t.look.treat}
+      sky={TODAY_SKY}
+      look={t.look}
+      dots={<SunIcon filled={progress.includes(t.id)} className="dot-star current" />}
+      onWin={() => onDone(t.id)}
+      onNext={() => go('#/', true)}
+      onHome={() => go('#/')}
     />
   );
 }

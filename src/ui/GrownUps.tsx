@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { WORLDS } from '../content/worlds.ts';
 import { emptyProgress, type Progress } from '../core/progress.ts';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
-import { FriendArt, GRUMPY } from './art.tsx';
+import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
 
 export function GrownUps({ progress, update, onClose }: {
   progress: Progress;
@@ -13,6 +13,8 @@ export function GrownUps({ progress, update, onClose }: {
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const total = WORLDS.reduce((n, w) => n + w.levels.length, 0);
+  const finished = WORLDS.reduce((n, w) => n + w.levels.filter((l) => progress.done.includes(l.id)).length, 0);
+  const days = progress.done.filter((id) => id.startsWith('day-')).length;
   // Close on a tap outside the panel, but only a tap that also started there.
   // On touch screens, lifting the finger that held the gear sends a click to
   // whatever is now under it -- the backdrop -- which used to close the panel
@@ -40,7 +42,7 @@ export function GrownUps({ progress, update, onClose }: {
           gently rewinds. After a few quiet seconds a little hand shows the next move.
         </p>
         <p className="muted">
-          Puzzles finished: {progress.done.length} of {total}. Tap a friend (or drag it) to move; with two friends,
+          Puzzles finished: {finished} of {total}. Tap a friend (or drag it) to move; with two friends,
           tap one to choose who goes.
         </p>
 
@@ -62,6 +64,15 @@ export function GrownUps({ progress, update, onClose }: {
               in check and every square he could step to is watched. That is checkmate. Red squares show what a
               friend would watch before you let go. Finished {BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length}{' '}
               of {BEDTIME_LEVELS.length}.
+            </span>
+          </li>
+          <li>
+            <div className="lesson-faces">
+              <SunIcon className="lesson-friend" />
+            </div>
+            <span>
+              Today's puzzle (the sunny bubble, always open): a new puzzle every day, made from the date and checked by
+              the solver. The friend changes with the day of the week; Saturday brings two. Days finished: {days}.
             </span>
           </li>
         </ul>

@@ -323,6 +323,30 @@ export function StarIcon({ className, filled = true }: IconProps & { filled?: bo
   );
 }
 
+/** A little sun: today's puzzle, filled once it is done. */
+export function SunIcon({ className, filled = true }: IconProps & { filled?: boolean }) {
+  const fill = filled ? '#fbbf24' : 'rgba(255,255,255,0.6)';
+  const stroke = filled ? '#d97706' : '#cbd5e1';
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      {Array.from({ length: 8 }, (_, i) => (
+        <line
+          key={i}
+          x1={50}
+          y1={8}
+          x2={50}
+          y2={22}
+          stroke={stroke}
+          strokeWidth={7}
+          strokeLinecap="round"
+          transform={`rotate(${i * 45} 50 50)`}
+        />
+      ))}
+      <circle cx={50} cy={50} r={22} fill={fill} stroke={stroke} strokeWidth={6} />
+    </svg>
+  );
+}
+
 export function HandIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">

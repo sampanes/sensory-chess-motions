@@ -275,6 +275,21 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
     radial-gradient(circle at 16% 70%, #fff 0 1.1%, transparent 1.6%),
     linear-gradient(#3730a3, #6366f1);
 }
+.bubble.day {
+  background:
+    radial-gradient(circle at 70% 78%, #fff 0 10%, transparent 10.5%),
+    radial-gradient(circle at 80% 74%, #fff 0 8%, transparent 8.5%),
+    linear-gradient(#7dd3fc, #fef9c3);
+}
+.bubble-sun {
+  position: absolute;
+  top: 6%;
+  left: 8%;
+  width: 30%;
+  height: 30%;
+  animation: spin 24s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .bubble-sun { animation: none; } }
 .bubble-moon {
   position: absolute;
   top: 12%;
@@ -587,3 +602,5 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }

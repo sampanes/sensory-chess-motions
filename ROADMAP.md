@@ -109,7 +109,14 @@ has been solvable for 365 dates in a row in a test.
   world. Every play after that (and every "again" after a win) rolls a surprise treat, one of 7
   board themes (frame, squares and sky), and a key and instrument for the munch notes and win tune.
 
-Still open: kid testing of the new levels, and the daily puzzle.
+- **Today's puzzle** (`src/core/daily.ts`): the sunny bubble on the home screen, always open. Made
+  from the local date with the generator, so it needs no server: Sunday king, Monday rook, and so
+  on, Saturday two friends at once, always in a friendly middle range (score 5 to 14), with a
+  look (treat, board, music) that is also picked by the date. `tests/daily.test.ts` checks 365
+  dates in a row.
+
+Every "done when" box is checked except watching real kids play. Still open: kid testing, and
+whether a friend a kid has not met yet should get its intro before appearing in today's puzzle.
 
 ## M4 -- Chess ideas, secretly
 

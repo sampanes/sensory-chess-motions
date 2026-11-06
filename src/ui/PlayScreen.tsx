@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { pickLook, PLAIN_MUSIC } from '../content/looks.ts';
+import { pickLook, PLAIN_MUSIC, type Look } from '../content/looks.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import { startState } from '../core/puzzle.ts';
 import { applyMove, friendIndexAt, hopsFor, isWon } from '../core/rules.ts';
@@ -19,6 +19,8 @@ export interface PlayScreenProps {
   sky: string;
   /** Already finished before: start with a surprise treat, board and music. */
   replay?: boolean;
+  /** A set look for the first play instead of the world's own (today's puzzle). */
+  look?: Look;
   /** Show the hint hand sooner (first level of a world). */
   eagerHint?: boolean;
   /** Little row of dots showing where you are in the world. */
@@ -33,10 +35,10 @@ const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const FOLLOW_UP_HINT_MS = 1200;
 
-export function PlayScreen({ puzzle, treat, sky, replay, eagerHint, dots, onWin, onNext, onHome }: PlayScreenProps) {
+export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerHint, dots, onWin, onNext, onHome }: PlayScreenProps) {
   const later = useTimers();
   // Every play after a win rolls a new surprise look (src/content/looks.ts).
-  const [look, setLook] = useState(() => pickLook({ treat, sky }, replay === true));
+  const [look, setLook] = useState(() => firstLook ?? pickLook({ treat, sky }, replay === true));
   useEffect(() => {
     setMusic(look.music);
   }, [look]);

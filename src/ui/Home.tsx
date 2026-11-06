@@ -1,15 +1,17 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
 import { doneCount, isWorldOpen, type Progress } from '../core/progress.ts';
-import { FriendArt, GearIcon, GRUMPY, StarIcon } from './art.tsx';
+import { FriendArt, GearIcon, GRUMPY, StarIcon, SunIcon } from './art.tsx';
 import { sfx, wakeAudio } from './sound.ts';
+import { today, type Today } from './today.ts';
 import { WORLD_LEVEL_IDS } from './useProgress.ts';
 
-export function Home({ progress, onOpenWorld, onBedtime, onGrownUps }: {
+export function Home({ progress, onOpenWorld, onBedtime, onToday, onGrownUps }: {
   progress: Progress;
   onOpenWorld: (worldId: string) => void;
   onBedtime: () => void;
+  onToday: () => void;
   onGrownUps: () => void;
 }) {
   const open = WORLDS.map((_, wi) => isWorldOpen(progress, WORLD_LEVEL_IDS, wi));
@@ -31,6 +33,7 @@ export function Home({ progress, onOpenWorld, onBedtime, onGrownUps }: {
           />
         ))}
         <BedtimeBubble done={BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onBedtime} />
+        <TodayBubble progress={progress} onOpen={onToday} />
       </div>
       <HoldButton onHeld={onGrownUps} />
     </div>
@@ -73,6 +76,34 @@ function WorldBubble({ world, open, bounce, done, onOpen }: {
       </div>
       <div className="bubble-stars">
         {world.levels.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
+      </div>
+    </button>
+  );
+}
+
+/** Today's puzzle: always open, a new one every day. */
+function TodayBubble({ progress, onOpen }: { progress: Progress; onOpen: () => void }) {
+  // Made after the first paint: building a puzzle can take a moment on a slow tablet.
+  const [t, setT] = useState<Today | null>(null);
+  useEffect(() => {
+    const id = setTimeout(() => setT(today()), 60);
+    return () => clearTimeout(id);
+  }, []);
+  const faces = t?.faces ?? [];
+  return (
+    <button
+      className="world-bubble"
+      onClick={() => { wakeAudio(); sfx.tap(); onOpen(); }}
+      aria-label="Today's puzzle"
+    >
+      <div className="bubble day">
+        <SunIcon className="bubble-sun" />
+        {faces.map((k, i) => (
+          <FriendArt key={k} kind={k} className={faces.length > 1 ? `bubble-friend pair-${i}` : 'bubble-friend'} />
+        ))}
+      </div>
+      <div className="bubble-stars">
+        <SunIcon filled={t !== null && progress.done.includes(t.id)} className="mini-star" />
       </div>
     </button>
   );
