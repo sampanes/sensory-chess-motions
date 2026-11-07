@@ -56,7 +56,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   const [round, setRound] = useState(0);
   const [gulp, setGulp] = useState<{ index: number; delay: number } | null>(null);
   const [awake, setAwake] = useState<{ guards: number[]; squares: number[] } | null>(null);
-  /** Racing guard pawns that just got home first. */
+  /** Racing guard pawns that just got home first (they grow into angry queens). */
   const [cheer, setCheer] = useState<number[]>([]);
   const [booped, setBooped] = useState<number | null>(null);
   const [hint, setHint] = useState<number | null>(null);
@@ -114,11 +114,13 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
     sfx.hop(from.kind);
 
     if (res.kind === 'beaten') {
-      // Hop there, the gray pawn takes its last step home and cheers, and everyone starts over.
+      // Hop there, the gray pawn takes its last step home and grows into an angry queen, and
+      // everyone starts over.
       setShown(res.hopped);
       later(() => { setShown(res.shown); sfx.hop('pawn'); }, arrive + STEP_MS);
-      later(() => { setCheer(res.by); setMood('confused'); sfx.uhoh(); }, arrive + 2 * STEP_MS);
-      later(() => rewind(), arrive + 2 * STEP_MS + 1300);
+      later(() => { setCheer(res.by); setMood('confused'); sfx.promote(); }, arrive + 2 * STEP_MS);
+      later(() => sfx.uhoh(), arrive + 2 * STEP_MS + 700);
+      later(() => rewind(), arrive + 2 * STEP_MS + 1900);
       return;
     }
 
@@ -259,11 +261,11 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
         if (!here && booped !== gi) return null;
         const isAwake = awake?.guards.includes(gi) ?? false;
         const cheering = cheer.includes(gi);
-        const cls = `guard ${isRacer(puzzle, gi) ? 'racer' : ''} ${isAwake ? 'awake' : ''} ${cheering ? 'cheer' : ''} ${booped === gi ? 'booped' : ''}`;
-        const face = isAwake || threat?.by.includes(gi) ? 'grumpy' : cheering ? 'wow' : isRacer(puzzle, gi) ? 'happy' : 'sleepy';
+        const cls = `guard ${isRacer(puzzle, gi) && !cheering ? 'racer' : ''} ${isAwake ? 'awake' : ''} ${cheering ? 'crowned' : ''} ${booped === gi ? 'booped' : ''}`;
+        const face = isAwake || cheering || threat?.by.includes(gi) ? 'grumpy' : isRacer(puzzle, gi) ? 'happy' : 'sleepy';
         return (
           <div key={`g${gi}`} className={cls} style={cell(board.gpos[gi])}>
-            <FriendArt kind={g.kind} colors={GRUMPY} mood={face} className="fill" />
+            <FriendArt kind={cheering ? 'queen' : g.kind} colors={GRUMPY} mood={face} className="fill" />
           </div>
         );
       })}

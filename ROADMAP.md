@@ -158,7 +158,8 @@ watches him.
 `src/content/pawnwalk.ts`, same engine as tiptoe (`src/core/sneak.ts`, goal `home`). The pawn
 friend walks straight up, eats diagonally, and becomes a queen on the gold top row. In race puzzles
 a gray guard pawn is awake and walks one square down after every hop toward its own gray row; if it
-gets there first, everyone starts over (a lost race plays out so the kid sees why). Helpers stop it
+gets there first, it grows into an angry gray queen (John's idea) and everyone starts over (a lost
+race plays out so the kid sees why). Helpers stop it
 by booping it or by standing in front of it (a blockade: pawns only watch diagonally). When the gray
 pawn steps next to a friend it does not wake anyone: like in chess it is the kid's move, the threat
 shows as pulsing red stripes, and the next hop must answer it (eat the gray pawn or move away). John

@@ -655,10 +655,15 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   0%, 100% { rotate: -5deg; }
   50% { rotate: 5deg; }
 }
-.guard.cheer { animation: guard-cheer 0.4s ease-in-out 3; }
-@keyframes guard-cheer {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -18%; }
+/* A gray pawn that got home first grows into an angry queen and stomps. */
+.guard.crowned { animation: guard-crowned 0.5s cubic-bezier(.3, 1.6, .5, 1), guard-stomp 0.3s ease-in-out 0.55s 3; }
+@keyframes guard-crowned {
+  0% { scale: 0.6; }
+  100% { scale: 1.15; }
+}
+@keyframes guard-stomp {
+  0%, 100% { translate: 0 0; scale: 1.15; }
+  50% { translate: 0 -12%; scale: 1.2 1.1; }
 }
 /* The pawn walk: the friend's home row (gold, top) and a racing gray pawn's (bottom). */
 .home-row {
