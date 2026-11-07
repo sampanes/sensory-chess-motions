@@ -2,16 +2,17 @@
 // kid home screen. A thin grown-up strip in the top bar switches puzzles and
 // compares variants, so trying an idea needs no setup at all.
 //
-// Now in the lab: cross with a team. Variants: the reach map on or off.
+// Now in the lab: cross with a team. Variants: home spots that say whether
+// the picked friend can ever land there, or plain.
 // (Tiptoe puzzles and the pawn walk graduated to their own home bubbles.)
 
 import { CROSS_LEVELS } from '../content/crossing.ts';
 import { CrossScreen } from './CrossScreen.tsx';
 
-export type LabVariant = 'plain' | 'reach';
+export type LabVariant = 'plain' | 'spots';
 
 const VARIANTS: { id: LabVariant; label: string }[] = [
-  { id: 'reach', label: 'reach map' },
+  { id: 'spots', label: 'spots' },
   { id: 'plain', label: 'plain' },
 ];
 
@@ -37,7 +38,7 @@ export function LabScreen({ li, variant, go }: { li: number; variant: LabVariant
     <CrossScreen
       key={`${level.id}-${variant}`}
       grid={level.grid}
-      reach={variant === 'reach'}
+      spots={variant === 'spots'}
       eagerHint={li === 0}
       top={strip}
       onNext={() => go((li + 1) % n, variant)}

@@ -176,8 +176,9 @@ Tests prove every helper friend is needed.
 8 fields in `src/content/crossing.ts`, rules in `src/core/cross.ts` (the usual moves; won when every
 friend stands on a gold home square). Fields teach the rook's lane, the bishop's color, the knight's
 hedge, then pairs and the whole team sharing one gap; in field 7 the pawn earns its queen by
-promotion (the plan's proposed default). Variants: reach map (tapping a friend hatches every square
-it can never reach, however many hops) or plain. Not built yet: footprints, the anti-queen knight
+promotion (the plan's proposed default). Variants: talking spots (John's idea: with a friend picked,
+each gold spot it can ever reach holds its faint ghost, and one it never can goes gray and dashed;
+this replaced a hatch over every never-reachable square, which read as "not in one hop") or plain. Not built yet: footprints, the anti-queen knight
 puzzles.
 
 **Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked

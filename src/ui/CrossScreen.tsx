@@ -1,12 +1,14 @@
 // Cross with a team (lab prototype): bring every friend to a gold home square.
-// Rules are in src/core/cross.ts. With the reach map on, tapping a friend
-// hatches every square it can never reach, however many hops it takes (the
-// bishop's other color, the far side of a hedge for a slider).
+// Rules are in src/core/cross.ts. With "spots" on, picking a friend makes each
+// gold home spot answer "can this friend ever land here, however many hops?":
+// yes = a faint ghost of the friend waits in it; never = the spot goes gray
+// and dashed (the bishop's other color, a square the rocks cut off), and
+// shakes "no" when tapped.
 
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { crossHop, crossHops, crossStart, crossWon, mustParseCross, reachMap, solveCross } from '../core/cross.ts';
 import type { GameState } from '../core/types.ts';
-import { AgainIcon, GoIcon, HomeIcon } from './art.tsx';
+import { AgainIcon, FriendArt, GoIcon, HomeIcon } from './art.tsx';
 import { Board, type FriendMood } from './Board.tsx';
 import { Confetti } from './Confetti.tsx';
 import { moveDuration, REWIND_MS } from './motion.ts';
@@ -17,10 +19,10 @@ export const CROSS_SKY = '#fae8ff';
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 
-export function CrossScreen({ grid, reach, eagerHint, top, onNext, onHome }: {
+export function CrossScreen({ grid, spots, eagerHint, top, onNext, onHome }: {
   grid: readonly string[];
-  /** Show the reach map for the picked friend. */
-  reach: boolean;
+  /** The home spots show whether the picked friend can ever land there. */
+  spots: boolean;
   eagerHint?: boolean;
   top?: ReactNode;
   onNext?: () => void;
@@ -40,6 +42,7 @@ export function CrossScreen({ grid, reach, eagerHint, top, onNext, onHome }: {
   const [idleKey, setIdleKey] = useState(0);
   const [nudgeKey, setNudgeKey] = useState(0);
   const [pokeKey, setPokeKey] = useState(0);
+  const [shake, setShake] = useState<{ pos: number; key: number } | null>(null);
 
   const hops = useMemo(
     () => (busy || won || !game.friends[selected] ? [] : crossHops(puzzle, game, selected)),
@@ -47,8 +50,8 @@ export function CrossScreen({ grid, reach, eagerHint, top, onNext, onHome }: {
   );
   const picked = game.friends[selected];
   const reachable = useMemo(
-    () => (reach && picked && !won ? reachMap(puzzle, picked.kind, picked.at) : null),
-    [reach, picked, won, puzzle],
+    () => (spots && picked && !won ? reachMap(puzzle, picked.kind, picked.at) : null),
+    [spots, picked, won, puzzle],
   );
 
   useEffect(() => {
@@ -139,6 +142,7 @@ export function CrossScreen({ grid, reach, eagerHint, top, onNext, onHome }: {
     }
     setNudgeKey((n) => n + 1);
     sfx.nudge();
+    if (reachable && puzzle.homes.includes(pos) && !reachable.has(pos)) setShake((s) => ({ pos, key: (s?.key ?? 0) + 1 }));
   };
 
   const cell = (pos: number): CSSProperties => ({
@@ -150,14 +154,19 @@ export function CrossScreen({ grid, reach, eagerHint, top, onNext, onHome }: {
 
   const extra = (
     <>
-      {reachable && !busy &&
-        Array.from({ length: puzzle.rows * puzzle.cols }, (_, pos) => {
-          if (puzzle.rocks[pos] || reachable.has(pos)) return null;
-          return <div key={`r${pos}`} className="reach no" style={cell(pos)} />;
-        })}
       {puzzle.homes.map((h) => {
         const filled = game.friends.some((f) => f.at === h);
-        return <div key={`h${h}`} className={`home-spot ${filled ? 'filled' : ''}`} style={cell(h)} />;
+        const say = filled || !reachable || busy || !picked ? '' : reachable.has(h) ? 'yes' : 'no';
+        const shaking = shake?.pos === h && say === 'no';
+        return (
+          <div
+            key={`h${h}${shaking ? `s${shake.key}` : ''}`}
+            className={`home-spot ${filled ? 'filled' : ''} ${say} ${shaking ? 'shake' : ''}`}
+            style={cell(h)}
+          >
+            {say === 'yes' && <FriendArt key={`${selected}${picked.kind}`} kind={picked.kind} mood="sleepy" className="home-ghost" />}
+          </div>
+        );
       })}
     </>
   );

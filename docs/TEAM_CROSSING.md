@@ -1,6 +1,6 @@
 # Cross with a team: every friend is good at something (plan)
 
-Status: **lab prototype (2026-11-06)**, `#/lab`: 8 fields, reach map, queen by promotion. Footprints
+Status: **lab prototype (2026-11-06)**, `#/lab`: 8 fields, talking home spots, queen by promotion. Footprints
 and the anti-queen puzzles are not built. For older kids (about 8), well after the toddler worlds. Listed
 in the M4 table of `ROADMAP.md` next to the checkmate mode (`docs/CHECKMATE_MODE.md`).
 
@@ -24,9 +24,12 @@ are **good at different things**.
 
 ## Showing strengths and weaknesses
 
-- **Reach map.** When a friend is picked, tint every square it could reach in any number of
-  hops, and show squares it can never reach as "out of reach". For the bishop that is the whole
-  other color: the most important bishop fact, shown instead of told.
+- **Talking home spots (built).** When a friend is picked, each gold home spot says whether that
+  friend can ever land there, in any number of hops: a faint ghost of the friend waits in a spot
+  it can reach; a spot it never can goes gray and dashed, and shakes "no" when tapped. For the
+  bishop that is the other color, shown instead of told. (First built as a hatch over every
+  never-reachable square; John read the hatch as "can't reach in one hop", and for the knight the
+  never-squares that rocks cut off made no visible sense, so the answer moved onto the spots.)
 - **Race footprints.** For one stretch of field, show how many hops each friend needs to cross
   it, as a row of footprints per friend (rook 2, knight 4, bishop "can't"). The solver already
   computes this: it is the shortest route for that friend alone.

@@ -9,7 +9,7 @@
 //   #/tiptoe        tiptoe puzzles: sneak past sleepy guards (always open)
 //   #/tiptoe/2      tiptoe puzzle 2
 //   #/pawn          walk the pawn home (always open), #/pawn/2 = puzzle 2
-//   #/lab           the lab: prototypes of new ideas, now the team crossing (#/lab/3/reach = puzzle 3, a variant)
+//   #/lab           the lab: prototypes of new ideas, now the team crossing (#/lab/3/spots = puzzle 3, a variant)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -53,10 +53,10 @@ function parseHash(hash: string): Route {
     const li = sneak[2] ? Number(sneak[2]) - 1 : -1;
     return li >= 0 && li < mode.levels.length ? { screen: 'sneak', mode, li } : { screen: 'sneakWorld', mode };
   }
-  const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|reach))?$/.exec(hash);
+  const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|spots|reach))?$/.exec(hash);
   if (lab) {
     const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), LAB_LEVELS.length - 1);
-    return { screen: 'lab', li, variant: (lab[2] as LabVariant | undefined) ?? 'reach' };
+    return { screen: 'lab', li, variant: lab[2] === 'plain' ? 'plain' : 'spots' };
   }
   const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);
   if (bed) {
