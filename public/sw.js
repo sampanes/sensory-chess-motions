@@ -45,7 +45,9 @@ self.addEventListener('fetch', (event) => {
   // Every page visit (?p=..., ?maker, plain) is the same single HTML file.
   const key = req.mode === 'navigate' ? ROOT : req;
 
-  const network = fetch(req);
+  // Pages are revalidated with the server every time (a cheap 304 when nothing
+  // changed), so the browser's own 10-minute cache cannot hide a fresh deploy.
+  const network = req.mode === 'navigate' ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(req);
   const update = network.then(async (res) => {
     if (res.ok && res.type === 'basic') {
       const copy = res.clone();

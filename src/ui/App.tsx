@@ -1,5 +1,6 @@
 // Screens are addressed by the URL hash so the phone's back button works:
 //   #/              home
+//   #/friends       the friends folder: every friend world
 //   #/w/rook        a friend's puzzles
 //   #/w/rook/3      puzzle 3 of that friend
 //   #/bed           bedtime puzzles (always open)
@@ -19,7 +20,7 @@ import { StarIcon, SunIcon } from './art.tsx';
 import { BedtimeScreen } from './BedtimeScreen.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
-import { Home } from './Home.tsx';
+import { FriendsDrawer, Home } from './Home.tsx';
 import { LAB_LEVELS, LabScreen } from './LabScreen.tsx';
 import { TiptoeScreen } from './TiptoeScreen.tsx';
 import { TiptoeWorld } from './TiptoeWorld.tsx';
@@ -33,6 +34,7 @@ import { SNEAK_MODES, PAWN_MODE, type SneakMode } from './sneakModes.tsx';
 
 type Route =
   | { screen: 'home' }
+  | { screen: 'friends' }
   | { screen: 'world'; wi: number }
   | { screen: 'play'; wi: number; li: number }
   | { screen: 'bedtime' }
@@ -44,6 +46,7 @@ type Route =
 
 function parseHash(hash: string): Route {
   if (hash === '#/today') return { screen: 'today' };
+  if (hash === '#/friends') return { screen: 'friends' };
   const sneak = /^#\/(tiptoe|pawn)(?:\/(\d+))?$/.exec(hash);
   if (sneak) {
     const mode = SNEAK_MODES[sneak[1] as 'tiptoe' | 'pawn'];
@@ -145,7 +148,7 @@ export function App() {
     return <TodayLevel progress={progress.done} onDone={(id) => update((p) => markDone(p, id))} />;
   }
 
-  if (route.screen !== 'home') {
+  if (route.screen === 'world' || route.screen === 'play') {
     const world = WORLDS[route.wi];
     if (needsFriendIntro(progress, world.id, WORLD_LEVEL_IDS[route.wi])) {
       return (
@@ -153,7 +156,7 @@ export function App() {
           key={world.id}
           world={world}
           onMet={() => update((p) => markWorldMet(p, world.id))}
-          onHome={() => go('#/')}
+          onHome={() => go('#/friends')}
         />
       );
     }
@@ -171,16 +174,20 @@ export function App() {
         worldIndex={route.wi}
         progress={progress}
         onPlay={(li) => go(`#/w/${w.id}/${li + 1}`)}
-        onHome={() => go('#/')}
+        onHome={() => go('#/friends')}
       />
     );
+  }
+
+  if (route.screen === 'friends') {
+    return <FriendsDrawer progress={progress} onOpenWorld={(id) => go(`#/w/${id}`)} onHome={() => go('#/')} />;
   }
 
   return (
     <>
       <Home
         progress={progress}
-        onOpenWorld={(id) => go(`#/w/${id}`)}
+        onFriends={() => go('#/friends')}
         onBedtime={() => go('#/bed')}
         onToday={() => go('#/today')}
         onTiptoe={() => go('#/tiptoe')}
@@ -211,7 +218,7 @@ function Level({ wi, li, progress, onDone }: { wi: number; li: number; progress:
       eagerHint={li === 0}
       dots={dots}
       onWin={() => onDone(level.id)}
-      onNext={() => go(last ? '#/' : `#/w/${world.id}/${li + 2}`, true)}
+      onNext={() => go(last ? '#/friends' : `#/w/${world.id}/${li + 2}`, true)}
       onHome={() => go(`#/w/${world.id}`)}
     />
   );

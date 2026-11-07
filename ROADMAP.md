@@ -76,6 +76,11 @@ whose world just opened (and has not been visited yet) is still asleep for a mom
 tall, waves side to side with a yawn-and-hello sound, and wakes up in color. It replays on each visit
 to the home screen until the kid opens that world.
 
+**Status (2026-11-06):** the home screen keeps one bubble per mode. The seven friend worlds live in a
+friends folder (John's idea, like an app drawer): a bubble with a tiny face per friend, sleepy until
+that world opens, a star per finished world, and a wiggle when a friend just woke up inside. It opens
+to the full world grid (`#/friends`); back from a world returns to the folder.
+
 Still open: the first-run tap/hop/munch tutorial (the hint hand already shows after 2.5 seconds on
 the first puzzle of every world), and kid testing.
 

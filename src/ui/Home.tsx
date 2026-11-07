@@ -4,45 +4,106 @@ import { PAWN_LEVELS, PAWN_SKY } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS, TIPTOE_SKY } from '../content/tiptoe.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
 import { doneCount, isWorldOpen, needsFriendIntro, type Progress } from '../core/progress.ts';
-import { FriendArt, GearIcon, GRUMPY, StarIcon, SunIcon } from './art.tsx';
+import { FriendArt, GearIcon, GRUMPY, HomeIcon, StarIcon, SunIcon } from './art.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 import { today, type Today } from './today.ts';
 import { WORLD_LEVEL_IDS } from './useProgress.ts';
 
-export function Home({ progress, onOpenWorld, onBedtime, onToday, onTiptoe, onPawn, onGrownUps }: {
+/** Which friend worlds are open, which one says "me next!", and which just woke up. */
+function worldStates(progress: Progress) {
+  const open = WORLDS.map((_, wi) => isWorldOpen(progress, WORLD_LEVEL_IDS, wi));
+  // The friend waiting to be played with bounces to say "me next!".
+  const suggested = WORLDS.findIndex((w, wi) => open[wi] && doneCount(progress, WORLD_LEVEL_IDS[wi]) < w.levels.length);
+  const waking = WORLDS.map(
+    (w, wi) => wi > 0 && open[wi] && !progress.unlockAll && needsFriendIntro(progress, w.id, WORLD_LEVEL_IDS[wi]),
+  );
+  return { open, suggested, waking };
+}
+
+export function Home({ progress, onFriends, onBedtime, onToday, onTiptoe, onPawn, onGrownUps }: {
   progress: Progress;
-  onOpenWorld: (worldId: string) => void;
+  onFriends: () => void;
   onBedtime: () => void;
   onToday: () => void;
   onTiptoe: () => void;
   onPawn: () => void;
   onGrownUps: () => void;
 }) {
-  const open = WORLDS.map((_, wi) => isWorldOpen(progress, WORLD_LEVEL_IDS, wi));
-  // The friend waiting to be played with bounces to say "me next!".
-  const suggested = WORLDS.findIndex((w, wi) => open[wi] && doneCount(progress, WORLD_LEVEL_IDS[wi]) < w.levels.length);
-
   return (
     <div className="screen home">
       <div className="hills" aria-hidden="true" />
       <div className="world-grid">
-        {WORLDS.map((w, wi) => (
-          <WorldBubble
-            key={w.id}
-            world={w}
-            open={open[wi]}
-            bounce={wi === suggested}
-            waking={wi > 0 && open[wi] && !progress.unlockAll && needsFriendIntro(progress, w.id, WORLD_LEVEL_IDS[wi])}
-            done={doneCount(progress, WORLD_LEVEL_IDS[wi])}
-            onOpen={() => onOpenWorld(w.id)}
-          />
-        ))}
+        <FriendsFolder progress={progress} onOpen={onFriends} />
         <BedtimeBubble done={BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onBedtime} />
         <TiptoeBubble done={TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onTiptoe} />
         <PawnBubble done={PAWN_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onPawn} />
         <TodayBubble progress={progress} onOpen={onToday} />
       </div>
       <HoldButton onHeld={onGrownUps} />
+    </div>
+  );
+}
+
+/**
+ * The friends folder (like an app drawer): one bubble holding a tiny face for
+ * every friend, sleepy until that friend's world opens. Tapping it opens the
+ * drawer with every friend world.
+ */
+function FriendsFolder({ progress, onOpen }: { progress: Progress; onOpen: () => void }) {
+  const { open, suggested, waking } = worldStates(progress);
+  const news = waking.some(Boolean);
+  const finished = WORLDS.map((w, wi) => doneCount(progress, WORLD_LEVEL_IDS[wi]) >= w.levels.length);
+  return (
+    <button
+      className={`world-bubble ${suggested >= 0 || news ? 'suggest' : ''}`}
+      onClick={() => { wakeAudio(); sfx.select('king'); onOpen(); }}
+      aria-label="Friends"
+    >
+      <div className={`bubble folder ${news ? 'news' : ''}`}>
+        <div className="folder-grid">
+          {WORLDS.slice(0, 6).map((w, wi) => (
+            <div key={w.id} className={`folder-mini ${open[wi] && !waking[wi] ? '' : 'asleep'}`} style={{ background: w.sky }}>
+              <FriendArt kind={w.faces[0]} mood={open[wi] && !waking[wi] ? 'happy' : 'sleepy'} className="fill" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="bubble-stars">
+        {WORLDS.map((w, wi) => <StarIcon key={w.id} filled={finished[wi]} className="mini-star" />)}
+      </div>
+    </button>
+  );
+}
+
+/** The opened friends folder: every friend world, and the way back home. */
+export function FriendsDrawer({ progress, onOpenWorld, onHome }: {
+  progress: Progress;
+  onOpenWorld: (worldId: string) => void;
+  onHome: () => void;
+}) {
+  const { open, suggested, waking } = worldStates(progress);
+  return (
+    <div className="screen home drawer">
+      <div className="hills" aria-hidden="true" />
+      <div className="topbar">
+        <button className="round-btn" onClick={() => { sfx.tap(); onHome(); }} aria-label="Home">
+          <HomeIcon className="icon" />
+        </button>
+        <div className="round-btn-spacer" />
+      </div>
+      <div className="world-grid drawer-grid">
+        {WORLDS.map((w, wi) => (
+          <WorldBubble
+            key={w.id}
+            world={w}
+            open={open[wi]}
+            bounce={wi === suggested}
+            waking={waking[wi]}
+            done={doneCount(progress, WORLD_LEVEL_IDS[wi])}
+            onOpen={() => onOpenWorld(w.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
