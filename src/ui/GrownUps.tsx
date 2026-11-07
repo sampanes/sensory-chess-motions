@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { WORLDS } from '../content/worlds.ts';
 import { emptyProgress, type Progress } from '../core/progress.ts';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
+import { PAWN_LEVELS } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
 
@@ -77,6 +78,18 @@ export function GrownUps({ progress, update, onClose }: {
               your friend scurries back. Land right on a guard from a square it does not watch to send it home (a
               capture). Finished {TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} of{' '}
               {TIPTOE_LEVELS.length}.
+            </span>
+          </li>
+          <li>
+            <div className="lesson-faces">
+              <FriendArt kind="pawn" className="lesson-friend" />
+            </div>
+            <span>
+              Pawn walk (the blue bubble, always open): get the pawn to the gold top row, where it becomes a queen,
+              like promotion in chess. It walks straight ahead and eats diagonally. In races a gray pawn walks down
+              too; if it gets home first it becomes an angry queen and you start over. Stand in front of it to stop
+              it, or eat it when it steps next to you. Finished{' '}
+              {PAWN_LEVELS.filter((l) => progress.done.includes(l.id)).length} of {PAWN_LEVELS.length}.
             </span>
           </li>
           <li>

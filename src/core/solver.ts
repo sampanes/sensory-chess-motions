@@ -24,8 +24,14 @@ export function stateKey(s: GameState): number {
   return key;
 }
 
-export function solve(p: Puzzle, start: GameState, stateLimit = DEFAULT_STATE_LIMIT): SolveResult {
-  if (isWon(start)) return { status: 'solved', moves: [] };
+/** `won` is the finish test: every treat eaten, unless a mode says otherwise (the team crossing). */
+export function solve(
+  p: Puzzle,
+  start: GameState,
+  stateLimit = DEFAULT_STATE_LIMIT,
+  won: (s: GameState) => boolean = isWon,
+): SolveResult {
+  if (won(start)) return { status: 'solved', moves: [] };
 
   const startKey = stateKey(start);
   const parent = new Map<number, { prev: number; move: Move }>();
@@ -43,7 +49,7 @@ export function solve(p: Puzzle, start: GameState, stateLimit = DEFAULT_STATE_LI
           if (seen.has(k)) continue;
           seen.add(k);
           parent.set(k, { prev: key, move });
-          if (isWon(res.state)) return { status: 'solved', moves: walkBack(parent, startKey, k) };
+          if (won(res.state)) return { status: 'solved', moves: walkBack(parent, startKey, k) };
           if (seen.size > stateLimit) return { status: 'too-big' };
           next.push({ key: k, state: res.state });
         }

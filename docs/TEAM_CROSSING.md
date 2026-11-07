@@ -1,6 +1,7 @@
 # Cross with a team: every friend is good at something (plan)
 
-Status: **idea, nothing built.** For older kids (about 8), well after the toddler worlds. Listed
+Status: **lab prototype (2026-11-06)**, `#/lab`: 8 fields, reach map, queen by promotion. Footprints
+and the anti-queen puzzles are not built. For older kids (about 8), well after the toddler worlds. Listed
 in the M4 table of `ROADMAP.md` next to the checkmate mode (`docs/CHECKMATE_MODE.md`).
 
 ## The idea

@@ -7,7 +7,8 @@
 //   #/today         today's puzzle (always open, new every day)
 //   #/tiptoe        tiptoe puzzles: sneak past sleepy guards (always open)
 //   #/tiptoe/2      tiptoe puzzle 2
-//   #/lab           the lab: prototypes of new ideas, now the pawn walk (#/lab/3/dots = puzzle 3, a variant)
+//   #/pawn          walk the pawn home (always open), #/pawn/2 = puzzle 2
+//   #/lab           the lab: prototypes of new ideas, now the team crossing (#/lab/3/reach = puzzle 3, a variant)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -27,8 +28,8 @@ import { PlayScreen } from './PlayScreen.tsx';
 import { today, TODAY_SKY } from './today.ts';
 import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
-import type { Peek } from './TiptoeScreen.tsx';
-import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
+import type { LabVariant } from './LabScreen.tsx';
+import { SNEAK_MODES, PAWN_MODE, type SneakMode } from './sneakModes.tsx';
 
 type Route =
   | { screen: 'home' }
@@ -37,21 +38,22 @@ type Route =
   | { screen: 'bedtime' }
   | { screen: 'bed'; li: number }
   | { screen: 'today' }
-  | { screen: 'tiptoe' }
-  | { screen: 'tip'; li: number }
-  | { screen: 'lab'; li: number; peek: Peek };
+  | { screen: 'sneakWorld'; mode: SneakMode }
+  | { screen: 'sneak'; mode: SneakMode; li: number }
+  | { screen: 'lab'; li: number; variant: LabVariant };
 
 function parseHash(hash: string): Route {
   if (hash === '#/today') return { screen: 'today' };
-  const tip = /^#\/tiptoe(?:\/(\d+))?$/.exec(hash);
-  if (tip) {
-    const li = tip[1] ? Number(tip[1]) - 1 : -1;
-    return li >= 0 && li < TIPTOE_LEVELS.length ? { screen: 'tip', li } : { screen: 'tiptoe' };
+  const sneak = /^#\/(tiptoe|pawn)(?:\/(\d+))?$/.exec(hash);
+  if (sneak) {
+    const mode = SNEAK_MODES[sneak[1] as 'tiptoe' | 'pawn'];
+    const li = sneak[2] ? Number(sneak[2]) - 1 : -1;
+    return li >= 0 && li < mode.levels.length ? { screen: 'sneak', mode, li } : { screen: 'sneakWorld', mode };
   }
-  const lab = /^#\/lab(?:\/(\d+))?(?:\/(never|dots|always))?$/.exec(hash);
+  const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|reach))?$/.exec(hash);
   if (lab) {
     const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), LAB_LEVELS.length - 1);
-    return { screen: 'lab', li, peek: (lab[2] as Peek | undefined) ?? 'never' };
+    return { screen: 'lab', li, variant: (lab[2] as LabVariant | undefined) ?? 'reach' };
   }
   const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);
   if (bed) {
@@ -109,29 +111,32 @@ export function App() {
   }
 
   if (route.screen === 'lab') {
-    return <LabScreen li={route.li} peek={route.peek} go={(li, peek) => go(`#/lab/${li + 1}/${peek}`, true)} />;
+    return <LabScreen li={route.li} variant={route.variant} go={(li, v) => go(`#/lab/${li + 1}/${v}`, true)} />;
   }
 
-  if (route.screen === 'tiptoe') {
-    return <TiptoeWorld progress={progress} onPlay={(li) => go(`#/tiptoe/${li + 1}`)} onHome={() => go('#/')} />;
+  if (route.screen === 'sneakWorld') {
+    const { mode } = route;
+    return <TiptoeWorld mode={mode} progress={progress} onPlay={(li) => go(`#/${mode.path}/${li + 1}`)} onHome={() => go('#/')} />;
   }
 
-  if (route.screen === 'tip') {
-    const li = route.li;
-    const level = TIPTOE_LEVELS[li];
-    const last = li === TIPTOE_LEVELS.length - 1;
+  if (route.screen === 'sneak') {
+    const { mode, li } = route;
+    const level = mode.levels[li];
+    const last = li === mode.levels.length - 1;
     return (
       <TiptoeScreen
         key={level.id}
         grid={level.grid}
+        rules={mode.rules(level)}
+        sky={mode.sky}
         peek="never"
         eagerHint={li === 0}
-        top={TIPTOE_LEVELS.map((l, i) => (
+        top={mode.levels.map((l, i) => (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
         ))}
         onWin={() => update((p) => markDone(p, level.id))}
-        onNext={() => go(last ? '#/tiptoe' : `#/tiptoe/${li + 2}`, true)}
-        onHome={() => go('#/tiptoe')}
+        onNext={() => go(last ? `#/${mode.path}` : `#/${mode.path}/${li + 2}`, true)}
+        onHome={() => go(`#/${mode.path}`)}
       />
     );
   }
@@ -179,6 +184,7 @@ export function App() {
         onBedtime={() => go('#/bed')}
         onToday={() => go('#/today')}
         onTiptoe={() => go('#/tiptoe')}
+        onPawn={() => go(`#/${PAWN_MODE.path}`)}
         onGrownUps={() => setGrownUps(true)}
       />
       {grownUps && <GrownUps progress={progress} update={update} onClose={() => setGrownUps(false)} />}

@@ -1,0 +1,211 @@
+// Cross with a team (lab prototype): bring every friend to a gold home square.
+// Rules are in src/core/cross.ts. With the reach map on, tapping a friend
+// hatches every square it can never reach, however many hops it takes (the
+// bishop's other color, the far side of a hedge for a slider).
+
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { crossHop, crossHops, crossStart, crossWon, mustParseCross, reachMap, solveCross } from '../core/cross.ts';
+import type { GameState } from '../core/types.ts';
+import { AgainIcon, GoIcon, HomeIcon } from './art.tsx';
+import { Board, type FriendMood } from './Board.tsx';
+import { Confetti } from './Confetti.tsx';
+import { moveDuration, REWIND_MS } from './motion.ts';
+import { sfx, wakeAudio } from './sound.ts';
+import { useTimers } from './timers.ts';
+
+export const CROSS_SKY = '#fae8ff';
+const HINT_MS = 7000;
+const EAGER_HINT_MS = 2500;
+
+export function CrossScreen({ grid, reach, eagerHint, top, onNext, onHome }: {
+  grid: readonly string[];
+  /** Show the reach map for the picked friend. */
+  reach: boolean;
+  eagerHint?: boolean;
+  top?: ReactNode;
+  onNext?: () => void;
+  onHome: () => void;
+}) {
+  const later = useTimers();
+  const puzzle = useMemo(() => mustParseCross(grid), [grid]);
+  const [game, setGame] = useState<GameState>(() => crossStart(puzzle));
+  const [selected, setSelected] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [won, setWon] = useState(false);
+  const [showGo, setShowGo] = useState(false);
+  const [mood, setMood] = useState<FriendMood>('idle');
+  const [motion, setMotion] = useState<'normal' | 'rewind'>('normal');
+  const [round, setRound] = useState(0);
+  const [hint, setHint] = useState<number | null>(null);
+  const [idleKey, setIdleKey] = useState(0);
+  const [nudgeKey, setNudgeKey] = useState(0);
+  const [pokeKey, setPokeKey] = useState(0);
+
+  const hops = useMemo(
+    () => (busy || won || !game.friends[selected] ? [] : crossHops(puzzle, game, selected)),
+    [busy, won, puzzle, game, selected],
+  );
+  const picked = game.friends[selected];
+  const reachable = useMemo(
+    () => (reach && picked && !won ? reachMap(puzzle, picked.kind, picked.at) : null),
+    [reach, picked, won, puzzle],
+  );
+
+  useEffect(() => {
+    if (won || busy) return;
+    const t = window.setTimeout(() => {
+      const res = solveCross(puzzle, game);
+      if (res.status !== 'solved' || res.moves.length === 0) return;
+      const m = res.moves[0];
+      setHint(m.friend === selected ? m.to : game.friends[m.friend].at);
+    }, eagerHint ? EAGER_HINT_MS : HINT_MS);
+    return () => window.clearTimeout(t);
+  }, [won, busy, eagerHint, puzzle, game, selected, idleKey]);
+
+  const distance = (a: number, b: number) =>
+    Math.max(Math.abs((a % puzzle.cols) - (b % puzzle.cols)), Math.abs(Math.floor(a / puzzle.cols) - Math.floor(b / puzzle.cols)));
+
+  const move = (fi: number, to: number) => {
+    const from = game.friends[fi];
+    const travel = moveDuration(from.kind, distance(from.at, to));
+    const res = crossHop(puzzle, game, { friend: fi, to });
+    setSelected(fi);
+    setBusy(true);
+    setNudgeKey(0);
+    setPokeKey(0);
+    setGame(res.state);
+    sfx.hop(from.kind);
+    if (res.promoted) later(() => sfx.promote(), travel);
+    if (puzzle.homes.includes(to)) later(() => sfx.munch(res.state.friends.filter((f) => puzzle.homes.includes(f.at)).length - 1), travel);
+    later(() => {
+      if (crossWon(puzzle, res.state)) {
+        setWon(true);
+        setMood('dance');
+        sfx.win();
+        later(() => setShowGo(true), 1100);
+        return;
+      }
+      if (solveCross(puzzle, res.state).status === 'stuck') {
+        setMood('confused');
+        sfx.uhoh();
+        later(() => rewind(), 1000);
+        return;
+      }
+      // Pick the next friend still away from home, so the kid sees the team.
+      const away = res.state.friends.findIndex((f) => !puzzle.homes.includes(f.at));
+      if (puzzle.homes.includes(to) && away >= 0) setSelected(away);
+      setBusy(false);
+    }, travel + 350);
+  };
+
+  const rewind = () => {
+    setMood('idle');
+    setMotion('rewind');
+    setGame(crossStart(puzzle));
+    setSelected(0);
+    setHint(null);
+    setRound((n) => n + 1);
+    setBusy(true);
+    sfx.rewind();
+    later(() => {
+      setBusy(false);
+      setMotion('normal');
+    }, REWIND_MS);
+  };
+
+  const again = () => {
+    wakeAudio();
+    if (busy && !won) return;
+    setWon(false);
+    setShowGo(false);
+    rewind();
+  };
+
+  const press = (pos: number) => {
+    wakeAudio();
+    if (won || busy) return;
+    setHint(null);
+    setIdleKey((n) => n + 1);
+    const fi = game.friends.findIndex((f) => f.at === pos);
+    if (fi >= 0) {
+      setSelected(fi);
+      setPokeKey((n) => n + 1);
+      sfx.select(game.friends[fi].kind);
+      return;
+    }
+    if (hops.includes(pos)) {
+      move(selected, pos);
+      return;
+    }
+    setNudgeKey((n) => n + 1);
+    sfx.nudge();
+  };
+
+  const cell = (pos: number): CSSProperties => ({
+    left: `${((pos % puzzle.cols) * 100) / puzzle.cols}%`,
+    top: `${(Math.floor(pos / puzzle.cols) * 100) / puzzle.rows}%`,
+    width: `${100 / puzzle.cols}%`,
+    height: `${100 / puzzle.rows}%`,
+  });
+
+  const extra = (
+    <>
+      {reachable && !busy &&
+        Array.from({ length: puzzle.rows * puzzle.cols }, (_, pos) => {
+          if (puzzle.rocks[pos] || reachable.has(pos)) return null;
+          return <div key={`r${pos}`} className="reach no" style={cell(pos)} />;
+        })}
+      {puzzle.homes.map((h) => {
+        const filled = game.friends.some((f) => f.at === h);
+        return <div key={`h${h}`} className={`home-spot ${filled ? 'filled' : ''}`} style={cell(h)} />;
+      })}
+    </>
+  );
+
+  return (
+    <div className="screen play" style={{ background: CROSS_SKY }}>
+      <div className="topbar">
+        <button className="round-btn" onClick={() => { sfx.tap(); onHome(); }} aria-label="Home">
+          <HomeIcon className="icon" />
+        </button>
+        <div className="dots-row">{top}</div>
+        <button className="round-btn" onClick={again} aria-label="Start over">
+          <AgainIcon className="icon" />
+        </button>
+      </div>
+
+      <div className="board-wrap">
+        <Board
+          puzzle={puzzle}
+          state={game}
+          treat="berry"
+          selected={selected}
+          hops={hops}
+          hint={hint}
+          mood={mood}
+          gulp={null}
+          motion={motion}
+          round={round}
+          nudgeKey={nudgeKey}
+          pokeKey={pokeKey}
+          extra={extra}
+          onPress={press}
+          onRelease={() => {}}
+        />
+        {won && <Confetti />}
+      </div>
+
+      <div className="bottombar">
+        {showGo && (
+          <button
+            className="go-btn"
+            onClick={() => { sfx.tap(); if (onNext) onNext(); else again(); }}
+            aria-label={onNext ? 'Next puzzle' : 'Play again'}
+          >
+            {onNext ? <GoIcon className="icon-lg" /> : <AgainIcon className="icon-lg invert" />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
+import { PAWN_LEVELS, PAWN_SKY } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS, TIPTOE_SKY } from '../content/tiptoe.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
 import { doneCount, isWorldOpen, needsFriendIntro, type Progress } from '../core/progress.ts';
@@ -8,12 +9,13 @@ import { sfx, wakeAudio } from './sound.ts';
 import { today, type Today } from './today.ts';
 import { WORLD_LEVEL_IDS } from './useProgress.ts';
 
-export function Home({ progress, onOpenWorld, onBedtime, onToday, onTiptoe, onGrownUps }: {
+export function Home({ progress, onOpenWorld, onBedtime, onToday, onTiptoe, onPawn, onGrownUps }: {
   progress: Progress;
   onOpenWorld: (worldId: string) => void;
   onBedtime: () => void;
   onToday: () => void;
   onTiptoe: () => void;
+  onPawn: () => void;
   onGrownUps: () => void;
 }) {
   const open = WORLDS.map((_, wi) => isWorldOpen(progress, WORLD_LEVEL_IDS, wi));
@@ -37,6 +39,7 @@ export function Home({ progress, onOpenWorld, onBedtime, onToday, onTiptoe, onGr
         ))}
         <BedtimeBubble done={BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onBedtime} />
         <TiptoeBubble done={TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onTiptoe} />
+        <PawnBubble done={PAWN_LEVELS.filter((l) => progress.done.includes(l.id)).length} onOpen={onPawn} />
         <TodayBubble progress={progress} onOpen={onToday} />
       </div>
       <HoldButton onHeld={onGrownUps} />
@@ -90,6 +93,25 @@ function WorldBubble({ world, open, bounce, waking, done, onOpen }: {
       </div>
       <div className="bubble-stars">
         {world.levels.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
+      </div>
+    </button>
+  );
+}
+
+/** Walk the pawn home: the little pawn racing a gray pawn, under a gold home row. Always open. */
+function PawnBubble({ done, onOpen }: { done: number; onOpen: () => void }) {
+  return (
+    <button
+      className="world-bubble"
+      onClick={() => { wakeAudio(); sfx.select('pawn'); onOpen(); }}
+      aria-label="Pawn walk puzzles"
+    >
+      <div className="bubble pawn-race" style={{ background: PAWN_SKY }}>
+        <FriendArt kind="pawn" colors={GRUMPY} className="bubble-friend pair-0 racer-down" />
+        <FriendArt kind="pawn" className="bubble-friend pair-1 racer-up" />
+      </div>
+      <div className="bubble-stars">
+        {PAWN_LEVELS.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}
       </div>
     </button>
   );
