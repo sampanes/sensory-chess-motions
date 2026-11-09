@@ -4,9 +4,11 @@ import './index.css';
 import { App } from './ui/App.tsx';
 import { Maker } from './ui/Maker.tsx';
 import { registerOffline } from './ui/offline.ts';
+import { watchScreen } from './ui/screenMode.ts';
 import { SharedPuzzle } from './ui/SharedPuzzle.tsx';
 
 registerOffline();
+watchScreen();
 
 const params = new URLSearchParams(window.location.search);
 const shared = params.get('p');

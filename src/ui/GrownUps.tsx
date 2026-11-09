@@ -7,6 +7,7 @@ import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { PAWN_LEVELS } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
+import { autoLook, canFullScreen, loadScreenPref, saveScreenPref, toggleFullScreen, type ScreenPref } from './screenMode.ts';
 
 export function GrownUps({ progress, update, onClose }: {
   progress: Progress;
@@ -14,6 +15,7 @@ export function GrownUps({ progress, update, onClose }: {
   onClose: () => void;
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
+  const [screenPref, setScreenPref] = useState<ScreenPref>(loadScreenPref);
   const total = WORLDS.reduce((n, w) => n + w.levels.length, 0);
   const finished = WORLDS.reduce((n, w) => n + w.levels.filter((l) => progress.done.includes(l.id)).length, 0);
   const days = progress.done.filter((id) => id.startsWith('day-')).length;
@@ -119,9 +121,33 @@ export function GrownUps({ progress, update, onClose }: {
             <b>Keep them in the game</b> on Android: turn on Settings, Security, App pinning (sometimes called
             Screen pinning). Open recent apps, tap the Tiny Hops icon, then Pin.
           </li>
+          <li>
+            <b>On a touchscreen computer:</b> tap Full screen below to hide the browser's tabs and address bar (press
+            Esc, or swipe down from the top edge, to get them back). Or install it from the Edge or Chrome menu
+            ("Apps", then "Install this site as an app") so it opens in its own window.
+          </li>
         </ul>
 
         <div className="settings">
+          <div className="screen-pick" role="radiogroup" aria-label="Screen size">
+            <span>Screen:</span>
+            {([
+              ['auto', `Auto (${autoLook().screen === 'big' ? 'big screen' : 'phone'} here)`],
+              ['phone', 'Phone'],
+              ['big', 'Big screen'],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                role="radio"
+                aria-checked={screenPref === id}
+                className={`text-btn ${screenPref === id ? 'primary' : ''}`}
+                onClick={() => { saveScreenPref(id); setScreenPref(id); }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {canFullScreen() && <button className="text-btn" onClick={toggleFullScreen}>Full screen</button>}
           <label className="toggle">
             <input
               type="checkbox"

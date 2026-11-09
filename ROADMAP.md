@@ -51,7 +51,17 @@ the app. The game installs and plays offline.
 - The grown-up panel has tips for Guided Access and App pinning.
 - Treats were already told apart by shape, and hop spots are dots or rings, so no color-only cues.
 
-Still open: the play-tests on real devices and with real kids.
+**Status (2026-11-09):** phone or big screen. John's home touchscreen is a PC on a stand used like a
+giant tablet, so the game picks its look from the screen itself (`src/ui/screenMode.ts`): a short
+side of 700 css px or more (tablets, touchscreen PCs) gets the big-screen look, with the board up to
+220px a square and bigger buttons, stars and bubbles. Any landscape big screen puts the buttons beside the
+board so it fills the height, as a landscape phone already did. The grown-up panel can force Phone
+or Big screen (saved on that device), and has a Full screen button and a tip for touchscreen
+computers. Phones look exactly as before, except that a landscape phone no longer overflows with 15
+stars in one column (they wrap into two). Checked in headless Chrome at 1536x864 (1080p at 125%),
+1920x1080, an upright iPad and both phone orientations, including a puzzle played to a win with taps.
+
+Still open: the play-tests on real devices and with real kids, now including the big touchscreen.
 
 ## M2 -- Meet the friends
 

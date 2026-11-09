@@ -467,6 +467,7 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .settings { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 8px; }
 .toggle { display: flex; align-items: center; gap: 10px; }
 .toggle input { width: 22px; height: 22px; }
+.screen-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .text-btn {
   display: inline-block;
@@ -527,27 +528,79 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .maker-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .maker pre { background: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; }
 
-/* ==== Phone on its side ================================================
-   Stacked bars leave a 5x5 board about 30px squares on a landscape phone.
-   Put the buttons beside the board instead, so it can use the full height. */
+/* ==== Bars beside the board (data-layout="side", set in screenMode.ts) ====
+   Stacked bars leave a 5x5 board about 30px squares on a landscape phone, and
+   waste the height of any landscape big screen. Put the buttons beside the
+   board instead, so it can use the full height. */
 
-@media (orientation: landscape) and (max-height: 560px) {
-  .screen.play { flex-direction: row; }
-  .play .topbar {
-    flex-direction: column;
-    padding: 12px 4px 12px 12px;
-  }
-  .play .dots-row { flex-direction: column; flex-wrap: nowrap; }
-  .play .dot-star { width: 20px; height: 20px; }
-  .play .dot-star.current { width: 30px; height: 30px; }
-  .play .bottombar { width: 124px; height: auto; }
-  .play .tray { flex-direction: column; gap: 10px; }
-  .play .tray-slot { width: 84px; height: 84px; }
-  .play .tray-friend { width: 76px; height: 76px; }
-  .board {
-    --free-w: calc(100vw - 242px - env(safe-area-inset-left) - env(safe-area-inset-right));
-    --free-h: calc(var(--vh) - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  }
+[data-layout='side'] .screen.play { flex-direction: row; }
+[data-layout='side'] .play .topbar {
+  flex-direction: column;
+  padding: 12px 4px 12px 12px;
+}
+[data-layout='side'] .play .dots-row { flex-direction: column; flex-wrap: nowrap; }
+[data-layout='side'] .play .dot-star { width: 20px; height: 20px; }
+[data-layout='side'] .play .dot-star.current { width: 30px; height: 30px; }
+/* A landscape phone is too short for 15 stars in one column: two columns of 8. */
+[data-screen='phone'][data-layout='side'] .play .dots-row {
+  display: grid; grid-auto-flow: column; grid-template-rows: repeat(8, auto); place-items: center; gap: 1px 2px;
+}
+[data-layout='side'] .play .bottombar { width: 124px; height: auto; }
+[data-layout='side'] .play .tray { flex-direction: column; gap: 10px; }
+[data-layout='side'] .play .tray-slot { width: 84px; height: 84px; }
+[data-layout='side'] .play .tray-friend { width: 76px; height: 76px; }
+[data-layout='side'] .board {
+  --free-w: calc(100vw - 242px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  --free-h: calc(var(--vh) - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* ==== Big screens (data-screen="big": tablets, touchscreen PCs) ==========
+   The phone sizes cap a square at 116px and keep 58px buttons, which leaves a
+   big touchscreen mostly empty, with buttons a long reach into the corners.
+   Everything grows: the board fills the height, the buttons are bigger. */
+
+[data-screen='big'] .topbar { padding: 18px 24px 6px; gap: 16px; }
+[data-screen='big'] .round-btn, [data-screen='big'] .round-btn-spacer { width: 84px; height: 84px; }
+[data-screen='big'] .dot-star { width: 30px; height: 30px; }
+[data-screen='big'] .dot-star.current { width: 46px; height: 46px; }
+[data-screen='big'] .bottombar { height: 176px; }
+[data-screen='big'] .go-btn { width: 150px; height: 150px; }
+[data-screen='big'] .tray { gap: 20px; }
+[data-screen='big'] .tray-slot { width: 128px; height: 128px; }
+[data-screen='big'] .tray-friend { width: 116px; height: 116px; }
+[data-screen='big'] .board {
+  --free-w: calc(100vw - 60px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  --free-h: calc(var(--vh) - 330px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  --cell: min(calc(var(--free-w) / var(--cols)), calc(var(--free-h) / var(--rows)), 220px);
+  border-radius: 30px;
+}
+[data-screen='big'] .squares { border-radius: 22px; }
+
+[data-screen='big'][data-layout='side'] .play .topbar { padding: 20px 8px 20px 20px; }
+[data-screen='big'][data-layout='side'] .play .dot-star { width: 28px; height: 28px; }
+[data-screen='big'][data-layout='side'] .play .dot-star.current { width: 42px; height: 42px; }
+[data-screen='big'][data-layout='side'] .play .bottombar { width: 200px; }
+[data-screen='big'][data-layout='side'] .play .tray-slot { width: 128px; height: 128px; }
+[data-screen='big'][data-layout='side'] .play .tray-friend { width: 116px; height: 116px; }
+/* Room above the board: a tall friend on the top row (the grumpy king's crown) pokes out of its square. */
+[data-screen='big'][data-layout='side'] .board-wrap { padding: 40px 14px 20px; }
+[data-screen='big'][data-layout='side'] .board {
+  --free-w: calc(100vw - 360px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  --free-h: calc(var(--vh) - 92px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Home, the friends drawer and the puzzle pickers. */
+[data-screen='big'] .world-grid { max-width: 1500px; gap: 30px 28px; padding: 36px 28px 110px; }
+[data-screen='big'] .world-bubble { width: clamp(170px, min(30vh, 21vw), 300px); }
+[data-screen='big'] .drawer-grid .world-bubble { width: clamp(160px, min(27vh, 21vw), 280px); }
+[data-screen='big'] .drawer-grid { padding-top: 12px; padding-bottom: 36px; }
+[data-screen='big'] .mini-star { width: 24px; height: 24px; }
+[data-screen='big'] .gear { width: 66px; height: 66px; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); }
+[data-screen='big'] .level-grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 26px;
+  max-width: 1320px;
+  padding: 24px 28px 48px;
 }
 
 /* ==== Keyframes ======================================================== */
