@@ -34,7 +34,9 @@ A friend wakes up once half of the previous friend's puzzles are done (four at m
   hand, per friend), sound on/off, phone or big screen, "open everything", and reset.
 - **Puzzle maker**: [`?maker`](https://sampanes.github.io/sensory-chess-motions/?maker). Paint a board;
   it tells you instantly whether the puzzle can be finished and in how many moves. "Copy share link"
-  gives a `?p=...` link that opens straight into the puzzle.
+  gives a `?p=...` link that opens straight into the puzzle. It also has undo, "make it a bit
+  harder" (the solver adds one rock or treat), and a set of up to 12 puzzles that play in order
+  from one link, for a class or a grandparent's tablet.
 - **A card to print**: [`?card`](https://sampanes.github.io/sensory-chess-motions/?card). One page
   with each friend beside its real chess piece, how it moves, and how to set up a real board.
 - **Offline and home screen**: after one visit the game works without internet, and it can be

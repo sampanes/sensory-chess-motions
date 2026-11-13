@@ -274,7 +274,21 @@ puzzle played again alone counts from then on). The grown-up panel has a "What t
 (`src/core/knows.ts`): one row per friend, plus rows for attacked squares, captures, safe captures,
 pawn races and checkmate, each with "N of M alone" and a badge that turns to "Knows it" after 5
 different puzzles finished alone. Wins from before this was counted are simply not known until the
-puzzle is played again. Still open: the maker upgrades and classroom share.
+puzzle is played again.
+
+**Status (2026-11-12):** the maker upgrades and the classroom share are built, so every build item
+of this milestone is done:
+- **Undo** in the maker (one paint stroke is one step, up to 200 steps).
+- **Start from** any built-in puzzle, now grouped by friend and numbered easiest to hardest.
+- **Make it a bit harder** (`src/core/harder.ts`): the solver tries a rock or a treat on every empty
+  square and takes the smallest change that raises the difficulty score by at least half a point
+  while the puzzle still finishes in 10 moves or fewer, so pressing it again climbs gently. It says
+  what it added, and when nothing small is left.
+- **A set of puzzles in one link** (`?p=<code>_<code>_...`, up to 12; `decodeSet` in
+  `src/core/share.ts`): built in the maker with "Add this puzzle to the set", kept on that device
+  across reloads, played in order with a star per puzzle. This is the classroom share: nothing is
+  uploaded, the puzzles are in the link itself. Old single-puzzle links still open.
+Still open: a real parent or teacher trying it.
 
 Dropped (John, 2026-11-06): a "wind down after a set playtime" timer. It would guess wrong about
 when a kid is done more often than it helped.

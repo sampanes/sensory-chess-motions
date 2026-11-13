@@ -561,6 +561,21 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .verdict.bad { background: #fee2e2; color: #991b1b; }
 .maker-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .maker pre { background: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; }
+.maker-note { margin: -6px 0 12px; padding: 8px 12px; border-radius: 10px; background: #eff6ff; color: #1e3a8a; font-size: 14px; }
+.maker-set { margin: 4px 0 18px; padding: 12px 14px 2px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0; }
+.maker-set h2 { font-size: 17px; margin: 0 0 4px; }
+.maker-set .muted { margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
+.set-list { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0 0 12px; counter-reset: set; }
+.set-list li { display: grid; justify-items: center; gap: 4px; counter-increment: set; }
+.set-mini {
+  position: relative; width: 74px; height: 74px; padding: 0; border-radius: 12px; overflow: hidden;
+  border: 3px solid #fff; box-shadow: 0 2px 0 rgba(15, 23, 42, 0.15); background: #eaf7d8;
+}
+.set-mini::after {
+  content: counter(set); position: absolute; left: 3px; top: 2px; min-width: 18px; padding: 0 4px; border-radius: 999px;
+  background: #0f172a; color: #fff; font: 700 12px/18px system-ui, sans-serif;
+}
+.set-remove { font-size: 12px; color: #b91c1c; text-decoration: underline; }
 
 /* ==== Grown-up card to print (?card) =================================== */
 
