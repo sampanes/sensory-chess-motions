@@ -3,10 +3,11 @@
 // gold home spot answer "can this friend ever land here, however many hops?":
 // yes = a faint ghost of the friend waits in it; never = the spot goes gray
 // and dashed (the bishop's other color, a square the rocks cut off), and
-// shakes "no" when tapped.
+// shakes "no" when tapped. With "steps" on as well, a spot the friend can
+// reach also shows footprints: one for each hop that friend needs, alone.
 
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { crossHop, crossHops, crossStart, crossWon, mustParseCross, reachMap, solveCross } from '../core/cross.ts';
+import { crossHop, crossHops, crossStart, crossWon, mustParseCross, reachSteps, solveCross } from '../core/cross.ts';
 import type { GameState } from '../core/types.ts';
 import { AgainIcon, FriendArt, GoIcon, HomeIcon } from './art.tsx';
 import { Board, type FriendMood } from './Board.tsx';
@@ -19,10 +20,26 @@ export const CROSS_SKY = '#fae8ff';
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 
-export function CrossScreen({ grid, spots, eagerHint, top, onNext, onHome }: {
+/** More footprints than this would not fit in a square; no lab field needs more (tests/cross.test.ts). */
+const MAX_PRINTS = 8;
+
+/** A row of footprints (two rows from five up), one per hop. */
+function Prints({ count }: { count: number }) {
+  const n = Math.min(count, MAX_PRINTS);
+  const perRow = n <= 4 ? n : Math.ceil(n / 2);
+  return (
+    <div className="home-prints" style={{ '--per-row': perRow, '--print-w': n <= 4 ? '11%' : '9%' } as CSSProperties} aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => <span key={i} className="print" />)}
+    </div>
+  );
+}
+
+export function CrossScreen({ grid, spots, steps = false, eagerHint, top, onNext, onHome }: {
   grid: readonly string[];
   /** The home spots show whether the picked friend can ever land there. */
   spots: boolean;
+  /** A spot the picked friend can reach also shows one footprint per hop it needs alone. */
+  steps?: boolean;
   eagerHint?: boolean;
   top?: ReactNode;
   onNext?: () => void;
@@ -50,7 +67,7 @@ export function CrossScreen({ grid, spots, eagerHint, top, onNext, onHome }: {
   );
   const picked = game.friends[selected];
   const reachable = useMemo(
-    () => (spots && picked && !won ? reachMap(puzzle, picked.kind, picked.at) : null),
+    () => (spots && picked && !won ? reachSteps(puzzle, picked.kind, picked.at) : null),
     [spots, picked, won, puzzle],
   );
 
@@ -165,6 +182,7 @@ export function CrossScreen({ grid, spots, eagerHint, top, onNext, onHome }: {
             style={cell(h)}
           >
             {say === 'yes' && <FriendArt key={`${selected}${picked.kind}`} kind={picked.kind} mood="sleepy" className="home-ghost" />}
+            {say === 'yes' && steps && <Prints count={reachable!.get(h) ?? 0} />}
           </div>
         );
       })}

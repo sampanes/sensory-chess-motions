@@ -210,8 +210,13 @@ friend stands on a gold home square). Fields teach the rook's lane, the bishop's
 hedge, then pairs and the whole team sharing one gap; in field 7 the pawn earns its queen by
 promotion (the plan's proposed default). Variants: talking spots (John's idea: with a friend picked,
 each gold spot it can ever reach holds its faint ghost, and one it never can goes gray and dashed;
-this replaced a hatch over every never-reachable square, which read as "not in one hop") or plain. Not built yet: footprints, the anti-queen knight
-puzzles.
+this replaced a hatch over every never-reachable square, which read as "not in one hop") or plain.
+
+**Status (2026-11-12):** footprints are built as a third crossing variant in the lab ("steps"): a
+gold spot the picked friend can reach also shows one footprint per hop that friend needs alone, so
+picking the rook and then the knight shows who is fast across open ground. The anti-queen knight
+idea is taught in tiptoe (tiptoe 5 and shoo 3) rather than as crossing fields. Waiting on John's
+verdict before the crossing gets a home bubble.
 
 **Status (2026-11-02):** tuck the king into bed is built as "bedtime puzzles": 8 solver-checked
 checkmates, drag or tap-to-place from a tray, red preview of watched squares, the king shoos an

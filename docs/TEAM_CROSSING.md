@@ -1,7 +1,7 @@
 # Cross with a team: every friend is good at something (plan)
 
-Status: **lab prototype (2026-11-06)**, `#/lab`: 8 fields, talking home spots, queen by promotion. Footprints
-and the anti-queen puzzles are not built. For older kids (about 8), well after the toddler worlds. Listed
+Status: **lab prototype (2026-11-12)**, `#/lab`: 8 fields, talking home spots, footprints as a
+third variant, queen by promotion. The anti-queen idea is taught in tiptoe instead (see below). For older kids (about 8), well after the toddler worlds. Listed
 in the M4 table of `ROADMAP.md` next to the checkmate mode (`docs/CHECKMATE_MODE.md`).
 
 ## The idea
@@ -30,9 +30,11 @@ are **good at different things**.
   bishop that is the other color, shown instead of told. (First built as a hatch over every
   never-reachable square; John read the hatch as "can't reach in one hop", and for the knight the
   never-squares that rocks cut off made no visible sense, so the answer moved onto the spots.)
-- **Race footprints.** For one stretch of field, show how many hops each friend needs to cross
-  it, as a row of footprints per friend (rook 2, knight 4, bishop "can't"). The solver already
-  computes this: it is the shortest route for that friend alone.
+- **Race footprints (built as the lab variant "steps").** With a friend picked, each gold spot it
+  can reach shows one footprint per hop that friend needs to get there alone (`reachSteps` in
+  `src/core/cross.ts`): in field 8 the rook is 2 or 3 hops from every home, the knight 3, 6 and 8,
+  and the bishop's wrong-color spot says "no". Picking each friend in turn is the comparison. Up to
+  8 prints fit in a spot, and a test checks no lab field needs more.
 - **Team order.** Some lanes are blocked by a teammate until it moves (friends block each other
   in real chess too), so the order of moves matters. That is the cooperation, and it stays
   chess-true: nobody carries anybody.
@@ -62,6 +64,11 @@ knight forks.
 
 As a puzzle: "put the knight somewhere the queen can't touch, but next to her", solved by landing
 in a hole the reach map leaves dark.
+
+Where it lives now (2026-11-12): in the tiptoe puzzles, where the queen is a sleepy guard and the
+holes are the only safe squares. Tiptoe 5 puts treats in two of her holes and the knight shoos her
+from a third; shoo 3 does the same to a rook guard ("a rook guard never sees an L-jump coming").
+A crossing has no guards, so the idea has no natural field of its own here.
 
 ## Building it
 

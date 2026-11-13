@@ -61,10 +61,10 @@ function parseHash(hash: string): Route {
     const li = Math.min(Math.max(Number(setup[1] ?? 1) - 1, 0), LAB_SETUP_LEVELS.length - 1);
     return { screen: 'labSetup', li, variant: setup[2] === 'copy' ? 'copy' : 'ghosts' };
   }
-  const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|spots|reach))?$/.exec(hash);
+  const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|spots|steps|reach))?$/.exec(hash);
   if (lab) {
     const li = Math.min(Math.max(Number(lab[1] ?? 1) - 1, 0), LAB_LEVELS.length - 1);
-    return { screen: 'lab', li, variant: lab[2] === 'plain' ? 'plain' : 'spots' };
+    return { screen: 'lab', li, variant: lab[2] === 'plain' ? 'plain' : lab[2] === 'steps' ? 'steps' : 'spots' };
   }
   const bed = /^#\/bed(?:\/(\d+))?$/.exec(hash);
   if (bed) {

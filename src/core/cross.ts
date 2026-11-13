@@ -82,20 +82,30 @@ export { applyHop as crossHop, hopsFor as crossHops };
  * includes the far side of a rock hedge.
  */
 export function reachMap(p: Puzzle, kind: Kind, from: number): Set<number> {
-  const seen = new Set([from]);
+  return new Set(reachSteps(p, kind, from).keys());
+}
+
+/**
+ * The same search, keeping count: the fewest hops this friend needs, alone,
+ * to each square it can reach (its own square is 0). These are the
+ * footprints: the rook is 2 hops from almost anywhere on open ground, the
+ * knight takes many small ones, and the bishop's other color is not in the map.
+ */
+export function reachSteps(p: Puzzle, kind: Kind, from: number): Map<number, number> {
+  const steps = new Map([[from, 0]]);
   let frontier = [{ kind, at: from }];
-  while (frontier.length) {
+  for (let n = 1; frontier.length; n++) {
     const next: Friend[] = [];
     for (const f of frontier) {
       const s: GameState = { friends: [f], left: 0 };
       for (const to of hopsFor({ ...p, treats: [] }, s, 0)) {
         const after = applyHop({ ...p, treats: [] }, s, { friend: 0, to }).state.friends[0];
-        if (seen.has(to)) continue;
-        seen.add(to);
+        if (steps.has(to)) continue;
+        steps.set(to, n);
         next.push(after);
       }
     }
     frontier = next;
   }
-  return seen;
+  return steps;
 }

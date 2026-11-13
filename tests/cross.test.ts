@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { CROSS_LEVELS } from '../src/content/crossing.ts';
-import { crossHop, crossStart, crossWon, mustParseCross, parseCross, reachMap, solveCross } from '../src/core/cross.ts';
+import { crossHop, crossStart, crossWon, mustParseCross, parseCross, reachMap, reachSteps, solveCross } from '../src/core/cross.ts';
 
 test('a crossing is won when every friend stands on a home square', () => {
   const p = mustParseCross(['o..', '...', 'R..']);
@@ -21,6 +21,31 @@ test('the reach map: the bishop never reaches the other color, the knight jumps 
   }
   const knight = reachMap(field, 'knight', field.friends[1].at);
   assert.ok([...knight].some((pos) => pos < 10), 'the knight lands past the hedge');
+});
+
+test('footprints: the fewest hops each friend needs alone', () => {
+  const open = mustParseCross(['....o', '.....', '.....', '.....', 'R....']);
+  const at = (r: number, c: number) => r * 5 + c;
+  const rook = reachSteps(open, 'rook', at(4, 0));
+  assert.equal(rook.get(at(4, 0)), 0, 'where it stands');
+  assert.equal(rook.get(at(0, 0)), 1, 'straight up its lane');
+  assert.equal(rook.get(at(0, 4)), 2, 'a corner turn');
+  // The bishop gets to the far corner in one slide; the knight and the king need many small hops.
+  assert.equal(reachSteps(open, 'bishop', at(4, 0)).get(at(0, 4)), 1);
+  assert.equal(reachSteps(open, 'knight', at(4, 0)).get(at(0, 4)), 4);
+  assert.equal(reachSteps(open, 'king', at(4, 0)).get(at(0, 4)), 4);
+  // What a friend can never reach has no footprints at all, and the map agrees with reachMap.
+  const bishop = reachSteps(open, 'bishop', at(4, 0));
+  assert.equal(bishop.get(at(0, 3)), undefined, 'the other color');
+  assert.deepEqual([...bishop.keys()].sort((a, b) => a - b), [...reachMap(open, 'bishop', at(4, 0))].sort((a, b) => a - b));
+  // In every lab field, each friend is at most 8 hops from a home it can reach (that many prints fit).
+  for (const l of CROSS_LEVELS) {
+    const p = mustParseCross(l.grid);
+    for (const f of p.friends) {
+      const steps = reachSteps(p, f.kind, f.at);
+      for (const h of p.homes) if (steps.has(h)) assert.ok(steps.get(h)! <= 8, `${l.id}: ${f.kind} is ${steps.get(h)} hops from home`);
+    }
+  }
 });
 
 test('crossing grids are checked', () => {

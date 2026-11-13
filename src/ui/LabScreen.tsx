@@ -4,7 +4,8 @@
 //
 // Now in the lab:
 //   crossing  (#/lab)        cross with a team. Variants: home spots that say whether
-//                            the picked friend can ever land there, or plain.
+//                            the picked friend can ever land there, the same plus
+//                            footprints (how many hops it needs alone), or plain.
 //   set up    (#/lab/setup)  put every friend on its starting square of a real board.
 //                            Variants: ghosts on the squares to fill, or copy the far side.
 // (Tiptoe puzzles and the pawn walk graduated to their own home bubbles.)
@@ -14,11 +15,12 @@ import { SETUP_LEVELS, SETUP_SKY } from '../content/setup.ts';
 import { CrossScreen } from './CrossScreen.tsx';
 import { SetupScreen } from './SetupScreen.tsx';
 
-export type LabVariant = 'plain' | 'spots';
+export type LabVariant = 'plain' | 'spots' | 'steps';
 export type SetupVariant = 'ghosts' | 'copy';
 
 const VARIANTS: { id: LabVariant; label: string }[] = [
   { id: 'spots', label: 'spots' },
+  { id: 'steps', label: 'steps' },
   { id: 'plain', label: 'plain' },
 ];
 
@@ -66,7 +68,8 @@ export function LabScreen({ li, variant, go }: { li: number; variant: LabVariant
     <CrossScreen
       key={`${level.id}-${variant}`}
       grid={level.grid}
-      spots={variant === 'spots'}
+      spots={variant !== 'plain'}
+      steps={variant === 'steps'}
       eagerHint={li === 0}
       top={<Strip proto="crossing" li={li} n={n} variant={variant} variants={VARIANTS} go={go} />}
       onNext={() => go((li + 1) % n, variant)}
