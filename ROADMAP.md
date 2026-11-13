@@ -245,6 +245,17 @@ a table of game words against chess words (shooing a guard = capturing, tucking 
 checkmate). It also says what the game does not teach yet. The starting squares are tested (rooks
 in the corners, a light square on the right, each queen on her own color).
 
+**Status (2026-11-12):** "set up the board" is in the lab as a second prototype (`#/lab/setup`, beside
+the crossing; the grown-up strip switches between them). A real 8x8 board with the gray side already
+set up and asleep at the top; the friends start mixed up in the middle and each goes on a starting
+square of its kind (either rook may take either corner). Seven levels build the position from the
+corners in: rooks, knights, bishops, queen and king (the queen has exactly one square), pawns, the
+whole back row, everybody. A friend put on a wrong home square just hops back. Variants to compare:
+ghosts (a faint friend waits on every square still to fill, and the picked friend's squares get a
+ring) or copy (nothing shown: copy the sleeping side). Rules in `src/core/setup.ts`, levels in
+`src/content/setup.ts`, screen `src/ui/SetupScreen.tsx`. Waiting on John's poke before it gets a
+home bubble. Not built: board reveal (grass to checkerboard) and friends dressing up as pieces.
+
 ## M6 -- Grown-up tools
 
 This is for parents and teachers. All of it lives behind the gear-hold gate and stays on the device.

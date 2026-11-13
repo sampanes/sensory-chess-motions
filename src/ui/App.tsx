@@ -10,6 +10,7 @@
 //   #/tiptoe/2      tiptoe puzzle 2
 //   #/pawn          walk the pawn home (always open), #/pawn/2 = puzzle 2
 //   #/lab           the lab: prototypes of new ideas, now the team crossing (#/lab/3/spots = puzzle 3, a variant)
+//   #/lab/setup     the lab's second prototype: set up a real board (#/lab/setup/4/copy = puzzle 4, a variant)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -22,7 +23,7 @@ import { BedtimeScreen } from './BedtimeScreen.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { FriendsDrawer, Home } from './Home.tsx';
-import { LAB_LEVELS, LabScreen } from './LabScreen.tsx';
+import { LAB_LEVELS, LAB_SETUP_LEVELS, LabScreen, LabSetupScreen } from './LabScreen.tsx';
 import { TiptoeScreen } from './TiptoeScreen.tsx';
 import { TiptoeWorld } from './TiptoeWorld.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
@@ -30,7 +31,7 @@ import { PlayScreen } from './PlayScreen.tsx';
 import { today, TODAY_SKY } from './today.ts';
 import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
-import type { LabVariant } from './LabScreen.tsx';
+import type { LabVariant, SetupVariant } from './LabScreen.tsx';
 import { SNEAK_MODES, PAWN_MODE, type SneakMode } from './sneakModes.tsx';
 
 type Route =
@@ -43,7 +44,8 @@ type Route =
   | { screen: 'today' }
   | { screen: 'sneakWorld'; mode: SneakMode }
   | { screen: 'sneak'; mode: SneakMode; li: number }
-  | { screen: 'lab'; li: number; variant: LabVariant };
+  | { screen: 'lab'; li: number; variant: LabVariant }
+  | { screen: 'labSetup'; li: number; variant: SetupVariant };
 
 function parseHash(hash: string): Route {
   if (hash === '#/today') return { screen: 'today' };
@@ -53,6 +55,11 @@ function parseHash(hash: string): Route {
     const mode = SNEAK_MODES[sneak[1] as 'tiptoe' | 'pawn'];
     const li = sneak[2] ? Number(sneak[2]) - 1 : -1;
     return li >= 0 && li < mode.levels.length ? { screen: 'sneak', mode, li } : { screen: 'sneakWorld', mode };
+  }
+  const setup = /^#\/lab\/setup(?:\/(\d+))?(?:\/(ghosts|copy))?$/.exec(hash);
+  if (setup) {
+    const li = Math.min(Math.max(Number(setup[1] ?? 1) - 1, 0), LAB_SETUP_LEVELS.length - 1);
+    return { screen: 'labSetup', li, variant: setup[2] === 'copy' ? 'copy' : 'ghosts' };
   }
   const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|spots|reach))?$/.exec(hash);
   if (lab) {
@@ -116,6 +123,10 @@ export function App() {
 
   if (route.screen === 'lab') {
     return <LabScreen li={route.li} variant={route.variant} go={(li, v) => go(`#/lab/${li + 1}/${v}`, true)} />;
+  }
+
+  if (route.screen === 'labSetup') {
+    return <LabSetupScreen li={route.li} variant={route.variant} go={(li, v) => go(`#/lab/setup/${li + 1}/${v}`, true)} />;
   }
 
   if (route.screen === 'sneakWorld') {

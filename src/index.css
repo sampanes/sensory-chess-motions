@@ -812,6 +812,10 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   font: inherit;
 }
 .lab-strip button.on { background: #65a30d; color: #fff; }
+
+/* Set up the board (lab): a faint sleepy friend waits on every square still to fill. */
+.setup-ghost { position: absolute; z-index: 0; pointer-events: none; opacity: 0.28; filter: grayscale(0.35); }
+.setup-ghost > svg { transform: scale(1.05); transform-origin: 50% 80%; }
 .lab-gap { width: 6px; }
 
 .guard { position: absolute; z-index: 1; pointer-events: none; }
