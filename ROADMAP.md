@@ -328,5 +328,6 @@ meaning on their own" listen-through.
 
 - Every milestone starts and ends with `npm test` green.
 - Do a real-toddler play-test before calling a milestone done. Adult play-testing does not count.
+  What to watch for is in `docs/PLAY_TEST.md`.
 - Keep new mechanics in `src/core` as pure, tested code before they get any art.
 - Cut scope before breaking a rule from "Rules that never change".

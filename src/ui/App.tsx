@@ -145,7 +145,8 @@ export function App() {
         rules={mode.rules(level)}
         sky={mode.sky}
         peek="never"
-        eagerHint={li === 0}
+        // The first puzzle of a set brings a new idea, so the hint hand comes sooner there.
+        eagerHint={mode.levels.findIndex((l) => l.set === level.set) === li}
         top={mode.levels.map((l, i) => (l.set !== level.set ? null : (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
         )))}
