@@ -36,6 +36,8 @@ export interface BoardProps {
   extra?: ReactNode;
   /** Hop targets that get a ring like a treat (something to boop there). */
   rings?: readonly number[];
+  /** Every friend drawn in these colors instead of its own (dressed up as a real piece). */
+  dress?: { fill: string; dark: string } | null;
   onPress: (pos: number) => void;
   onRelease: (pos: number) => void;
 }
@@ -170,6 +172,7 @@ export function Board(props: BoardProps) {
             cols={cols}
             style={cellStyle(f.at)}
             selected={i === selected && state.friends.length > 1}
+            dress={props.dress ?? null}
             mood={mood}
             rewind={props.motion === 'rewind'}
             poke={i === selected ? props.pokeKey : 0}
@@ -192,6 +195,7 @@ function FriendToken(props: {
   cols: number;
   style: CSSProperties;
   selected: boolean;
+  dress: { fill: string; dark: string } | null;
   mood: FriendMood;
   rewind: boolean;
   poke: number;
@@ -235,7 +239,7 @@ function FriendToken(props: {
     <div ref={outer} className="friend" style={props.style}>
       {props.selected && <div className="friend-glow" style={{ background: PALETTE[shownKind].fill }} />}
       <div key={`${props.poke}-${moodClass}`} className={`friend-body ${moodClass} ${props.poke ? 'poke' : ''}`}>
-        <FriendArt kind={shownKind} mood={props.mood === 'dance' ? 'wow' : 'happy'} className="fill" />
+        <FriendArt kind={shownKind} mood={props.mood === 'dance' ? 'wow' : 'happy'} colors={props.dress ?? undefined} className="fill" />
       </div>
       {sparkle > 0 && <Sparkles key={sparkle} delay={0} big />}
     </div>

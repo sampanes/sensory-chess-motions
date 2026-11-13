@@ -27,6 +27,14 @@ export const MEADOW: BoardTheme = { id: 'meadow', light: '#eaf7d8', dark: '#bfe6
  */
 export const HIGH_CONTRAST: BoardTheme = { id: 'contrast', light: '#ffffff', dark: '#9fb0c8', rim: '#0f172a', rimDark: '#000000', sky: '' };
 
+/**
+ * A real wooden chessboard, and the ivory of a real set's light pieces. The
+ * set-up puzzle ends on these: the meadow turns to wood and the friends dress
+ * up as the pieces they are (keeping their faces). Not a surprise theme.
+ */
+export const WOOD: BoardTheme = { id: 'wood', light: '#f0d9b5', dark: '#b58863', rim: '#7a5230', rimDark: '#553820', sky: '' };
+export const IVORY = { fill: '#fffdf3', dark: '#3f3a36' } as const;
+
 export const BOARD_THEMES: readonly BoardTheme[] = [
   MEADOW,
   { id: 'beach', light: '#fdf4dc', dark: '#f1dca4', rim: '#d9b26a', rimDark: '#b48c45', sky: '#dff3fb' },

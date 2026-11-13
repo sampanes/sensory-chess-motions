@@ -9,8 +9,13 @@
 //   copy    nothing is shown: look at the sleeping side and copy it
 // Either way a friend put on a wrong home square just hops back, and after a
 // quiet spell the hint hand shows a right one.
+//
+// The reveal: when the whole side of sixteen stands (not just a few of them),
+// the meadow turns into a wooden chessboard and the friends turn ivory,
+// keeping their faces. The kid is looking at a real chess set.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { IVORY, WOOD } from '../content/looks.ts';
 import { BOARD, makeSetup, setupDrop, setupStart, setupTargets, setupWon, type SetupLevel, type SetupState } from '../core/setup.ts';
 import type { GameState, Puzzle } from '../core/types.ts';
 import { AgainIcon, FriendArt, GoIcon, GRUMPY, HomeIcon } from './art.tsx';
@@ -23,6 +28,8 @@ import { useTimers } from './timers.ts';
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const BOUNCE_MS = 520;
+/** After the win, the dance goes on this long before the reveal. */
+const REVEAL_MS = 1400;
 
 const EMPTY_BOARD: Puzzle = { rows: BOARD, cols: BOARD, rocks: Array(BOARD * BOARD).fill(false), treats: [], friends: [] };
 
@@ -50,6 +57,9 @@ export function SetupScreen({ level, seed, ghosts, sky, eagerHint, top, onNext, 
   const [busy, setBusy] = useState(false);
   const [won, setWon] = useState(false);
   const [showGo, setShowGo] = useState(false);
+  /** The whole side stands: wooden board, ivory friends. */
+  const [revealed, setRevealed] = useState(false);
+  const wholeSide = puzzle.loose.length + puzzle.fixed.length === 2 * BOARD;
   const [mood, setMood] = useState<FriendMood>('idle');
   const [motion, setMotion] = useState<'normal' | 'rewind'>('normal');
   const [round, setRound] = useState(0);
@@ -113,7 +123,8 @@ export function SetupScreen({ level, seed, ghosts, sky, eagerHint, top, onNext, 
         setWon(true);
         setMood('dance');
         sfx.win();
-        later(() => setShowGo(true), 1100);
+        if (wholeSide) later(() => { setRevealed(true); setMood('idle'); sfx.promote(); }, REVEAL_MS);
+        later(() => setShowGo(true), wholeSide ? REVEAL_MS + 900 : 1100);
         return;
       }
       // Pick the next friend still waiting, so there is always someone to place.
@@ -127,6 +138,7 @@ export function SetupScreen({ level, seed, ghosts, sky, eagerHint, top, onNext, 
     if (busy && !won) return;
     setWon(false);
     setShowGo(false);
+    setRevealed(false);
     setMood('idle');
     setMotion('rewind');
     setGame(setupStart(puzzle));
@@ -217,6 +229,8 @@ export function SetupScreen({ level, seed, ghosts, sky, eagerHint, top, onNext, 
           puzzle={EMPTY_BOARD}
           state={state}
           treat="berry"
+          theme={revealed ? WOOD : undefined}
+          dress={revealed ? IVORY : null}
           selected={won ? null : selected}
           hops={ghosts ? targets : []}
           rings={targets}

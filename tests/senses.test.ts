@@ -1,7 +1,7 @@
 // More senses: the saved toggles, and the high-contrast board's colors.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { BOARD_THEMES, HIGH_CONTRAST, MEADOW } from '../src/content/looks.ts';
+import { BOARD_THEMES, HIGH_CONTRAST, IVORY, MEADOW, WOOD } from '../src/content/looks.ts';
 import { NO_SENSES, parseSenses } from '../src/ui/senses.ts';
 
 test('both toggles are off unless they were saved as on', () => {
@@ -33,4 +33,12 @@ test('the high-contrast board really has more contrast than the meadow', () => {
   assert.ok(contrast(HIGH_CONTRAST.rim, HIGH_CONTRAST.dark) >= 7);
   // It is a grown-up choice, never one of the surprise themes a replay rolls.
   assert.ok(!BOARD_THEMES.includes(HIGH_CONTRAST));
+});
+
+test('the wooden board and ivory pieces of the set-up reveal read clearly', () => {
+  assert.ok(!BOARD_THEMES.includes(WOOD), 'only the reveal uses it');
+  // Ivory stands out from the dark wood, and its outline from the light wood.
+  assert.ok(contrast(IVORY.fill, WOOD.dark) >= 2.5, String(contrast(IVORY.fill, WOOD.dark)));
+  assert.ok(contrast(IVORY.dark, WOOD.light) >= 7, String(contrast(IVORY.dark, WOOD.light)));
+  assert.ok(contrast(IVORY.dark, WOOD.dark) >= 3, String(contrast(IVORY.dark, WOOD.dark)));
 });

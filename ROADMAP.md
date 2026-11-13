@@ -259,7 +259,14 @@ whole back row, everybody. A friend put on a wrong home square just hops back. V
 ghosts (a faint friend waits on every square still to fill, and the picked friend's squares get a
 ring) or copy (nothing shown: copy the sleeping side). Rules in `src/core/setup.ts`, levels in
 `src/content/setup.ts`, screen `src/ui/SetupScreen.tsx`. Waiting on John's poke before it gets a
-home bubble. Not built: board reveal (grass to checkerboard) and friends dressing up as pieces.
+home bubble.
+
+**Status (2026-11-12):** the board reveal and "friends into pieces" have a first form, as the end
+of the set-up puzzle. When the whole side of sixteen stands (levels 5 to 7), the meadow fades to a
+wooden chessboard and the friends turn ivory, keeping their faces, opposite the silver side, which
+wakes up: the kid is looking at a real chess set (`WOOD` and `IVORY` in `src/content/looks.ts`).
+Not built: 8x8 boards in the friend worlds, and Staunton shapes (the friends keep their own
+shapes; only their colors change).
 
 ## M6 -- Grown-up tools
 
