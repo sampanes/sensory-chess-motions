@@ -12,6 +12,20 @@ export interface SneakLevel {
   id: string;
   grid: readonly string[];
   race?: boolean;
+  /** Levels with the same set are shown together (tiptoe: sneak, shoo, safe). */
+  set?: string;
+}
+
+/** The levels of a mode, split into its sets in order (one group when a mode has no sets). */
+export function levelSets(levels: readonly SneakLevel[]): { set: string; levels: { level: SneakLevel; index: number }[] }[] {
+  const out: { set: string; levels: { level: SneakLevel; index: number }[] }[] = [];
+  levels.forEach((level, index) => {
+    const name = level.set ?? '';
+    const last = out[out.length - 1];
+    if (last && last.set === name) last.levels.push({ level, index });
+    else out.push({ set: name, levels: [{ level, index }] });
+  });
+  return out;
 }
 
 export interface SneakMode {

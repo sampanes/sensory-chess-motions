@@ -79,7 +79,9 @@ export function GrownUps({ progress, update, onClose }: {
               Tiptoe puzzles (the green bubble, always open): sneak past sleepy gray guards to the treats. A guard
               watches the squares it attacks in real chess. Stop on one and it wakes up, shows what it watches, and
               your friend scurries back. Land right on a guard from a square it does not watch to send it home (a
-              capture). Finished {TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} of{' '}
+              capture). There are three sets of eight: sneaking past; shooing a guard that is in the way; and
+              staying safe, where a guard that another guard watches is protected, so the protector has to go
+              home first. Finished {TIPTOE_LEVELS.filter((l) => progress.done.includes(l.id)).length} of{' '}
               {TIPTOE_LEVELS.length}.
             </span>
           </li>

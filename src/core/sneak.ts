@@ -303,8 +303,11 @@ function keyOf(s: SneakState): string {
 
 export type SneakSolve = { status: 'solved'; moves: SneakMove[] } | { status: 'stuck' } | { status: 'too-big' };
 
-/** Fewest hops that finish without waking anyone (or losing a race). */
-export function solveSneak(p: SneakPuzzle, start: SneakState, limit = 200_000): SneakSolve {
+/**
+ * Fewest hops that finish without waking anyone (or losing a race).
+ * With boops off, no guard may be sent home: tests use it to prove a capture is needed.
+ */
+export function solveSneak(p: SneakPuzzle, start: SneakState, limit = 200_000, boops = true): SneakSolve {
   if (sneakWon(p, start)) return { status: 'solved', moves: [] };
   const parent = new Map<string, { prev: string; move: SneakMove }>();
   const startKey = keyOf(start);
@@ -317,6 +320,7 @@ export function solveSneak(p: SneakPuzzle, start: SneakState, limit = 200_000): 
         for (const to of sneakHops(p, s, fi)) {
           const res = sneakHop(p, s, { friend: fi, to });
           if (res.kind !== 'ok') continue;
+          if (!boops && res.booped >= 0) continue;
           const k = keyOf(res.state);
           if (seen.has(k)) continue;
           seen.add(k);

@@ -1,11 +1,12 @@
 // Picker for a sneak mode (tiptoe puzzles, the pawn walk). Every puzzle is
 // open from the start: new modes never wait for the friend worlds to be
-// finished.
+// finished. A mode with sets (tiptoe: sneak, shoo, stay safe) shows each set
+// as its own block of tiles.
 
 import type { Progress } from '../core/progress.ts';
 import { mustParseSneak, type SneakRules } from '../core/sneak.ts';
 import { GRUMPY, HomeIcon, PALETTE, StarIcon } from './art.tsx';
-import type { SneakMode } from './sneakModes.tsx';
+import { levelSets, type SneakMode } from './sneakModes.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 
 export function TiptoeWorld({ mode, progress, onPlay, onHome }: {
@@ -24,22 +25,24 @@ export function TiptoeWorld({ mode, progress, onPlay, onHome }: {
         <div className="world-hero">{mode.hero('hero-friend')}</div>
         <div className="round-btn-spacer" />
       </div>
-      <div className="level-grid">
-        {mode.levels.map((l, li) => {
-          const done = progress.done.includes(l.id);
-          return (
-            <button
-              key={l.id}
-              className={`level-tile ${li === next ? 'suggest' : ''}`}
-              onClick={() => { wakeAudio(); sfx.tap(); onPlay(li); }}
-              aria-label={`${mode.name} ${li + 1}${done ? ', done' : ''}`}
-            >
-              <TiptoeMini grid={l.grid} rules={mode.rules(l)} />
-              {done && <StarIcon className="tile-star" />}
-            </button>
-          );
-        })}
-      </div>
+      {levelSets(mode.levels).map((group) => (
+        <div key={group.set} className="level-grid level-set">
+          {group.levels.map(({ level: l, index: li }) => {
+            const done = progress.done.includes(l.id);
+            return (
+              <button
+                key={l.id}
+                className={`level-tile ${li === next ? 'suggest' : ''}`}
+                onClick={() => { wakeAudio(); sfx.tap(); onPlay(li); }}
+                aria-label={`${mode.name} ${li + 1}${done ? ', done' : ''}`}
+              >
+                <TiptoeMini grid={l.grid} rules={mode.rules(l)} />
+                {done && <StarIcon className="tile-star" />}
+              </button>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }

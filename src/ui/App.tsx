@@ -135,9 +135,9 @@ export function App() {
         sky={mode.sky}
         peek="never"
         eagerHint={li === 0}
-        top={mode.levels.map((l, i) => (
+        top={mode.levels.map((l, i) => (l.set !== level.set ? null : (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
-        ))}
+        )))}
         onWin={() => update((p) => markDone(p, level.id))}
         onNext={() => go(last ? `#/${mode.path}` : `#/${mode.path}/${li + 2}`, true)}
         onHome={() => go(`#/${mode.path}`)}

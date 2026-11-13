@@ -176,6 +176,21 @@ real chess. Landing on one wakes the guard: he shows what he watches and the fri
 Landing ON a guard from a square he does not watch boops him home (a capture), unless another guard
 watches him.
 
+**Status (2026-11-12):** the captures rows of the table are built, folded into tiptoe (same engine,
+same green bubble, now 24 puzzles in three sets of eight, shown as three blocks in the picker):
+- **Shoo** (captures, ids `shoo-1`..`8`): the treat cannot be had until a guard is sent home. One
+  puzzle per way of taking: the rook down its lane, the bishop along its diagonal, the knight's
+  jump onto a rook guard, the king walking up to a knight guard, the pawn eating diagonally (and
+  becoming a queen), then two and three captures. `tests/tiptoe-sets.test.ts` proves each one is
+  stuck without a capture and that no capture in the set is a trap.
+- **Stay safe** (which captures are safe, ids `safe-1`..`8`): a guard that another guard watches is
+  protected, so the protector goes home first: a bishop behind a pawn, a pawn chain taken from the
+  back, chains of three, and a rook-and-bishop team. The tests prove a capture is needed and that an
+  unsafe capture is on offer at the start (or one hop later), so the lesson cannot be missed; they
+  also prove every guard matters and that a team puzzle needs both friends.
+Candidates came from a random search (kept only when a capture is required) and were then cut down
+to clean boards by hand. Still open for these two: kid testing.
+
 **Status (2026-11-06):** walk the pawn home graduated from the lab to its own always-open home
 bubble (the blue one, `#/pawn`), 8 puzzles in
 `src/content/pawnwalk.ts`, same engine as tiptoe (`src/core/sneak.ts`, goal `home`). The pawn
