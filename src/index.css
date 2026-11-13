@@ -484,6 +484,20 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .lesson-faces { flex: none; display: flex; width: 72px; justify-content: center; }
 .lesson-friend { width: 40px; height: 40px; }
 
+/* What they know: one row per friend or idea. */
+.knows { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 15px; }
+.knows th { text-align: left; font-weight: 600; }
+.knows td, .knows th { padding: 5px 8px 5px 0; vertical-align: middle; }
+.knows td { white-space: nowrap; }
+.knows tr + tr td, .knows tr + tr th { border-top: 1px solid #e2e8f0; }
+.know-faces { white-space: nowrap; width: 1%; }
+.know-friend { width: 30px; height: 30px; vertical-align: middle; }
+.know-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.know-badge.k-not-yet { background: #e2e8f0; color: #475569; }
+.know-badge.k-learning { background: #fef3c7; color: #92400e; }
+.know-badge.k-knows { background: #dcfce7; color: #166534; }
+@media (max-width: 520px) { .knows td.muted { display: none; } }
+
 .settings { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 8px; }
 .toggle { display: flex; align-items: center; gap: 10px; }
 .toggle input { width: 22px; height: 22px; }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { WORLDS } from '../src/content/worlds.ts';
 import {
-  emptyProgress, isLevelOpen, isWorldOpen, loadProgress, markDone, markWorldMet, needsFriendIntro,
+  emptyProgress, isLevelOpen, isWorldOpen, loadProgress, markDone, markFinished, markWorldMet, needsFriendIntro,
   saveProgress, STORAGE_KEY,
   type KeyValueStore,
 } from '../src/core/progress.ts';
@@ -38,7 +38,7 @@ test('progress survives a save and load', () => {
   assert.deepEqual(p.done, ['king-1']);
   assert.deepEqual(p.metWorlds, ['king']);
   saveProgress(store, { ...p, muted: true });
-  assert.deepEqual(loadProgress(store), { done: ['king-1'], metWorlds: ['king'], unlockAll: false, muted: true });
+  assert.deepEqual(loadProgress(store), { done: ['king-1'], own: [], metWorlds: ['king'], unlockAll: false, muted: true });
 });
 
 test('garbage or missing storage falls back to a fresh start', () => {
@@ -47,7 +47,7 @@ test('garbage or missing storage falls back to a fresh start', () => {
   assert.deepEqual(loadProgress(memoryStore({
     [STORAGE_KEY]: '{"done":[1,"a"],"metWorlds":[false,"king"],"unlockAll":"yes"}',
   })), {
-    done: ['a'], metWorlds: ['king'], unlockAll: false, muted: false,
+    done: ['a'], own: [], metWorlds: ['king'], unlockAll: false, muted: false,
   });
   const throwing: KeyValueStore = {
     getItem: () => { throw new Error('blocked'); },
@@ -55,6 +55,22 @@ test('garbage or missing storage falls back to a fresh start', () => {
   };
   assert.deepEqual(loadProgress(throwing), emptyProgress());
   assert.doesNotThrow(() => saveProgress(throwing, emptyProgress()));
+});
+
+test('a win without the hint hand is remembered, and survives a save and load', () => {
+  const store = memoryStore();
+  let p = markFinished(emptyProgress(), 'king-1', false);
+  assert.deepEqual([p.done, p.own], [['king-1'], []]);
+  // Played again later, this time alone: now it counts.
+  p = markFinished(p, 'king-1', true);
+  assert.deepEqual([p.done, p.own], [['king-1'], ['king-1']]);
+  // A later win with the hand does not take it away, and nothing is listed twice.
+  p = markFinished(markFinished(p, 'king-1', false), 'king-1', true);
+  assert.deepEqual([p.done, p.own], [['king-1'], ['king-1']]);
+  saveProgress(store, p);
+  assert.deepEqual(loadProgress(store).own, ['king-1']);
+  // Progress saved before this was counted loads with nothing known.
+  assert.deepEqual(loadProgress(memoryStore({ [STORAGE_KEY]: '{"done":["king-1"]}' })).own, []);
 });
 
 test('friend intros are remembered and legacy completed worlds do not replay them', () => {

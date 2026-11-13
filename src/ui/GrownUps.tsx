@@ -1,13 +1,44 @@
 // The only screen with words on it -- reached by holding the gear for 2s.
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { WORLDS } from '../content/worlds.ts';
+import { KNOWN_AFTER, knowReport, type KnowReport } from '../core/knows.ts';
 import { emptyProgress, type Progress } from '../core/progress.ts';
 import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { PAWN_LEVELS } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
 import { autoLook, canFullScreen, loadScreenPref, saveScreenPref, toggleFullScreen, type ScreenPref } from './screenMode.ts';
+
+const WORLD_NAMES: Record<string, string> = {
+  king: 'King',
+  rook: 'Rook',
+  bishop: 'Bishop',
+  queen: 'Queen',
+  knight: 'Knight',
+  pawn: 'Pawn',
+  friends: 'Rook and bishop together',
+};
+
+const TIPTOE_SET_NAMES = {
+  sneak: 'Attacked squares (tiptoe)',
+  shoo: 'Captures (tiptoe)',
+  safe: 'Safe captures (tiptoe)',
+} as const;
+
+const KNOWING_TEXT = { 'not-yet': 'Not yet', learning: 'Learning', knows: 'Knows it' } as const;
+
+function KnowRow({ faces, name, report }: { faces: ReactNode; name: string; report: KnowReport }) {
+  return (
+    <tr>
+      <td className="know-faces">{faces}</td>
+      <th scope="row">{name}</th>
+      <td>{report.own} of {report.total} alone</td>
+      <td className="muted">{report.done} finished</td>
+      <td><span className={`know-badge k-${report.knowing}`}>{KNOWING_TEXT[report.knowing]}</span></td>
+    </tr>
+  );
+}
 
 export function GrownUps({ progress, update, onClose }: {
   progress: Progress;
@@ -107,6 +138,42 @@ export function GrownUps({ progress, update, onClose }: {
             </span>
           </li>
         </ul>
+
+        <h2>What they know</h2>
+        <p className="muted">
+          How many puzzles were finished with no hint hand showing. A row turns to "knows it" after {KNOWN_AFTER}.
+          Nothing leaves this device. Puzzles finished before this was counted show up once they are played again.
+        </p>
+        <table className="knows">
+          <tbody>
+            {WORLDS.map((w) => (
+              <KnowRow
+                key={w.id}
+                faces={w.faces.map((k) => <FriendArt key={k} kind={k} className="know-friend" />)}
+                name={WORLD_NAMES[w.id] ?? w.id}
+                report={knowReport(progress, w.levels.map((l) => l.id))}
+              />
+            ))}
+            {(['sneak', 'shoo', 'safe'] as const).map((set) => (
+              <KnowRow
+                key={set}
+                faces={<FriendArt kind="rook" colors={GRUMPY} mood="sleepy" className="know-friend" />}
+                name={TIPTOE_SET_NAMES[set]}
+                report={knowReport(progress, TIPTOE_LEVELS.filter((l) => l.set === set).map((l) => l.id))}
+              />
+            ))}
+            <KnowRow
+              faces={<FriendArt kind="pawn" className="know-friend" />}
+              name="Pawn races and promotion"
+              report={knowReport(progress, PAWN_LEVELS.map((l) => l.id))}
+            />
+            <KnowRow
+              faces={<FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="know-friend" />}
+              name="Checkmate (bedtime)"
+              report={knowReport(progress, BEDTIME_LEVELS.map((l) => l.id))}
+            />
+          </tbody>
+        </table>
 
         <h2>Handing it to a little one</h2>
         <ul className="tips">

@@ -28,7 +28,8 @@ export interface PlayScreenProps {
   lesson?: Lesson;
   /** Little row of dots showing where you are in the world. */
   dots?: ReactNode;
-  onWin?: () => void;
+  /** `own` is true when no hint hand showed during this try. */
+  onWin?: (own: boolean) => void;
   /** Where the big "go" button leads after a win. Omit to only offer replay. */
   onNext?: () => void;
   onHome: () => void;
@@ -66,6 +67,8 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   // The first lesson only changes what is shown (see src/core/lesson.ts).
   const [lesson, setLesson] = useState<Lesson>(firstLesson);
   const taught = useRef(firstLesson !== 'done');
+  // Did the hint hand show during this try? (What they know, in the grown-up panel.)
+  const hinted = useRef(false);
 
   // The latest known way to finish from a given state. A kid who follows it
   // (or the hint hand) never waits on another search; only a detour does.
@@ -91,6 +94,7 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
       const res = planFrom(game);
       if (res.status !== 'solved' || res.moves.length === 0) return;
       const m = res.moves[0];
+      hinted.current = true;
       setHint(lessonHint(lesson, selected, m, game.friends[m.friend].at));
     }, wait);
     return () => window.clearTimeout(t);
@@ -134,7 +138,7 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
         setWon(true);
         setMood('dance');
         sfx.win();
-        onWin?.();
+        onWin?.(!hinted.current);
         later(() => setShowGo(true), 1100);
         return;
       }
@@ -151,6 +155,7 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   };
 
   const rewind = () => {
+    hinted.current = false; // a fresh try
     setMood('idle');
     setMotion('rewind');
     setGame(startState(puzzle));

@@ -4,6 +4,8 @@
 
 export interface Progress {
   done: string[];
+  /** Puzzles finished at least once with no hint hand showing (see src/core/knows.ts). */
+  own: string[];
   metWorlds: string[];
   unlockAll: boolean;
   muted: boolean;
@@ -17,7 +19,7 @@ export interface KeyValueStore {
 export const STORAGE_KEY = 'tiny-hops-progress-v1';
 
 export function emptyProgress(): Progress {
-  return { done: [], metWorlds: [], unlockAll: false, muted: false };
+  return { done: [], own: [], metWorlds: [], unlockAll: false, muted: false };
 }
 
 export function loadProgress(store: KeyValueStore | null): Progress {
@@ -27,6 +29,8 @@ export function loadProgress(store: KeyValueStore | null): Progress {
     const data = JSON.parse(raw) as Partial<Progress>;
     return {
       done: Array.isArray(data.done) ? data.done.filter((x): x is string => typeof x === 'string') : [],
+      // Missing in progress saved before this was counted: nothing is known about those wins.
+      own: Array.isArray(data.own) ? data.own.filter((x): x is string => typeof x === 'string') : [],
       metWorlds: Array.isArray(data.metWorlds)
         ? data.metWorlds.filter((x): x is string => typeof x === 'string')
         : [],
@@ -48,6 +52,12 @@ export function saveProgress(store: KeyValueStore | null, p: Progress): void {
 
 export function markDone(p: Progress, levelId: string): Progress {
   return p.done.includes(levelId) ? p : { ...p, done: [...p.done, levelId] };
+}
+
+/** A puzzle was finished; `own` says no hint hand showed during that try. */
+export function markFinished(p: Progress, levelId: string, own: boolean): Progress {
+  const done = markDone(p, levelId);
+  return !own || done.own.includes(levelId) ? done : { ...done, own: [...done.own, levelId] };
 }
 
 export function markWorldMet(p: Progress, worldId: string): Progress {

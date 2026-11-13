@@ -36,7 +36,8 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   eagerHint?: boolean;
   /** Middle of the top bar (the lab puts its controls here). */
   top?: ReactNode;
-  onWin?: () => void;
+  /** `own` is true when no hint hand showed during this try. */
+  onWin?: (own: boolean) => void;
   onNext?: () => void;
   onHome: () => void;
 }) {
@@ -64,6 +65,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   const [nudgeKey, setNudgeKey] = useState(0);
   const [pokeKey, setPokeKey] = useState(0);
   const dragFrom = useRef<number | null>(null);
+  const hinted = useRef(false);
 
   const hops = useMemo(
     () => (busy || won || !game.friends[selected] ? [] : sneakHops(puzzle, game, selected)),
@@ -93,6 +95,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
       const res = solveSneak(puzzle, game);
       if (res.status !== 'solved' || res.moves.length === 0) return;
       const m = res.moves[0];
+      hinted.current = true;
       setHint(m.friend === selected ? m.to : game.friends[m.friend].at);
     }, eagerHint ? EAGER_HINT_MS : HINT_MS);
     return () => window.clearTimeout(t);
@@ -163,7 +166,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
         setWon(true);
         setMood('dance');
         sfx.win();
-        onWin?.();
+        onWin?.(!hinted.current);
         later(() => setShowGo(true), 1100);
         return;
       }
@@ -178,6 +181,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   };
 
   const rewind = () => {
+    hinted.current = false; // a fresh try
     setMood('idle');
     setMotion('rewind');
     setGame(sneakStart(puzzle));

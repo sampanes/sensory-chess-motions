@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { WORLDS } from '../content/worlds.ts';
 import { firstLesson, type Lesson } from '../core/lesson.ts';
-import { markDone, markWorldMet, needsFriendIntro } from '../core/progress.ts';
+import { markFinished, markWorldMet, needsFriendIntro } from '../core/progress.ts';
 import { mustParse } from '../core/puzzle.ts';
 import { StarIcon, SunIcon } from './art.tsx';
 import { BedtimeScreen } from './BedtimeScreen.tsx';
@@ -107,7 +107,7 @@ export function App() {
         dots={BEDTIME_LEVELS.map((l, i) => (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
         ))}
-        onWin={() => update((p) => markDone(p, level.id))}
+        onWin={(own) => update((p) => markFinished(p, level.id, own))}
         onNext={() => go(last ? '#/bed' : `#/bed/${li + 2}`, true)}
         onHome={() => go('#/bed')}
       />
@@ -138,7 +138,7 @@ export function App() {
         top={mode.levels.map((l, i) => (l.set !== level.set ? null : (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
         )))}
-        onWin={() => update((p) => markDone(p, level.id))}
+        onWin={(own) => update((p) => markFinished(p, level.id, own))}
         onNext={() => go(last ? `#/${mode.path}` : `#/${mode.path}/${li + 2}`, true)}
         onHome={() => go(`#/${mode.path}`)}
       />
@@ -146,7 +146,7 @@ export function App() {
   }
 
   if (route.screen === 'today') {
-    return <TodayLevel progress={progress.done} onDone={(id) => update((p) => markDone(p, id))} />;
+    return <TodayLevel progress={progress.done} onDone={(id, own) => update((p) => markFinished(p, id, own))} />;
   }
 
   if (route.screen === 'world' || route.screen === 'play') {
@@ -164,7 +164,7 @@ export function App() {
   }
 
   if (route.screen === 'play') {
-    return <Level key={`${route.wi}-${route.li}`} wi={route.wi} li={route.li} progress={progress.done} lesson={firstLesson(progress, route.wi, route.li)} onDone={(id) => update((p) => markDone(p, id))} />;
+    return <Level key={`${route.wi}-${route.li}`} wi={route.wi} li={route.li} progress={progress.done} lesson={firstLesson(progress, route.wi, route.li)} onDone={(id, own) => update((p) => markFinished(p, id, own))} />;
   }
 
   if (route.screen === 'world') {
@@ -200,7 +200,7 @@ export function App() {
   );
 }
 
-function Level({ wi, li, progress, lesson, onDone }: { wi: number; li: number; progress: readonly string[]; lesson: Lesson; onDone: (id: string) => void }) {
+function Level({ wi, li, progress, lesson, onDone }: { wi: number; li: number; progress: readonly string[]; lesson: Lesson; onDone: (id: string, own: boolean) => void }) {
   const world = WORLDS[wi];
   const level = world.levels[li];
   const puzzle = useMemo(() => mustParse(level.grid), [level]);
@@ -219,14 +219,14 @@ function Level({ wi, li, progress, lesson, onDone }: { wi: number; li: number; p
       eagerHint={li === 0}
       lesson={lesson}
       dots={dots}
-      onWin={() => onDone(level.id)}
+      onWin={(own) => onDone(level.id, own)}
       onNext={() => go(last ? '#/friends' : `#/w/${world.id}/${li + 2}`, true)}
       onHome={() => go(`#/w/${world.id}`)}
     />
   );
 }
 
-function TodayLevel({ progress, onDone }: { progress: readonly string[]; onDone: (id: string) => void }) {
+function TodayLevel({ progress, onDone }: { progress: readonly string[]; onDone: (id: string, own: boolean) => void }) {
   const t = useMemo(() => today(), []);
   const puzzle = useMemo(() => mustParse(t.grid), [t]);
   return (
@@ -236,7 +236,7 @@ function TodayLevel({ progress, onDone }: { progress: readonly string[]; onDone:
       sky={TODAY_SKY}
       look={t.look}
       dots={<SunIcon filled={progress.includes(t.id)} className="dot-star current" />}
-      onWin={() => onDone(t.id)}
+      onWin={(own) => onDone(t.id, own)}
       onNext={() => go('#/', true)}
       onHome={() => go('#/')}
     />

@@ -51,7 +51,8 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   sky: string;
   eagerHint?: boolean;
   dots?: ReactNode;
-  onWin?: () => void;
+  /** `own` is true when no hint hand showed during this try. */
+  onWin?: (own: boolean) => void;
   onNext?: () => void;
   onHome: () => void;
 }) {
@@ -69,6 +70,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   const [idleKey, setIdleKey] = useState(0);
   const layer = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Drag | null>(null);
+  const hinted = useRef(false);
   dragRef.current = drag;
 
   const friends = friendsOf(p, placed);
@@ -106,7 +108,10 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     if (won || busy) return;
     const t = window.setTimeout(() => {
       const way = solveMate(p, placed, 1)[0];
-      if (way && way.length > 0) setHint(way[0]);
+      if (way && way.length > 0) {
+        hinted.current = true;
+        setHint(way[0]);
+      }
     }, eagerHint && placed.length === 0 ? EAGER_HINT_MS : HINT_MS);
     return () => window.clearTimeout(t);
   }, [won, busy, p, placed, eagerHint, idleKey]);
@@ -138,7 +143,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
       setWon(true);
       setBusy(true);
       later(() => sfx.win(), 450);
-      onWin?.();
+      onWin?.(!hinted.current);
       later(() => setShowGo(true), 1500);
       return;
     }
@@ -146,6 +151,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
       // Everyone is on the board and he is still awake: float them all home.
       setBusy(true);
       later(() => {
+        hinted.current = false; // a fresh try
         setPlaced([]);
         setRound((r) => r + 1);
         setBusy(false);
@@ -232,6 +238,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   const again = () => {
     wakeAudio();
     if (busy && !won) return;
+    hinted.current = false; // a fresh try
     setPlaced([]);
     setChosen(null);
     setWon(false);

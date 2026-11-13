@@ -249,6 +249,14 @@ This is for parents and teachers. All of it lives behind the gear-hold gate and 
 
 **Done when:** a parent can answer "does my kid know how the knight moves?" from the panel.
 
+**Status (2026-11-12):** "what they know" is built. Every win now records whether the hint hand
+showed during that try (`own` in the saved progress; a rewind or "again" starts a fresh try, and a
+puzzle played again alone counts from then on). The grown-up panel has a "What they know" table
+(`src/core/knows.ts`): one row per friend, plus rows for attacked squares, captures, safe captures,
+pawn races and checkmate, each with "N of M alone" and a badge that turns to "Knows it" after 5
+different puzzles finished alone. Wins from before this was counted are simply not known until the
+puzzle is played again. Still open: the maker upgrades and classroom share.
+
 Dropped (John, 2026-11-06): a "wind down after a set playtime" timer. It would guess wrong about
 when a kid is done more often than it helped.
 
