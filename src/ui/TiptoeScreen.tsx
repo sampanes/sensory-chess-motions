@@ -36,7 +36,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   eagerHint?: boolean;
   /** Middle of the top bar (the lab puts its controls here). */
   top?: ReactNode;
-  /** `own` is true when no hint hand showed during this try. */
+  /** `own` is true when no hint hand showed since the puzzle was opened. */
   onWin?: (own: boolean) => void;
   onNext?: () => void;
   onHome: () => void;
@@ -181,7 +181,6 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   };
 
   const rewind = () => {
-    hinted.current = false; // a fresh try
     setMood('idle');
     setMotion('rewind');
     setGame(sneakStart(puzzle));

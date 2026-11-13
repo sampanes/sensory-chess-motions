@@ -97,7 +97,8 @@ with one thing to do: only the king and his berry are on the board and a hand ta
 king's spots light up with a wave and the hand taps the one with the berry; he hops and munches,
 and the hand taps the green go button. The lesson only changes what is shown, never what is
 allowed, so a kid who taps the berry straight away is not held up. It never shows again once any
-puzzle is finished.
+tap-and-hop puzzle is finished (a daily or tiptoe puzzle counts; a bedtime puzzle, dragged from a
+tray, does not).
 
 Every build item is done. Still open: kid testing.
 
@@ -281,8 +282,9 @@ This is for parents and teachers. All of it lives behind the gear-hold gate and 
 **Done when:** a parent can answer "does my kid know how the knight moves?" from the panel.
 
 **Status (2026-11-12):** "what they know" is built. Every win now records whether the hint hand
-showed during that try (`own` in the saved progress; a rewind or "again" starts a fresh try, and a
-puzzle played again alone counts from then on). The grown-up panel has a "What they know" table
+showed since the puzzle was opened (`own` in the saved progress). "Start over" or a rewind does not
+wipe that: a kid who saw the answer and started again did not find it alone. Opening the puzzle
+again later is a fresh chance, and a puzzle finished alone then counts from then on. The grown-up panel has a "What they know" table
 (`src/core/knows.ts`): one row per friend, plus rows for attacked squares, captures, safe captures,
 pawn races and checkmate, each with "N of M alone" and a badge that turns to "Knows it" after 5
 different puzzles finished alone. Wins from before this was counted are simply not known until the
@@ -301,6 +303,12 @@ of this milestone is done:
   across reloads, played in order with a star per puzzle. This is the classroom share: nothing is
   uploaded, the puzzles are in the link itself. Old single-puzzle links still open.
 Still open: a real parent or teacher trying it.
+
+An independent review of that night's commits (2026-11-12) found ten defects, none of which could
+leave a kid stuck: the "alone" count was too generous after a hint and wrong around a slow drag in
+bedtime, the table overflowed narrow phones, undo missed some paint strokes, "make it a bit harder"
+could freeze the page or give a misleading message on big puzzles, and the high-contrast board did
+not reach bedtime. All are fixed, each with a check.
 
 Dropped (John, 2026-11-06): a "wind down after a set playtime" timer. It would guess wrong about
 when a kid is done more often than it helped.

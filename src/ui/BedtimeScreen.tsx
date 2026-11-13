@@ -11,6 +11,8 @@ import {
 import type { Friend } from '../core/types.ts';
 import { AgainIcon, FriendArt, GoIcon, GRUMPY, HandIcon, HomeIcon, RockArt } from './art.tsx';
 import { Confetti } from './Confetti.tsx';
+import { HIGH_CONTRAST } from '../content/looks.ts';
+import { highContrast } from './senses.ts';
 import { sfx, wakeAudio } from './sound.ts';
 import { useTimers } from './timers.ts';
 
@@ -51,7 +53,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   sky: string;
   eagerHint?: boolean;
   dots?: ReactNode;
-  /** `own` is true when no hint hand showed during this try. */
+  /** `own` is true when no hint hand showed since the puzzle was opened. */
   onWin?: (own: boolean) => void;
   onNext?: () => void;
   onHome: () => void;
@@ -104,8 +106,11 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
 
   // Idle hint: a hand points at where the next friend could go, and that
   // friend bounces in the tray.
+  // Not while a friend is held: the hand is not drawn during a drag, so a hint
+  // that arrived then would count against the kid without ever being seen.
+  const dragging = drag !== null;
   useEffect(() => {
-    if (won || busy) return;
+    if (won || busy || dragging) return;
     const t = window.setTimeout(() => {
       const way = solveMate(p, placed, 1)[0];
       if (way && way.length > 0) {
@@ -114,7 +119,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
       }
     }, eagerHint && placed.length === 0 ? EAGER_HINT_MS : HINT_MS);
     return () => window.clearTimeout(t);
-  }, [won, busy, p, placed, eagerHint, idleKey]);
+  }, [won, busy, dragging, p, placed, eagerHint, idleKey]);
 
   const touched = () => {
     wakeAudio();
@@ -142,6 +147,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     if (mateStatus(p, after) === 'mate') {
       setWon(true);
       setBusy(true);
+      setHint(null);
       later(() => sfx.win(), 450);
       onWin?.(!hinted.current);
       later(() => setShowGo(true), 1500);
@@ -151,8 +157,8 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
       // Everyone is on the board and he is still awake: float them all home.
       setBusy(true);
       later(() => {
-        hinted.current = false; // a fresh try
         setPlaced([]);
+        setHint(null);
         setRound((r) => r + 1);
         setBusy(false);
         sfx.rewind();
@@ -239,7 +245,6 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     wakeAudio();
     if (busy && !won) return;
     later.clear(); // nothing an old win had planned may land on the fresh board
-    hinted.current = false; // a fresh try
     setPlaced([]);
     setChosen(null);
     setWon(false);
@@ -250,6 +255,8 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     sfx.rewind();
   };
 
+  // The grown-up high-contrast board reaches this board too (it draws its own squares).
+  const contrast = highContrast() ? HIGH_CONTRAST : null;
   const placedTrays = new Set(placed.map((pl) => pl.tray));
   const kingMood = won ? 'sleepy' : status === 'check' ? 'wow' : 'grumpy';
   const kingAnim = won ? '' : status === 'stalemate' && placed.length > 0 ? 'confused' : 'bob';
@@ -269,14 +276,17 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
       </div>
 
       <div className="board-wrap">
-        <div className="board" style={{ '--rows': p.rows, '--cols': p.cols } as CSSProperties}>
+        <div
+          className="board"
+          style={{ '--rows': p.rows, '--cols': p.cols, ...(contrast ? { '--rim': contrast.rim, '--rim-dark': contrast.rimDark } : {}) } as CSSProperties}
+        >
           <div ref={layer} className="board-layer" onPointerDown={boardDown} onContextMenu={(e) => e.preventDefault()}>
             <div className="squares">
               {Array.from({ length: p.rows * p.cols }, (_, pos) => {
                 const r = Math.floor(pos / p.cols);
                 const c = pos % p.cols;
                 return (
-                  <div key={pos} className="square" style={{ ...cellStyle(pos), background: (r + c) % 2 ? DARK : LIGHT }}>
+                  <div key={pos} className="square" style={{ ...cellStyle(pos), background: (r + c) % 2 ? contrast?.dark ?? DARK : contrast?.light ?? LIGHT }}>
                     {p.rocks[pos] && <RockArt className="fill" />}
                   </div>
                 );

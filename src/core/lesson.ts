@@ -12,9 +12,14 @@ import type { Progress } from './progress.ts';
 
 export type Lesson = 'tap' | 'hop' | 'done';
 
-/** Only the first puzzle of the first world, and only while nothing at all has been finished. */
+/**
+ * Only the first puzzle of the first world, and only for a kid who has never
+ * finished a puzzle by tapping a friend to a spot. Bedtime puzzles do not
+ * count: there the friends are dragged from a tray, which teaches none of this.
+ */
 export function firstLesson(p: Progress, worldIndex: number, levelIndex: number): Lesson {
-  return worldIndex === 0 && levelIndex === 0 && p.done.length === 0 ? 'tap' : 'done';
+  const tapped = p.done.some((id) => !id.startsWith('bed-'));
+  return worldIndex === 0 && levelIndex === 0 && !tapped ? 'tap' : 'done';
 }
 
 /** A press on a friend ends the "tap" beat. Any other press leaves the lesson where it is. */

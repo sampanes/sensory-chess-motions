@@ -28,7 +28,7 @@ export interface PlayScreenProps {
   lesson?: Lesson;
   /** Little row of dots showing where you are in the world. */
   dots?: ReactNode;
-  /** `own` is true when no hint hand showed during this try. */
+  /** `own` is true when no hint hand showed since the puzzle was opened. */
   onWin?: (own: boolean) => void;
   /** Where the big "go" button leads after a win. Omit to only offer replay. */
   onNext?: () => void;
@@ -67,7 +67,9 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   // The first lesson only changes what is shown (see src/core/lesson.ts).
   const [lesson, setLesson] = useState<Lesson>(firstLesson);
   const taught = useRef(firstLesson !== 'done');
-  // Did the hint hand show during this try? (What they know, in the grown-up panel.)
+  // Did the hint hand show since this puzzle was opened? (What they know, in the grown-up panel.)
+  // It is never reset by "start over" or a rewind: a kid who saw the answer and started again did
+  // not find it alone. Opening the puzzle again later is a fresh chance.
   const hinted = useRef(false);
 
   // The latest known way to finish from a given state. A kid who follows it
@@ -155,7 +157,6 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   };
 
   const rewind = () => {
-    hinted.current = false; // a fresh try
     setMood('idle');
     setMotion('rewind');
     setGame(startState(puzzle));

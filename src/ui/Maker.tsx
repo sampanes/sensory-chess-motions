@@ -20,6 +20,8 @@ type Tool = (typeof TOOLS)[number];
 const STARTER = ['.....', '..*..', '.....', '.....', '..R..'];
 const SET_KEY = 'tiny-hops-maker-set-v1';
 const UNDO_MAX = 200;
+/** "Make it a bit harder" stops looking after this long, so the page never freezes. */
+const HARDER_BUDGET_MS = 350;
 
 const WORLD_NAMES: Record<string, string> = {
   king: 'King',
@@ -63,6 +65,8 @@ export function Maker() {
   const [note, setNote] = useState('');
   const [set, setSet] = useState<string[]>(loadSet);
   const painting = useRef(false);
+  /** A paint stroke has begun and has not changed anything yet (its first change is the undo step). */
+  const strokeFresh = useRef(false);
 
   // Undo: every change remembers the board before it. One paint stroke is one step.
   const past = useRef<string[][][]>([]);
@@ -116,10 +120,13 @@ export function Maker() {
   const shareUrl = `${base}?p=${code}`;
   const setUrl = `${base}?p=${joinSet(set)}`;
 
-  /** Paint one square. `stroke` is true for the first square of a stroke (that is the undo step). */
-  const paint = (r: number, c: number, stroke: boolean) => {
+  /** Paint one square. The first square a stroke really changes is the undo step. */
+  const paint = (r: number, c: number) => {
     if (cells[r][c] === tool) return;
-    if (stroke) remember();
+    if (strokeFresh.current) {
+      strokeFresh.current = false;
+      remember();
+    }
     setCells((prev) => {
       if (prev[r][c] === tool) return prev;
       const next = prev.map((row) => [...row]);
@@ -144,7 +151,11 @@ export function Maker() {
   };
 
   const harder = () => {
-    const res = makeHarder(grid);
+    const res = makeHarder(grid, HARDER_BUDGET_MS);
+    if (res === 'too-big') {
+      setNote('This puzzle has too many possibilities to work out a harder one quickly. Try it with fewer treats or friends.');
+      return;
+    }
     if (!res) {
       setNote('No small change makes it harder. Try a bigger board, or another friend.');
       return;
@@ -223,10 +234,11 @@ export function Maker() {
               onPointerDown={(e) => {
                 e.preventDefault();
                 painting.current = true;
-                paint(r, c, true);
+                strokeFresh.current = true;
+                paint(r, c);
               }}
               onPointerEnter={() => {
-                if (painting.current && !KIND_BY_CHAR[tool]) paint(r, c, false);
+                if (painting.current && !KIND_BY_CHAR[tool]) paint(r, c);
               }}
               aria-label={`Row ${r + 1} column ${c + 1}: ${toolName(ch as Tool)}`}
             >
@@ -269,7 +281,7 @@ export function Maker() {
                   >
                     {res.ok && <MiniBoard grid={toGrid(res.puzzles[0])} treat="cookie" />}
                   </button>
-                  <button className="set-remove" onClick={() => setSet(set.filter((x) => x !== c))} aria-label={`Take puzzle ${i + 1} out of the set`}>
+                  <button className="set-remove" onClick={() => { setSet(set.filter((x) => x !== c)); setCopied(''); }} aria-label={`Take puzzle ${i + 1} out of the set`}>
                     Remove
                   </button>
                 </li>
@@ -285,7 +297,7 @@ export function Maker() {
             {copied === 'set' ? 'Set link copied' : `Copy set link (${set.length})`}
           </button>
           {set.length > 0 && <a className="text-btn" href={setUrl}>Play the set</a>}
-          {set.length > 0 && <button className="text-btn" onClick={() => setSet([])}>Empty the set</button>}
+          {set.length > 0 && <button className="text-btn" onClick={() => { setSet([]); setCopied(''); }}>Empty the set</button>}
         </div>
       </section>
 

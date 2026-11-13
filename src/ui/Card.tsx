@@ -30,7 +30,7 @@ const MOVES: Record<Kind, string> = {
   bishop: 'Any number of squares along a diagonal. It stays on one color of square for the whole game.',
   queen: 'Like a rook and a bishop in one: any number of squares in a straight line or along a diagonal.',
   knight: 'An L shape: two squares one way, then one to the side. It is the only piece that jumps over others.',
-  pawn: 'One step straight ahead. It captures one step diagonally ahead. On the far row it becomes a queen. On a real board it may also take two steps on its very first move.',
+  pawn: 'One step straight ahead. It captures one step diagonally ahead. On the far row it becomes a queen (on a real board you may pick a rook, bishop or knight instead), and it may take two steps on its very first move.',
 };
 
 const WORDS: readonly (readonly [string, string])[] = [

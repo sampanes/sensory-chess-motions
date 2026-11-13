@@ -47,8 +47,7 @@ test('"make it a bit harder" changes one empty square and the puzzle stays finis
   ];
   for (const grid of samples) {
     const res = makeHarder(grid);
-    assert.ok(res, grid.join('/'));
-    if (!res) continue;
+    assert.ok(res && res !== 'too-big', grid.join('/'));
     const changed: string[] = [];
     grid.forEach((line, r) => [...line].forEach((ch, c) => { if (res.grid[r][c] !== ch) changed.push(`${ch}>${res.grid[r][c]}`); }));
     assert.deepEqual(changed, [`.>${res.added}`], 'exactly one empty square was filled');
@@ -67,7 +66,7 @@ test('pressing it again and again climbs gently, then says so when nothing small
   let steps = 0;
   for (; steps < 40; steps++) {
     const res = makeHarder(grid);
-    if (!res) break;
+    if (!res || res === 'too-big') break;
     assert.ok(res.after.score > last);
     last = res.after.score;
     grid = res.grid;
@@ -80,4 +79,28 @@ test('pressing it again and again climbs gently, then says so when nothing small
 test('a puzzle that cannot be finished gets no suggestion', () => {
   assert.equal(makeHarder(['*#.', '##.', '..K']), null);
   assert.equal(makeHarder(['...', '...', '...']), null, 'no friend, no treat');
+});
+
+test('a puzzle too big to rate says so, instead of "nothing makes it harder"', () => {
+  // Two rooks and five treats on a 6x6: finishable in 6 moves, but far too many positions to map.
+  const big = ['*....*', '......', '..*...', '......', '*....*', 'R....R'];
+  assert.equal(makeHarder(big), 'too-big');
+});
+
+test('with a time budget it stops early and still gives the best change found so far', () => {
+  const grid = ['.....', '..*..', '.....', '.....', '..R..'];
+  const exact = makeHarder(grid);
+  assert.ok(exact && exact !== 'too-big');
+  // A clock that jumps a second every time it is read: the budget is gone after the first square.
+  let t = 0;
+  const hurried = makeHarder(grid, 500, () => (t += 1000));
+  // Nothing was found before the time ran out, which is "could not work it out", not "nothing exists".
+  assert.equal(hurried, 'too-big');
+  // A generous budget gives the exact answer.
+  assert.deepEqual(makeHarder(grid, 60_000), exact);
+  // Out of time after a few squares: whatever it returns is a real, finishable, harder puzzle.
+  let n = 0;
+  const partial = makeHarder(grid, 5, () => (n++ < 6 ? 0 : 1000));
+  assert.ok(partial && partial !== 'too-big');
+  assert.ok(partial.after.score >= partial.before.score + 0.5);
 });

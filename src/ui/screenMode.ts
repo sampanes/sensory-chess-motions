@@ -52,6 +52,11 @@ export function autoLook(): ScreenLook {
 
 let current: ScreenPref | null = null;
 
+/** The choice in force right now (what was last applied, even if it could not be saved). */
+export function currentScreenPref(): ScreenPref {
+  return current ?? loadScreenPref();
+}
+
 export function applyScreen(pref: ScreenPref = current ?? loadScreenPref()) {
   current = pref;
   const look = screenLook(pref, window.innerWidth, window.innerHeight);

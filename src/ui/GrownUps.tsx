@@ -8,8 +8,8 @@ import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { PAWN_LEVELS } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
-import { autoLook, canFullScreen, loadScreenPref, saveScreenPref, toggleFullScreen, type ScreenPref } from './screenMode.ts';
-import { canBuzz, loadSenses, saveSenses, type Senses } from './senses.ts';
+import { autoLook, canFullScreen, currentScreenPref, saveScreenPref, toggleFullScreen, type ScreenPref } from './screenMode.ts';
+import { canBuzz, currentSenses, saveSenses, type Senses } from './senses.ts';
 
 const WORLD_NAMES: Record<string, string> = {
   king: 'King',
@@ -34,8 +34,8 @@ function KnowRow({ faces, name, report }: { faces: ReactNode; name: string; repo
     <tr>
       <td className="know-faces">{faces}</td>
       <th scope="row">{name}</th>
-      <td>{report.own} of {report.total} alone</td>
-      <td className="muted">{report.done} finished</td>
+      <td>{report.own} of {report.total}</td>
+      <td className="know-done muted">{report.done}</td>
       <td><span className={`know-badge k-${report.knowing}`}>{KNOWING_TEXT[report.knowing]}</span></td>
     </tr>
   );
@@ -47,8 +47,8 @@ export function GrownUps({ progress, update, onClose }: {
   onClose: () => void;
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
-  const [screenPref, setScreenPref] = useState<ScreenPref>(loadScreenPref);
-  const [senses, setSenses] = useState<Senses>(loadSenses);
+  const [screenPref, setScreenPref] = useState<ScreenPref>(currentScreenPref);
+  const [senses, setSenses] = useState<Senses>(currentSenses);
   const sense = (next: Senses) => { saveSenses(next); setSenses(next); };
   const total = WORLDS.reduce((n, w) => n + w.levels.length, 0);
   const finished = WORLDS.reduce((n, w) => n + w.levels.filter((l) => progress.done.includes(l.id)).length, 0);
@@ -148,6 +148,15 @@ export function GrownUps({ progress, update, onClose }: {
           Nothing leaves this device. Puzzles finished before this was counted show up once they are played again.
         </p>
         <table className="knows">
+          <thead>
+            <tr>
+              <td />
+              <td />
+              <th scope="col">Alone</th>
+              <th scope="col" className="know-done">Finished</th>
+              <td />
+            </tr>
+          </thead>
           <tbody>
             {WORLDS.map((w) => (
               <KnowRow

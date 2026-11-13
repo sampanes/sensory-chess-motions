@@ -53,9 +53,16 @@ export function saveSenses(next: Senses): void {
 
 export const highContrast = (): boolean => senses.contrast;
 
-/** True on devices whose browser can vibrate (most Android phones and tablets; not iPhone or iPad). */
+/** The toggles in force right now (what was last applied, even if it could not be saved). */
+export const currentSenses = (): Senses => senses;
+
+/**
+ * True on devices that can really vibrate: Android phones and tablets. Desktop
+ * Chrome and Edge have the same browser call with nothing behind it, so asking
+ * the browser alone would offer the toggle on a PC; iPhone and iPad have no call at all.
+ */
 export function canBuzz(): boolean {
-  return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+  return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' && /Android/i.test(navigator.userAgent);
 }
 
 /** A short buzz, when a grown-up turned it on and the device can do it. */

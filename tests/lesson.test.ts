@@ -12,6 +12,9 @@ test('only the very first puzzle is a lesson, and only until anything is finishe
   // A kid who finished anything at all (even a daily puzzle) already knows how to play.
   assert.equal(firstLesson(markDone(fresh, 'king-1'), 0, 0), 'done');
   assert.equal(firstLesson(markDone(fresh, 'day-2026-11-12'), 0, 0), 'done');
+  assert.equal(firstLesson(markDone(fresh, 'tiptoe-1'), 0, 0), 'done');
+  // Bedtime puzzles are dragged from a tray, so a kid who only did those still gets the lesson.
+  assert.equal(firstLesson(markDone(markDone(fresh, 'bed-1'), 'bed-2'), 0, 0), 'tap');
 });
 
 test('the beats go tap, hop, done', () => {
