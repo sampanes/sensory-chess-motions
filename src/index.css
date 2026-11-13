@@ -515,7 +515,7 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 
 .settings { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 8px; }
 .toggle { display: flex; align-items: center; gap: 10px; }
-.toggle input { width: 22px; height: 22px; }
+.toggle input { width: 22px; height: 22px; flex: none; }
 .screen-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .text-btn {
