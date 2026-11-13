@@ -238,6 +238,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   const again = () => {
     wakeAudio();
     if (busy && !won) return;
+    later.clear(); // nothing an old win had planned may land on the fresh board
     hinted.current = false; // a fresh try
     setPlaced([]);
     setChosen(null);

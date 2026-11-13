@@ -203,6 +203,7 @@ export function TiptoeScreen({ grid, rules, sky = TIPTOE_SKY, peek, eagerHint, t
   const again = () => {
     wakeAudio();
     if (busy && !won) return;
+    later.clear(); // nothing an old win had planned may land on the fresh board
     setWon(false);
     setShowGo(false);
     rewind();

@@ -136,6 +136,7 @@ export function SetupScreen({ level, seed, ghosts, sky, eagerHint, top, onNext, 
   const again = () => {
     wakeAudio();
     if (busy && !won) return;
+    later.clear(); // nothing an old win had planned may land on the fresh board
     setWon(false);
     setShowGo(false);
     setRevealed(false);

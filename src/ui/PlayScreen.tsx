@@ -174,6 +174,7 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   const again = () => {
     wakeAudio();
     if (busy && !won) return;
+    later.clear(); // nothing an old win had planned may land on the fresh board
     if (won) setLook(pickLook({ treat, sky }, true));
     setWon(false);
     setShowGo(false);
