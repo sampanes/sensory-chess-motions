@@ -269,6 +269,9 @@ wakes up: the kid is looking at a real chess set (`WOOD` and `IVORY` in `src/con
 Not built: 8x8 boards in the friend worlds, and Staunton shapes (the friends keep their own
 shapes; only their colors change).
 
+**Status (2026-11-13):** prompts for the art these need (and for the rest of the game's pictures)
+are in `docs/ART_PROMPTS.md`: one image-generator sheet per set, flat colors traced to small SVG.
+
 ## M6 -- Grown-up tools
 
 This is for parents and teachers. All of it lives behind the gear-hold gate and stays on the device.
