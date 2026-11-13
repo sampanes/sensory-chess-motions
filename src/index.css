@@ -562,6 +562,88 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .maker-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .maker pre { background: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; }
 
+/* ==== Grown-up card to print (?card) =================================== */
+
+.card-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 20px 28px;
+  background: #fff;
+  color: #0f172a;
+  min-height: 100%;
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.card-bar { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.card-page h1 { font-size: 24px; margin: 0 0 4px; }
+.card-page h2 { font-size: 16px; margin: 0 0 6px; }
+.card-lead { margin: 0 0 8px; color: #334155; font-size: 14px; line-height: 1.4; }
+.card-pieces { width: 100%; border-collapse: collapse; }
+.card-pieces td { padding: 5px 10px 5px 0; vertical-align: middle; border-top: 1px solid #e2e8f0; }
+.card-friend { width: 62px; }
+.card-friend > svg { width: 58px; height: 58px; }
+.card-symbol {
+  width: 60px;
+  font-size: 50px;
+  line-height: 1;
+  text-align: center;
+  font-family: 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols2', 'Noto Sans Symbols', 'DejaVu Sans', serif;
+}
+.card-text b { display: block; font-size: 16px; }
+.card-text span { display: block; font-size: 13px; line-height: 1.35; color: #334155; }
+.card-picture { width: 96px; padding-right: 0 !important; }
+.card-moves, .card-setup {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  border: 3px solid #7cb65a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.card-moves { width: 92px; }
+.card-setup { width: 100%; max-width: 300px; }
+.card-sq { position: relative; aspect-ratio: 1; }
+.card-sq.light { background: #eaf7d8; }
+.card-sq.dark { background: #bfe6a4; }
+.card-sq > svg { position: absolute; left: 4%; top: 4%; width: 92%; height: 92%; }
+.card-dot { position: absolute; inset: 30%; border-radius: 50%; background: #1d4ed8; }
+.card-cross { position: absolute; inset: 22%; }
+.card-cross::before, .card-cross::after {
+  content: ''; position: absolute; left: 44%; top: 0; width: 12%; height: 100%; background: #dc2626; border-radius: 2px;
+}
+.card-cross::before { rotate: 45deg; }
+.card-cross::after { rotate: -45deg; }
+.card-lower { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 22px; margin-top: 12px; }
+.card-steps { margin: 22px 0 12px; padding-left: 20px; font-size: 13px; line-height: 1.4; display: grid; gap: 4px; }
+.card-words { width: 100%; border-collapse: collapse; font-size: 13px; }
+.card-words td { padding: 3px 8px 3px 0; border-top: 1px solid #e2e8f0; }
+.card-words td:first-child { color: #334155; }
+.card-words td:last-child { font-weight: 600; }
+.card-note { font-size: 12px; color: #64748b; margin: 8px 0 0; }
+@media (max-width: 600px) {
+  .card-lower { grid-template-columns: 1fr; }
+  .card-picture { display: none; }
+}
+@media print {
+  @page { margin: 10mm; }
+  html, body, #root { height: auto; }
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .card-page { max-width: none; padding: 0; }
+  .card-picture { display: table-cell; }
+  /* Sized so the whole card fits one sheet of US Letter or A4. */
+  .card-page h1 { font-size: 21px; }
+  .card-pieces td { padding: 3px 10px 3px 0; }
+  .card-friend > svg { width: 44px; height: 44px; }
+  .card-symbol { font-size: 40px; }
+  .card-picture { width: 70px; }
+  .card-moves { width: 66px; border-width: 2px; }
+  .card-lower { grid-template-columns: 220px 1fr; margin-top: 8px; }
+  .card-setup { max-width: 220px; }
+  .card-steps { margin-top: 20px; }
+}
+
 /* ==== Bars beside the board (data-layout="side", set in screenMode.ts) ====
    Stacked bars leave a 5x5 board about 30px squares on a landscape phone, and
    waste the height of any landscape big screen. Put the buttons beside the

@@ -30,10 +30,13 @@ A friend wakes up once half of the previous friend's puzzles are done (four at m
 ## For grown-ups
 
 - **Grown-up panel**: on the home screen, press and hold the gear (bottom right) for 2 seconds.
-  It has what each friend teaches, sound on/off, "open everything", and reset.
+  It has what each friend teaches, a "what they know" table (puzzles finished without the hint
+  hand, per friend), sound on/off, phone or big screen, "open everything", and reset.
 - **Puzzle maker**: [`?maker`](https://sampanes.github.io/sensory-chess-motions/?maker). Paint a board;
   it tells you instantly whether the puzzle can be finished and in how many moves. "Copy share link"
   gives a `?p=...` link that opens straight into the puzzle.
+- **A card to print**: [`?card`](https://sampanes.github.io/sensory-chess-motions/?card). One page
+  with each friend beside its real chess piece, how it moves, and how to set up a real board.
 - **Offline and home screen**: after one visit the game works without internet, and it can be
   added to a home screen so it opens full screen. The service worker (`public/sw.js`) is network
   first, so an online visit always gets the newest version.

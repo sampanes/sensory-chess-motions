@@ -237,6 +237,14 @@ Let kids see, gently, that the friends *are* chess pieces.
 **Done when:** a kid who finished the game can set up a real board and move every piece correctly
 when an adult points to it.
 
+**Status (2026-11-12):** the printable grown-up card is built (`?card`, linked from the grown-up
+panel; `src/ui/Card.tsx`). One sheet of US Letter or A4: each friend beside its real piece (the
+printed chess symbol), a sentence on how it moves, and a little move picture drawn from the game's
+own rules (`src/core/setup.ts`), then a picture of both sides set up with the four setup rules, and
+a table of game words against chess words (shooing a guard = capturing, tucking the king in =
+checkmate). It also says what the game does not teach yet. The starting squares are tested (rooks
+in the corners, a light square on the right, each queen on her own color).
+
 ## M6 -- Grown-up tools
 
 This is for parents and teachers. All of it lives behind the gear-hold gate and stays on the device.

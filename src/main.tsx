@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import { App } from './ui/App.tsx';
+import { Card } from './ui/Card.tsx';
 import { Maker } from './ui/Maker.tsx';
 import { registerOffline } from './ui/offline.ts';
 import { watchScreen } from './ui/screenMode.ts';
@@ -13,8 +14,9 @@ watchScreen();
 const params = new URLSearchParams(window.location.search);
 const shared = params.get('p');
 const maker = params.has('maker');
+const card = params.has('card');
 
-if (!maker) {
+if (!maker && !card) {
   // iOS Safari ignores touch-action for pinch zoom; a toddler's pinch should
   // never shrink or blow up a kid screen. Grown-ups still need to zoom text.
   document.addEventListener('gesturestart', (e) => {
@@ -24,6 +26,6 @@ if (!maker) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {maker ? <Maker /> : shared !== null ? <SharedPuzzle code={shared} /> : <App />}
+    {card ? <Card /> : maker ? <Maker /> : shared !== null ? <SharedPuzzle code={shared} /> : <App />}
   </StrictMode>,
 );

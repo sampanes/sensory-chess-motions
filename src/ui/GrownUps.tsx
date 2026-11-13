@@ -235,6 +235,7 @@ export function GrownUps({ progress, update, onClose }: {
             Open every friend and puzzle
           </label>
           <a className="text-btn" href="?maker">Make your own puzzle</a>
+          <a className="text-btn" href="?card">Friends and chess pieces: a card to print</a>
           {confirmReset ? (
             <button
               className="text-btn danger"
