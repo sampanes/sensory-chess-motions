@@ -9,6 +9,7 @@ import { PAWN_LEVELS } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
 import { autoLook, canFullScreen, loadScreenPref, saveScreenPref, toggleFullScreen, type ScreenPref } from './screenMode.ts';
+import { canBuzz, loadSenses, saveSenses, type Senses } from './senses.ts';
 
 const WORLD_NAMES: Record<string, string> = {
   king: 'King',
@@ -47,6 +48,8 @@ export function GrownUps({ progress, update, onClose }: {
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [screenPref, setScreenPref] = useState<ScreenPref>(loadScreenPref);
+  const [senses, setSenses] = useState<Senses>(loadSenses);
+  const sense = (next: Senses) => { saveSenses(next); setSenses(next); };
   const total = WORLDS.reduce((n, w) => n + w.levels.length, 0);
   const finished = WORLDS.reduce((n, w) => n + w.levels.filter((l) => progress.done.includes(l.id)).length, 0);
   const days = progress.done.filter((id) => id.startsWith('day-')).length;
@@ -226,6 +229,16 @@ export function GrownUps({ progress, update, onClose }: {
             />
             Sound
           </label>
+          <label className="toggle">
+            <input type="checkbox" checked={senses.contrast} onChange={(e) => sense({ ...senses, contrast: e.target.checked })} />
+            High-contrast board (white and slate squares, dark edges)
+          </label>
+          {canBuzz() && (
+            <label className="toggle">
+              <input type="checkbox" checked={senses.buzz} onChange={(e) => sense({ ...senses, buzz: e.target.checked })} />
+              A tiny buzz on each hop
+            </label>
+          )}
           <label className="toggle">
             <input
               type="checkbox"

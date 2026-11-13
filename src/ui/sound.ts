@@ -4,6 +4,7 @@
 
 import { PLAIN_MUSIC, type Music } from '../content/looks.ts';
 import type { Kind } from '../core/types.ts';
+import { buzz } from './senses.ts';
 
 let ctx: AudioContext | null = null;
 let muted = false;
@@ -107,6 +108,7 @@ export const sfx = {
     note(f * 1.25, 0.09, 0.16, { type: 'triangle', vol: 0.16 });
   },
   hop(kind: Kind) {
+    buzz(12);
     if (kind === 'knight') {
       note(220, 0, 0.09, { type: 'triangle', vol: 0.22, glideTo: 110 });
       note(260, 0.16, 0.09, { type: 'triangle', vol: 0.22, glideTo: 120 });
@@ -118,6 +120,7 @@ export const sfx = {
   },
   /** Each treat in a puzzle plays the next note up, so finishing sounds like a tune. */
   munch(nth: number) {
+    buzz(28);
     tone(PENTA[nth % PENTA.length], 0, 0.22, 0.2);
     note(320, 0, 0.08, { type: 'sine', vol: 0.12, glideTo: 140 });
   },
@@ -135,6 +138,7 @@ export const sfx = {
     [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) => note(f, i * 0.06, 0.25, { type: 'triangle', vol: 0.14 }));
   },
   win() {
+    buzz([30, 60, 30, 60, 70]);
     const k = 2 ** (music.key / 12);
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.12, 0.3, 0.18));
     [523.25, 659.25, 783.99].forEach((f) => note(f * k, 0.55, 0.9, { type: 'sine', vol: 0.1 }));

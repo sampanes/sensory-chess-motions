@@ -6,10 +6,12 @@ import { Card } from './ui/Card.tsx';
 import { Maker } from './ui/Maker.tsx';
 import { registerOffline } from './ui/offline.ts';
 import { watchScreen } from './ui/screenMode.ts';
+import { applySenses } from './ui/senses.ts';
 import { SharedPuzzle } from './ui/SharedPuzzle.tsx';
 
 registerOffline();
 watchScreen();
+applySenses();
 
 const params = new URLSearchParams(window.location.search);
 const shared = params.get('p');

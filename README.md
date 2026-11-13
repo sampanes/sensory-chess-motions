@@ -31,7 +31,8 @@ A friend wakes up once half of the previous friend's puzzles are done (four at m
 
 - **Grown-up panel**: on the home screen, press and hold the gear (bottom right) for 2 seconds.
   It has what each friend teaches, a "what they know" table (puzzles finished without the hint
-  hand, per friend), sound on/off, phone or big screen, "open everything", and reset.
+  hand, per friend), sound on/off, phone or big screen, a high-contrast board, a buzz on each hop
+  (Android), "open everything", and reset.
 - **Puzzle maker**: [`?maker`](https://sampanes.github.io/sensory-chess-motions/?maker). Paint a board;
   it tells you instantly whether the puzzle can be finished and in how many moves. "Copy share link"
   gives a `?p=...` link that opens straight into the puzzle. It also has undo, "make it a bit

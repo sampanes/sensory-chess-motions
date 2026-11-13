@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
-import { MEADOW, type BoardTheme } from '../content/looks.ts';
+import { HIGH_CONTRAST, MEADOW, type BoardTheme } from '../content/looks.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import type { Friend, GameState, Kind, Puzzle } from '../core/types.ts';
 import { FriendArt, HandIcon, PALETTE, RockArt, TreatArt } from './art.tsx';
 import { moveDuration, moveKeyframes, REWIND_MS } from './motion.ts';
+import { highContrast } from './senses.ts';
 
 export type FriendMood = 'idle' | 'confused' | 'dance';
 
@@ -42,7 +43,7 @@ export interface BoardProps {
 export function Board(props: BoardProps) {
   const { puzzle, state, treat, selected, hops, hint, mood, gulp, round, nudgeKey } = props;
   const { rows, cols } = puzzle;
-  const { light, dark, rim, rimDark } = props.theme ?? MEADOW;
+  const { light, dark, rim, rimDark } = highContrast() ? HIGH_CONTRAST : props.theme ?? MEADOW;
   const layer = useRef<HTMLDivElement>(null);
 
   const cellStyle = (pos: number): CSSProperties => ({

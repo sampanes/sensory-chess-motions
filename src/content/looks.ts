@@ -20,6 +20,13 @@ export interface BoardTheme {
 
 export const MEADOW: BoardTheme = { id: 'meadow', light: '#eaf7d8', dark: '#bfe6a4', rim: '#7cb65a', rimDark: '#5d9442', sky: '' };
 
+/**
+ * The high-contrast board (a grown-up toggle, src/ui/senses.ts): white and
+ * slate squares in a near-black frame. It replaces whatever theme a puzzle
+ * would have had, so it is not one of the surprise themes below.
+ */
+export const HIGH_CONTRAST: BoardTheme = { id: 'contrast', light: '#ffffff', dark: '#9fb0c8', rim: '#0f172a', rimDark: '#000000', sky: '' };
+
 export const BOARD_THEMES: readonly BoardTheme[] = [
   MEADOW,
   { id: 'beach', light: '#fdf4dc', dark: '#f1dca4', rim: '#d9b26a', rimDark: '#b48c45', sky: '#dff3fb' },

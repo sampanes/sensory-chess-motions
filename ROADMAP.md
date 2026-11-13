@@ -301,6 +301,15 @@ when a kid is done more often than it helped.
 - **More senses.** Try a subtle vibration on each hop and a high-contrast board theme. Make sure
   the tune and the treat sounds carry meaning on their own.
 
+**Status (2026-11-12):** both "more senses" tries are built as grown-up toggles, off by default and
+saved on the device (`src/ui/senses.ts`):
+- **High-contrast board**: white and slate squares in a near-black frame on every board in the
+  game, a line between squares, and a dark edge around friends, guards, treats, rocks and hop spots.
+- **A tiny buzz on each hop** (12 ms), a longer one for a treat and a little pattern for a win.
+  Only offered where the browser can vibrate (most Android devices; iPhone and iPad cannot).
+Still to do: check on a real low-vision screen and a real Android tablet, and the "sounds carry
+meaning on their own" listen-through.
+
 ---
 
 ## How we work
