@@ -43,7 +43,8 @@ export function GrownUps({ progress, update, onClose }: {
         <p>
           Every friend is a real chess piece and moves exactly like one. Your child learns how the pieces move by
           collecting treats. There is nothing to read and no way to lose: if a puzzle can no longer be finished, it
-          gently rewinds. After a few quiet seconds a little hand shows the next move.
+          gently rewinds. After a few quiet seconds a little hand shows the next move. The very first puzzle is a
+          tiny lesson: the hand shows tap the friend, tap a glowing spot, then the green button.
         </p>
         <p className="muted">
           Puzzles finished: {finished} of {total}. Tap a friend (or drag it) to move; with two friends,

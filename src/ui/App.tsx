@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { WORLDS } from '../content/worlds.ts';
+import { firstLesson, type Lesson } from '../core/lesson.ts';
 import { markDone, markWorldMet, needsFriendIntro } from '../core/progress.ts';
 import { mustParse } from '../core/puzzle.ts';
 import { StarIcon, SunIcon } from './art.tsx';
@@ -163,7 +164,7 @@ export function App() {
   }
 
   if (route.screen === 'play') {
-    return <Level key={`${route.wi}-${route.li}`} wi={route.wi} li={route.li} progress={progress.done} onDone={(id) => update((p) => markDone(p, id))} />;
+    return <Level key={`${route.wi}-${route.li}`} wi={route.wi} li={route.li} progress={progress.done} lesson={firstLesson(progress, route.wi, route.li)} onDone={(id) => update((p) => markDone(p, id))} />;
   }
 
   if (route.screen === 'world') {
@@ -199,7 +200,7 @@ export function App() {
   );
 }
 
-function Level({ wi, li, progress, onDone }: { wi: number; li: number; progress: readonly string[]; onDone: (id: string) => void }) {
+function Level({ wi, li, progress, lesson, onDone }: { wi: number; li: number; progress: readonly string[]; lesson: Lesson; onDone: (id: string) => void }) {
   const world = WORLDS[wi];
   const level = world.levels[li];
   const puzzle = useMemo(() => mustParse(level.grid), [level]);
@@ -216,6 +217,7 @@ function Level({ wi, li, progress, onDone }: { wi: number; li: number; progress:
       sky={world.sky}
       replay={progress.includes(level.id)}
       eagerHint={li === 0}
+      lesson={lesson}
       dots={dots}
       onWin={() => onDone(level.id)}
       onNext={() => go(last ? '#/friends' : `#/w/${world.id}/${li + 2}`, true)}

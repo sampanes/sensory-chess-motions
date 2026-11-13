@@ -91,8 +91,15 @@ friends folder (John's idea, like an app drawer): a bubble with a tiny face per 
 that world opens, a star per finished world, and a wiggle when a friend just woke up inside. It opens
 to the full world grid (`#/friends`); back from a world returns to the folder.
 
-Still open: the first-run tap/hop/munch tutorial (the hint hand already shows after 2.5 seconds on
-the first puzzle of every world), and kid testing.
+**Status (2026-11-12):** the first-run lesson is built (`src/core/lesson.ts`). The very first puzzle
+a kid ever plays (king 1, while nothing at all is finished) is taught in three wordless beats, each
+with one thing to do: only the king and his berry are on the board and a hand taps the king; the
+king's spots light up with a wave and the hand taps the one with the berry; he hops and munches,
+and the hand taps the green go button. The lesson only changes what is shown, never what is
+allowed, so a kid who taps the berry straight away is not held up. It never shows again once any
+puzzle is finished.
+
+Every build item is done. Still open: kid testing.
 
 ## M3 -- More puzzles, a smoother climb
 

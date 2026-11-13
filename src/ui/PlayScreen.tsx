@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { pickLook, PLAIN_MUSIC, type Look } from '../content/looks.ts';
 import type { TreatKind } from '../content/worlds.ts';
+import { lessonAfterHop, lessonAfterPress, lessonHint, lessonShowsSpots, type Lesson } from '../core/lesson.ts';
 import { startState } from '../core/puzzle.ts';
 import { applyMove, friendIndexAt, hopsFor, isWon } from '../core/rules.ts';
 import { solve, type SolveResult } from '../core/solver.ts';
 import type { GameState, Move, Puzzle } from '../core/types.ts';
-import { AgainIcon, GoIcon, HomeIcon } from './art.tsx';
+import { AgainIcon, GoIcon, HandIcon, HomeIcon } from './art.tsx';
 import { Board, type FriendMood } from './Board.tsx';
 import { Confetti } from './Confetti.tsx';
 import { moveDuration, REWIND_MS } from './motion.ts';
@@ -23,6 +24,8 @@ export interface PlayScreenProps {
   look?: Look;
   /** Show the hint hand sooner (first level of a world). */
   eagerHint?: boolean;
+  /** The very first puzzle ever: teach tap, hop, munch (src/core/lesson.ts). */
+  lesson?: Lesson;
   /** Little row of dots showing where you are in the world. */
   dots?: ReactNode;
   onWin?: () => void;
@@ -34,8 +37,10 @@ export interface PlayScreenProps {
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
 const FOLLOW_UP_HINT_MS = 1200;
+const LESSON_HINT_MS = 700;
+const NO_HOPS: readonly number[] = [];
 
-export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerHint, dots, onWin, onNext, onHome }: PlayScreenProps) {
+export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerHint, lesson: firstLesson = 'done', dots, onWin, onNext, onHome }: PlayScreenProps) {
   const later = useTimers();
   // Every play after a win rolls a new surprise look (src/content/looks.ts).
   const [look, setLook] = useState(() => firstLook ?? pickLook({ treat, sky }, replay === true));
@@ -58,6 +63,9 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   const [nudgeKey, setNudgeKey] = useState(0);
   const [pokeKey, setPokeKey] = useState(0);
   const dragFrom = useRef<number | null>(null);
+  // The first lesson only changes what is shown (see src/core/lesson.ts).
+  const [lesson, setLesson] = useState<Lesson>(firstLesson);
+  const taught = useRef(firstLesson !== 'done');
 
   // The latest known way to finish from a given state. A kid who follows it
   // (or the hint hand) never waits on another search; only a detour does.
@@ -78,15 +86,15 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
   // solution (or the friend to pick, when another friend should move).
   useEffect(() => {
     if (won || busy) return;
-    const wait = hintSoon ? FOLLOW_UP_HINT_MS : eagerHint ? EAGER_HINT_MS : HINT_MS;
+    const wait = lesson !== 'done' ? LESSON_HINT_MS : hintSoon ? FOLLOW_UP_HINT_MS : eagerHint ? EAGER_HINT_MS : HINT_MS;
     const t = window.setTimeout(() => {
       const res = planFrom(game);
       if (res.status !== 'solved' || res.moves.length === 0) return;
       const m = res.moves[0];
-      setHint(m.friend === selected ? m.to : game.friends[m.friend].at);
+      setHint(lessonHint(lesson, selected, m, game.friends[m.friend].at));
     }, wait);
     return () => window.clearTimeout(t);
-  }, [won, busy, hintSoon, eagerHint, puzzle, game, selected, idleKey]);
+  }, [won, busy, hintSoon, eagerHint, lesson, puzzle, game, selected, idleKey]);
 
   const eatenSoFar = puzzle.treats.length - popCount(game.left);
 
@@ -108,6 +116,7 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
 
     setGame(res.state);
     setSelected(fi);
+    setLesson(lessonAfterHop());
     setBusy(true);
     setMotion('normal');
     setNudgeKey(0);
@@ -179,6 +188,11 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
       setPokeKey((n) => n + 1);
       dragFrom.current = fi;
       sfx.select(game.friends[fi].kind);
+      if (lesson === 'tap') {
+        // The friend was tapped: its spots light up with a little wave.
+        setLesson(lessonAfterPress(lesson, true));
+        setNudgeKey((n) => n + 1);
+      }
       return;
     }
     dragFrom.current = null;
@@ -217,7 +231,7 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
           treat={look.treat}
           theme={look.board}
           selected={selected}
-          hops={hops}
+          hops={lessonShowsSpots(lesson) ? hops : NO_HOPS}
           hint={hint}
           mood={mood}
           gulp={gulp}
@@ -233,13 +247,17 @@ export function PlayScreen({ puzzle, treat, sky, replay, look: firstLook, eagerH
 
       <div className="bottombar">
         {showGo && (
-          <button
-            className="go-btn"
-            onClick={() => { sfx.tap(); if (onNext) onNext(); else again(); }}
-            aria-label={onNext ? 'Next puzzle' : 'Play again'}
-          >
-            {onNext ? <GoIcon className="icon-lg" /> : <AgainIcon className="icon-lg invert" />}
-          </button>
+          <div className="go-wrap">
+            <button
+              className="go-btn"
+              onClick={() => { sfx.tap(); if (onNext) onNext(); else again(); }}
+              aria-label={onNext ? 'Next puzzle' : 'Play again'}
+            >
+              {onNext ? <GoIcon className="icon-lg" /> : <AgainIcon className="icon-lg invert" />}
+            </button>
+            {/* The lesson's last beat: the hand shows where the next puzzle is. */}
+            {taught.current && onNext && <HandIcon className="go-hand" />}
+          </div>
         )}
       </div>
     </div>
