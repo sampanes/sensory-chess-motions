@@ -239,25 +239,27 @@ of the square. No text. Flat colors, thick outlines, no gradients.
 
 ## After a sheet comes back
 
-Not built yet; written when the first sheet arrives:
-
-1. `scripts/cut-sheet` splits a sheet into one image per piece (connected regions on the
-   background), in reading order, named from the prompt's list.
-2. Trace each piece to SVG (`vtracer`, color mode, few colors), snap every fill to the nearest
-   palette color named in its prompt, drop anything smaller than a speck, and minify.
-3. A `--check` mode fails if a traced piece is over its size budget or uses a color outside its
-   palette.
-4. One piece at a time goes behind the same component (`FriendArt`, `TreatArt`, `RockArt`), with
-   a shots page of before and after.
+Built for the friends: `python scripts/bake-friends.py` (`--check` fails when the output is stale
+or a friend is over 6000 characters of path; `--preview DIR` saves the snapped pictures). It cuts
+the sheet on its empty bands, puts every friend on one shared canvas (one scale, one baseline),
+snaps each pixel to the friend's own colors, traces with `vtracer`, and writes
+`src/ui/friendBodies.ts`: paths tagged with a role (fill, dark, shade, ruby, sapphire), not a
+color, so the game paints them in any colors. Faces are drawn on top by `FriendArt` at `FACE_AT`.
+Needs `pip install vtracer pillow numpy`. vtracer 0.6.15 on Python 3.14 crashes when given any
+setting, so the script runs it on its defaults (fine on a snapped picture). Treats, rocks and the
+rest will get the same treatment, one sheet at a time, each with a shots page of before and
+after.
 
 ## Results
 
 (Which tool made each sheet, which roll was kept, and anything that had to be re-rolled.)
 
 - **0, the anchor (2026-11-13):** ChatGPT, `art/sheets/00-anchor.png` (transparent PNG). Kept over
-  Gemini's because it reads at board-square size: chunky shapes, big faces on the head. Its knight
-  faces right, not left as asked (code can mirror it). Faces sit on the head, so prompt 1's plain
-  face patch lands there too.
+  Gemini's because it reads at board-square size: chunky shapes, big faces on the head. Faces sit
+  on the head, so prompt 1's plain face patch lands there too.
 - **Gemini's roll of prompt 0** is kept as `art/sheets/00-staunton-shapes.jpg`: taller, more real
   Staunton shapes, faces on the belly, light shading. Too fine for the board (the faces vanish when
   small), but the right shapes for prompt 2, where it is the second attached picture.
+- **1, friend bodies (2026-11-13):** ChatGPT, first roll, `art/sheets/01-friend-bodies.png`. No
+  faces, two colors each plus the knight's mane shade and the king's jewels. The knight faces
+  left, as in the anchor (an earlier note here said right: wrong). In the game since this date.

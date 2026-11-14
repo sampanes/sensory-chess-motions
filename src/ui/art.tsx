@@ -1,9 +1,12 @@
 // All artwork is inline SVG so it stays crisp at any size and needs no files.
 // Friends are real chess-piece shapes with faces: kids meet "the one with the
-// crown" and later recognize the same shape on a real board.
+// crown" and later recognize the same shape on a real board. Their bodies are
+// traced from drawn art (friendBodies.ts, baked by scripts/bake-friends.py);
+// their faces are drawn here, so they blink and change mood.
 
 import type { Kind } from '../core/types.ts';
 import type { TreatKind } from '../content/worlds.ts';
+import { FRIEND_BODIES, type BodyRole } from './friendBodies.ts';
 
 export const PALETTE: Record<Kind, { fill: string; dark: string }> = {
   king: { fill: '#fcd34d', dark: '#b45309' },
@@ -69,84 +72,54 @@ function Cheeks({ at = [[38, 67], [62, 67]] }: { at?: number[][] }) {
   );
 }
 
-const BODY = 'M30 90 Q25 90 27 84 Q30 76 37 72 Q34 58 37 46 H63 Q66 58 63 72 Q70 76 73 84 Q75 90 70 90 Z';
-
-function Top({ kind }: { kind: Kind }) {
-  switch (kind) {
-    case 'king':
-      return (
-        <>
-          {/* A crown with a cross on top. A rounded dome here read as a pawn's head. */}
-          <rect x={46} y={2} width={8} height={18} rx={3} />
-          <rect x={39} y={6} width={22} height={7} rx={3} />
-          <path d="M33 47 L29 18 L40 27 L50 16 L60 27 L71 18 L67 47 Z" />
-          <path d="M31 31 H69" fill="none" />
-          <g stroke="none">
-            <circle cx={41} cy={37} r={2.6} fill="#ef4444" />
-            <circle cx={50} cy={37} r={2.6} fill="#60a5fa" />
-            <circle cx={59} cy={37} r={2.6} fill="#ef4444" />
-          </g>
-        </>
-      );
-    case 'queen':
-      return (
-        <>
-          <path d="M33 47 L28 22 L40 33 L50 16 L60 33 L72 22 L67 47 Z" />
-          <circle cx={28} cy={19} r={5} />
-          <circle cx={50} cy={12} r={5} />
-          <circle cx={72} cy={19} r={5} />
-        </>
-      );
-    case 'rook':
-      return <path d="M33 47 V18 H41 V26 H46 V18 H54 V26 H59 V18 H67 V47 Z" />;
-    case 'bishop':
-      return (
-        <>
-          <circle cx={50} cy={9} r={5} />
-          <path d="M38 47 Q28 32 44 18 L50 13 L56 18 Q72 32 62 47 Z" />
-          <path d="M57 24 L48 36" fill="none" strokeWidth={3.5} strokeLinecap="round" />
-        </>
-      );
-    case 'pawn':
-      return <circle cx={50} cy={30} r={15} />;
-    case 'knight':
-      return (
-        <path d="M37 47 L40 39 Q29 41 23 36 Q18 30 24 24 L38 12 L39 4 L47 10 Q65 10 67 30 Q68 40 64 47 Z" />
-      );
-  }
+/** Halfway between two colors (the knight's mane, between his two). */
+function mix(a: string, b: string): string {
+  const ch = (c: string, i: number) => parseInt(c.slice(i, i + 2), 16);
+  return '#' + [1, 3, 5].map((i) => Math.round((ch(a, i) + ch(b, i)) / 2).toString(16).padStart(2, '0')).join('');
 }
+
+/**
+ * Where each friend's face goes on its body (in the 0..100 box), and how big:
+ * on the round head under the crown, as in the art. The face is drawn at
+ * FACE_MID and moved here, so all four moods and the blink stay code.
+ */
+const FACE_AT: Record<Exclude<Kind, 'knight'>, { x: number; y: number; s: number }> = {
+  king: { x: 50, y: 46, s: 0.95 },
+  queen: { x: 50, y: 46, s: 0.95 },
+  rook: { x: 50, y: 46, s: 0.95 },
+  bishop: { x: 50, y: 46.5, s: 0.95 },
+  pawn: { x: 50, y: 37, s: 1.05 },
+};
+const FACE_MID = { x: 50, y: 63 };
 
 export function FriendArt({ kind, mood = 'happy', className, colors }: {
   kind: Kind;
   mood?: Mood;
   className?: string;
-  /** Override the friend's own colors (the grumpy king). */
+  /** Override the friend's own colors (the grumpy king, the gray side, ivory). */
   colors?: { fill: string; dark: string };
 }) {
   const { fill, dark } = colors ?? PALETTE[kind];
-  const knight = kind === 'knight';
+  const paint: Record<BodyRole, string> = { fill, dark, shade: mix(fill, dark), ruby: '#ef4444', sapphire: '#3b82f6' };
+  const at = kind === 'knight' ? null : FACE_AT[kind];
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <ellipse cx={50} cy={93} rx={25} ry={4.5} fill="rgba(0,0,0,0.15)" />
-      <g fill={fill} stroke={dark} strokeWidth={3} strokeLinejoin="round">
-        <Top kind={kind} />
-        <path d={BODY} />
-        <ellipse cx={50} cy={47} rx={17} ry={5} />
-      </g>
-      {knight ? (
-        <>
-          <Eyes mood={mood} cx={[42]} cy={22} />
-          <circle cx={27} cy={30} r={1.8} fill={dark} />
-          <path d="M47 11 Q60 16 62 32" stroke={dark} strokeWidth={3} fill="none" strokeLinecap="round" opacity={0.6} />
-          <Mouth mood={mood} x={32} y={35} />
-          <Cheeks at={[[50, 64]]} />
-        </>
-      ) : (
-        <>
+      <ellipse cx={50} cy={92} rx={25} ry={4.5} fill="rgba(0,0,0,0.15)" />
+      {FRIEND_BODIES[kind].map(([role, d], i) => <path key={i} d={d} fill={paint[role]} />)}
+      {at ? (
+        <g transform={`translate(${at.x} ${at.y}) scale(${at.s}) translate(${-FACE_MID.x} ${-FACE_MID.y})`}>
           <Eyes mood={mood} />
           <Mouth mood={mood} />
           <Cheeks />
-        </>
+        </g>
+      ) : (
+        <g transform="translate(44 31) scale(1.05) translate(-44 -31)">
+          {/* The knight in profile: one eye, a nostril at the snout, a smile along the jaw. */}
+          <Eyes mood={mood} cx={[44]} cy={31} />
+          <circle cx={30} cy={41} r={1.8} fill={dark} />
+          <Mouth mood={mood} x={37} y={44} />
+          <Cheeks at={[[51, 39]]} />
+        </g>
       )}
       {mood === 'sleepy' && (
         <g fill="#64748b" fontFamily="system-ui, sans-serif" fontWeight={800}>
