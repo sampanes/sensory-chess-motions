@@ -100,7 +100,7 @@ The roadmap's missing Staunton shapes: the end of "set up the board", where the 
 a real chess set and keep their faces. Drawn in ivory; code turns a copy dark for the other side.
 
 ```
-Same style as the attached picture. The same six characters, now dressed up as real classic
+Same style as the first attached picture. The same six characters, now dressed up as real classic
 (Staunton) tournament chess pieces: taller and slimmer, each with the real piece's details: a
 stepped round base, a thin collar ring, and the real top (king: crown with a cross; queen: crown
 with a ring of small balls; rook: notched castle top; bishop: tall mitre with a slit and a small
@@ -108,7 +108,8 @@ ball; knight: a carved horse head in profile facing left; pawn: a ball on a coll
 and chubby, not realistic. All six are ivory (#fffdf3) with a dark brown-gray outline (#3f3a36),
 and NO face: leave a smooth plain area where a face will be drawn later (on the knight, the side
 of the horse head). Same height order as a real set: king tallest, then queen, bishop, knight,
-rook, pawn shortest. Grid: 3 columns, 2 rows.
+rook, pawn shortest. The second attached picture shows the taller real-piece shapes wanted;
+keep the first picture's chunky outline and flat color. Grid: 3 columns, 2 rows.
 Style: flat vector sticker art for a toddler's game. Thick, even, dark outline around every shape
 (the outline is a darker shade of that shape's own color, never black). Flat solid fills only: no
 gradients, no shading, no texture, no glow, no drop shadow, no highlights except where named. Round,
@@ -252,3 +253,11 @@ Not built yet; written when the first sheet arrives:
 ## Results
 
 (Which tool made each sheet, which roll was kept, and anything that had to be re-rolled.)
+
+- **0, the anchor (2026-11-13):** ChatGPT, `art/sheets/00-anchor.png` (transparent PNG). Kept over
+  Gemini's because it reads at board-square size: chunky shapes, big faces on the head. Its knight
+  faces right, not left as asked (code can mirror it). Faces sit on the head, so prompt 1's plain
+  face patch lands there too.
+- **Gemini's roll of prompt 0** is kept as `art/sheets/00-staunton-shapes.jpg`: taller, more real
+  Staunton shapes, faces on the belly, light shading. Too fine for the board (the faces vanish when
+  small), but the right shapes for prompt 2, where it is the second attached picture.
