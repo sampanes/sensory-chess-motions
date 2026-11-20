@@ -296,7 +296,11 @@ queen and bishop around one rock, then bishop and knight. They sit on the wooden
 climb (the curve test passes: 16.5, 17.7, 20.5, 21.5), and every friend and rock in them is needed.
 The size limit is now 8 everywhere (`LIMITS.maxSize`), so the maker offers 7x7 and 8x8 too, and share
 links allow the longer code. Random search rarely finds good 8x8 team puzzles (an open board seldom
-needs every friend), so these were tuned by hand. Not built: 8x8 in the other friend worlds.
+needs every friend), so these were tuned by hand. Every one-friend world also ends on an 8x8 board
+now (`king-16` .. `pawn-16`, on the meadow): one friend, two to five treats, each one the top of its
+world's climb (the pawn's needs the queen it becomes, for a treat behind it). These came from a
+random search kept only when the score sits just above the world's hardest puzzle and every rock
+matters. Played to a win by tapping in headless Chrome, phone and PC.
 
 **Status (2026-11-13):** prompts for the art these need (and for the rest of the game's pictures)
 are in `docs/ART_PROMPTS.md`: one image-generator sheet per set, flat colors traced to small SVG.
