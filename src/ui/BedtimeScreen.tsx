@@ -20,7 +20,7 @@ const LIGHT = '#eaf7d8';
 const DARK = '#bfe6a4';
 const HINT_MS = 7000;
 const EAGER_HINT_MS = 2500;
-const REWIND_AFTER_MS = 1300;
+const DEMO_STEP_MS = 1500;
 /** A press that moves less than this is a tap, not a drag. */
 const DRAG_PX = 10;
 
@@ -67,7 +67,9 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   const [showGo, setShowGo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [round, setRound] = useState(0);
-  const [shoo, setShoo] = useState(0);
+  const [kingAt, setKingAt] = useState<number | null>(null);
+  const [capturedAt, setCapturedAt] = useState<number | null>(null);
+  const [explanation, setExplanation] = useState('');
   const [hint, setHint] = useState<Placement | null>(null);
   const [idleKey, setIdleKey] = useState(0);
   const layer = useRef<HTMLDivElement>(null);
@@ -131,7 +133,6 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     const res = drop(p, placed, t, at);
     const after = friendsOf(p, res.placed);
     const nowClosed = closedSquares(p, after);
-    setPlaced(res.placed);
     setChosen(null);
     sfx.hop(p.tray[t]);
 
@@ -140,10 +141,27 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     fresh.forEach((_, i) => later(() => sfx.cover(i), 120 + 110 * i));
 
     if (res.shooed.length > 0) {
-      setShoo((k) => k + 1);
-      later(() => sfx.shoo(), 150);
+      const attempted = [...placed.filter((pl) => pl.tray !== t), { tray: t, at }];
+      setPlaced(attempted);
+      setBusy(true);
+      setExplanation('The king can take this friend!');
+      res.shooed.forEach((trayIndex, i) => {
+        const target = attempted.find((pl) => pl.tray === trayIndex)!;
+        later(() => setKingAt(target.at), i * DEMO_STEP_MS + 300);
+        later(() => {
+          setPlaced((current) => current.filter((pl) => pl.tray !== trayIndex));
+          sfx.shoo();
+        }, i * DEMO_STEP_MS + 750);
+        later(() => setKingAt(null), i * DEMO_STEP_MS + 1100);
+      });
+      later(() => {
+        setPlaced(res.placed);
+        setExplanation('');
+        setBusy(false);
+      }, res.shooed.length * DEMO_STEP_MS);
       return;
     }
+    setPlaced(res.placed);
     if (mateStatus(p, after) === 'mate') {
       setWon(true);
       setBusy(true);
@@ -154,15 +172,27 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
       return;
     }
     if (res.placed.length === p.tray.length) {
-      // Everyone is on the board and he is still awake: float them all home.
+      // Show a legal escape, or explain stalemate, before resetting the board.
       setBusy(true);
+      const escape = escapes(p, after)[0];
+      if (escape !== undefined) {
+        const capture = after.some((friend) => friend.at === escape);
+        setExplanation(capture ? 'The king can take this friend!' : 'The king can escape!');
+        later(() => setKingAt(escape), 400);
+        if (capture) later(() => { setCapturedAt(escape); sfx.shoo(); }, 800);
+      } else {
+        setExplanation('The king is not in check!');
+      }
       later(() => {
+        setKingAt(null);
+        setCapturedAt(null);
         setPlaced([]);
+        setExplanation('');
         setHint(null);
         setRound((r) => r + 1);
         setBusy(false);
         sfx.rewind();
-      }, REWIND_AFTER_MS);
+      }, 2200);
     }
   };
 
@@ -246,6 +276,9 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     if (busy && !won) return;
     later.clear(); // nothing an old win had planned may land on the fresh board
     setPlaced([]);
+    setKingAt(null);
+    setCapturedAt(null);
+    setExplanation('');
     setChosen(null);
     setWon(false);
     setShowGo(false);
@@ -301,19 +334,19 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
               {shown.check && <div className={`watched check ${won ? 'tucked' : ''}`} style={cellStyle(p.king)} />}
             </div>
 
-            <div className="friend" style={cellStyle(p.king)}>
-              <div key={`k${shoo}-${kingAnim}`} className={`friend-body ${shoo ? 'confused' : kingAnim}`}>
+            <div className="friend bedtime-king" style={cellStyle(kingAt ?? p.king)}>
+              <div className={`friend-body ${kingAnim}`}>
                 <FriendArt kind="king" colors={GRUMPY} mood={kingMood} className="fill" />
               </div>
             </div>
 
-            {p.fixed.map((f) => (
+            {p.fixed.filter((f) => f.at !== capturedAt).map((f) => (
               <div key={`f${f.at}`} className="friend" style={cellStyle(f.at)}>
                 <div className="friend-body"><FriendArt kind={f.kind} className="fill" /></div>
               </div>
             ))}
 
-            {placed.map((pl) => (
+            {placed.filter((pl) => pl.at !== capturedAt).map((pl) => (
               <div
                 key={`p${round}-${pl.tray}-${pl.at}`}
                 className={`friend ${draggingFromBoard === pl.tray ? 'lifted-away' : ''}`}
@@ -340,6 +373,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
           </div>
         </div>
         {won && <Confetti />}
+        <div className="bedtime-explanation" role="status" aria-live="polite">{explanation}</div>
       </div>
 
       <div className="bottombar">
