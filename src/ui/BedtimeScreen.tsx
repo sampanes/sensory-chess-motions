@@ -70,6 +70,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
   const [kingAt, setKingAt] = useState<number | null>(null);
   const [capturedAt, setCapturedAt] = useState<number | null>(null);
   const [explanation, setExplanation] = useState('');
+  const [showSafeKing, setShowSafeKing] = useState(false);
   const [hint, setHint] = useState<Placement | null>(null);
   const [idleKey, setIdleKey] = useState(0);
   const layer = useRef<HTMLDivElement>(null);
@@ -181,11 +182,12 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
         later(() => setKingAt(escape), 400);
         if (capture) later(() => { setCapturedAt(escape); sfx.shoo(); }, 800);
       } else {
-        setExplanation('The king is not in check!');
+        setShowSafeKing(true);
       }
       later(() => {
         setKingAt(null);
         setCapturedAt(null);
+        setShowSafeKing(false);
         setPlaced([]);
         setExplanation('');
         setHint(null);
@@ -278,6 +280,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
     setPlaced([]);
     setKingAt(null);
     setCapturedAt(null);
+    setShowSafeKing(false);
     setExplanation('');
     setChosen(null);
     setWon(false);
@@ -335,6 +338,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
             </div>
 
             <div className="friend bedtime-king" style={cellStyle(kingAt ?? p.king)}>
+              {showSafeKing && <div className="king-safe-field" aria-hidden="true" />}
               <div className={`friend-body ${kingAnim}`}>
                 <FriendArt kind="king" colors={GRUMPY} mood={kingMood} className="fill" />
               </div>
@@ -374,6 +378,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
         </div>
         {won && <Confetti />}
         <div className="bedtime-explanation" role="status" aria-live="polite">{explanation}</div>
+        <div className="bedtime-sr-status" role="status" aria-live="polite">{showSafeKing ? 'The king is safe, but cannot move. Stalemate!' : ''}</div>
       </div>
 
       <div className="bottombar">
