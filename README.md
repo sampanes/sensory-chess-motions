@@ -68,7 +68,8 @@ Puzzles are ASCII grids in `src/content/worlds.ts`:
 '..K..',
 ```
 
-Boards are 3x3 to 6x6, up to 3 friends and 10 treats. Pawns walk toward the top row.
+Boards are 3x3 to 8x8 (each friend world ends on one 8x8 board, a real chessboard), up to 3
+friends and 10 treats. Pawns walk toward the top row.
 `npm test` runs a solver over every level and fails if one can't be finished or needs more
 than 10 moves, and checks that each world gets harder in order, in small steps.
 `node scripts/solve-all.ts` prints every level's difficulty. The puzzle maker's "Grid text" box
