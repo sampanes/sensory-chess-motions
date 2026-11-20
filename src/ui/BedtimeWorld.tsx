@@ -1,10 +1,12 @@
-// Picker for the bedtime puzzles. Every one is open from the start: new modes
-// never wait for the friend worlds to be finished.
+// Picker for the bedtime puzzles, one block per set (first beds, helpers, big
+// beds). Every one is open from the start: new modes never wait for the
+// friend worlds to be finished.
 
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { mustParseMate } from '../core/mate.ts';
 import type { Progress } from '../core/progress.ts';
 import { FriendArt, GRUMPY, HomeIcon, PALETTE, StarIcon } from './art.tsx';
+import { levelSets } from './sneakModes.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 
 export function BedtimeWorld({ progress, onPlay, onHome }: {
@@ -24,22 +26,24 @@ export function BedtimeWorld({ progress, onPlay, onHome }: {
         </div>
         <div className="round-btn-spacer" />
       </div>
-      <div className="level-grid">
-        {BEDTIME_LEVELS.map((l, li) => {
-          const done = progress.done.includes(l.id);
-          return (
-            <button
-              key={l.id}
-              className={`level-tile ${li === next ? 'suggest' : ''}`}
-              onClick={() => { wakeAudio(); sfx.tap(); onPlay(li); }}
-              aria-label={`Bedtime puzzle ${li + 1}${done ? ', done' : ''}`}
-            >
-              <BedtimeMini grid={l.grid} tray={l.tray} />
-              {done && <StarIcon className="tile-star" />}
-            </button>
-          );
-        })}
-      </div>
+      {levelSets(BEDTIME_LEVELS).map((group) => (
+        <div key={group.set} className="level-grid level-set">
+          {group.levels.map(({ level: l, index: li }) => {
+            const done = progress.done.includes(l.id);
+            return (
+              <button
+                key={l.id}
+                className={`level-tile ${li === next ? 'suggest' : ''}`}
+                onClick={() => { wakeAudio(); sfx.tap(); onPlay(li); }}
+                aria-label={`Bedtime puzzle ${li + 1}${done ? ', done' : ''}`}
+              >
+                <BedtimeMini grid={l.grid} tray={l.tray} />
+                {done && <StarIcon className="tile-star" />}
+              </button>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }

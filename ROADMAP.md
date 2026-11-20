@@ -226,6 +226,21 @@ What it is for (John): a wiggly kid who won't settle gets one quick puzzle that 
 staying up late, and learns a checkmate while she's at it.
 Still open: kid testing, and the other mechanics in the table.
 
+**Status (2026-11-19):** bedtime grew from 8 to 24 puzzles in three sets of eight, shown as three
+blocks in its picker like tiptoe (`src/content/bedtime.ts`; the first set keeps its ids, so saved
+stars stay):
+- **First beds** (`bed-1`..`8`): the original eight.
+- **Helpers** (`bed-help-1`..`8`): a friend already stands on the board and never moves; the one in
+  the tray must land where the helper protects it, or where the helper fences the king in. Your
+  king holds the queen, a rook or bishop or pawn holds the queen from afar, the king or a rook
+  fences a row, a knight holds the rook next to a cornered king, and a rook fences a corner so only
+  the knight can reach him. Secretly: protect your piece.
+- **Big beds** (`bed-big-1`..`8`): 6x6 boards with two or three tray friends (two rooks, king and
+  rook, king and queen, queen and knight, rook and bishop around rocks, two queens in the open, two
+  rooks and a king one row in from the edge, and king, bishop and knight in the corner).
+`tests/bedtime-sets.test.ts` proves every tray friend is needed (none can be left in the tray), and
+every helper is needed (the puzzle cannot be won without it). The grown-up table has a row per set.
+
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.
 

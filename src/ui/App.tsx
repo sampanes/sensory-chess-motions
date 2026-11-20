@@ -110,10 +110,10 @@ export function App() {
         grid={level.grid}
         tray={level.tray}
         sky={BEDTIME_SKY}
-        eagerHint={li === 0}
-        dots={BEDTIME_LEVELS.map((l, i) => (
+        eagerHint={BEDTIME_LEVELS.findIndex((l) => l.set === level.set) === li}
+        dots={BEDTIME_LEVELS.map((l, i) => (l.set !== level.set ? null : (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
-        ))}
+        )))}
         onWin={(own) => update((p) => markFinished(p, level.id, own))}
         onNext={() => go(last ? '#/bed' : `#/bed/${li + 2}`, true)}
         onHome={() => go('#/bed')}

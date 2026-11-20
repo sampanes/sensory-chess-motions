@@ -27,6 +27,12 @@ const TIPTOE_SET_NAMES = {
   safe: 'Safe captures (tiptoe)',
 } as const;
 
+const BEDTIME_SET_NAMES = {
+  first: 'Checkmate (bedtime)',
+  helpers: 'Checkmate with a helper (bedtime)',
+  big: 'Checkmate on a big board (bedtime)',
+} as const;
+
 const KNOWING_TEXT = { 'not-yet': 'Not yet', learning: 'Learning', knows: 'Knows it' } as const;
 
 function KnowRow({ faces, name, report }: { faces: ReactNode; name: string; report: KnowReport }) {
@@ -101,7 +107,8 @@ export function GrownUps({ progress, update, onClose }: {
             <span>
               Bedtime puzzles (the night-sky bubble, always open): drag friends from the tray until the grumpy king is
               in check and every square he could step to is watched. That is checkmate. Red squares show what a
-              friend would watch before you let go. Finished {BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length}{' '}
+              friend would watch before you let go. Three sets: first beds, then a helper already on the board
+              that the new friend must lean on (protecting a piece), then a big 6x6 bed. Finished {BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length}{' '}
               of {BEDTIME_LEVELS.length}.
             </span>
           </li>
@@ -179,11 +186,14 @@ export function GrownUps({ progress, update, onClose }: {
               name="Pawn races and promotion"
               report={knowReport(progress, PAWN_LEVELS.map((l) => l.id))}
             />
-            <KnowRow
-              faces={<FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="know-friend" />}
-              name="Checkmate (bedtime)"
-              report={knowReport(progress, BEDTIME_LEVELS.map((l) => l.id))}
-            />
+            {(['first', 'helpers', 'big'] as const).map((set) => (
+              <KnowRow
+                key={set}
+                faces={<FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="know-friend" />}
+                name={BEDTIME_SET_NAMES[set]}
+                report={knowReport(progress, BEDTIME_LEVELS.filter((l) => l.set === set).map((l) => l.id))}
+              />
+            ))}
           </tbody>
         </table>
 

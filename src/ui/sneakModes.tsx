@@ -17,8 +17,8 @@ export interface SneakLevel {
 }
 
 /** The levels of a mode, split into its sets in order (one group when a mode has no sets). */
-export function levelSets(levels: readonly SneakLevel[]): { set: string; levels: { level: SneakLevel; index: number }[] }[] {
-  const out: { set: string; levels: { level: SneakLevel; index: number }[] }[] = [];
+export function levelSets<L extends { set?: string }>(levels: readonly L[]): { set: string; levels: { level: L; index: number }[] }[] {
+  const out: { set: string; levels: { level: L; index: number }[] }[] = [];
   levels.forEach((level, index) => {
     const name = level.set ?? '';
     const last = out[out.length - 1];

@@ -36,6 +36,8 @@ on. Any screen can be opened directly with its link (the list is in `README.md`)
 | Tiptoe, third set (stay safe): puzzle 1 offers a capture that wakes the bishop. | After the wake they go for the bishop first. If they repeat the same capture three times, the lesson is not landing. |
 | Pawn walk: a race against the gray pawn, and the angry queen when it gets home first. | They laugh or at least are not scared, and try again. |
 | Bedtime: one checkmate puzzle. | A 4 to 5 year old finishes one without help (the milestone 4 bar). |
+| Bedtime helpers (second block): a friend already on the board. | Does the kid put the new friend next to the helper on purpose, or only after the king shoos it back once? Both are fine; the second is the lesson landing. |
+| Bedtime big beds (third block): 6x6, two or three friends. | Older kids only. Watch whether the red squares on the big board help or overwhelm. |
 | Today's puzzle. | They can finish it; note the friend and the day if not. |
 
 ## The big touchscreen
