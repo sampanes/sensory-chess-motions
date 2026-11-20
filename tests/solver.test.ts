@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mustParse, startState } from '../src/core/puzzle.ts';
 import { applyMove, isWon } from '../src/core/rules.ts';
-import { solve } from '../src/core/solver.ts';
+import { DEFAULT_STATE_LIMIT, solve, stateLimitFor } from '../src/core/solver.ts';
 
 test('finds the shortest solution and it actually wins', () => {
   const p = mustParse(['*...*', '.....', '..R..', '.....', '*...*']);
@@ -45,4 +45,13 @@ test('reports stuck when a treat can never be reached', () => {
 test('reports too-big instead of hanging when the search explodes', () => {
   const p = mustParse(['*....*', '......', '......', '......', '......', 'QRB..*']);
   assert.equal(solve(p, startState(p), 10).status, 'too-big');
+});
+
+test('a bigger board gets a smaller search cap, so a hand-made 8x8 board cannot freeze the page', () => {
+  const board = (n: number) => mustParse(Array.from({ length: n }, (_, r) => (r === 0 ? 'R' + '.'.repeat(n - 2) + '*' : '.'.repeat(n))));
+  assert.equal(stateLimitFor(board(6)), DEFAULT_STATE_LIMIT);
+  assert.ok(stateLimitFor(board(7)) < DEFAULT_STATE_LIMIT);
+  assert.ok(stateLimitFor(board(8)) < 50_000);
+  // Still enough for an 8x8 puzzle a kid can finish.
+  assert.equal(solve(board(8), startState(board(8))).status, 'solved');
 });

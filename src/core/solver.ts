@@ -14,6 +14,20 @@ export type SolveResult =
 
 export const DEFAULT_STATE_LIMIT = 250_000;
 
+/**
+ * How many states a search may visit on this board. Up to 6x6 it is
+ * DEFAULT_STATE_LIMIT. A bigger board gives every state more hops to try
+ * (a sliding friend crosses 8 squares, not 6), so the cap shrinks with the
+ * cube of the area: a search on a hand-made 8x8 board in a shared link or the
+ * maker then costs about what the worst 6x6 one did, instead of freezing the
+ * page for seconds. It still covers every built-in 8x8 puzzle with room to
+ * spare (tests/levels.test.ts solves each one with this cap).
+ */
+export function stateLimitFor(p: Puzzle): number {
+  const area = p.rows * p.cols;
+  return area <= 36 ? DEFAULT_STATE_LIMIT : Math.round(DEFAULT_STATE_LIMIT * (36 / area) ** 3);
+}
+
 const KIND_CODE = new Map<Kind, number>(KINDS.map((k, i) => [k, i]));
 
 // Plain arithmetic (not bitwise) so keys can exceed 32 bits:
@@ -28,7 +42,7 @@ export function stateKey(s: GameState): number {
 export function solve(
   p: Puzzle,
   start: GameState,
-  stateLimit = DEFAULT_STATE_LIMIT,
+  stateLimit = stateLimitFor(p),
   won: (s: GameState) => boolean = isWon,
 ): SolveResult {
   if (won(start)) return { status: 'solved', moves: [] };
