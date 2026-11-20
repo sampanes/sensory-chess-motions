@@ -239,16 +239,19 @@ of the square. No text. Flat colors, thick outlines, no gradients.
 
 ## After a sheet comes back
 
-Built for the friends: `python scripts/bake-friends.py` (`--check` fails when the output is stale
-or a friend is over 6000 characters of path; `--preview DIR` saves the snapped pictures). It cuts
-the sheet on its empty bands, puts every friend on one shared canvas (one scale, one baseline),
-snaps each pixel to the friend's own colors, traces with `vtracer`, and writes
-`src/ui/friendBodies.ts`: paths tagged with a role (fill, dark, shade, ruby, sapphire), not a
-color, so the game paints them in any colors. Faces are drawn on top by `FriendArt` at `FACE_AT`.
-Needs `pip install vtracer pillow numpy`. vtracer 0.6.15 on Python 3.14 crashes when given any
-setting, so the script runs it on its defaults (fine on a snapped picture). Treats, rocks and the
-rest will get the same treatment, one sheet at a time, each with a shots page of before and
-after.
+One script bakes every sheet: `python scripts/bake-art.py [friends|treats|rocks|all]` (`--check`
+fails when an output is stale or a piece is over its budget; `--preview DIR` saves the snapped
+pictures). Each sheet has a recipe in the script: the file name in `art/sheets/`, the output file,
+and the colors of each piece in sheet order. It cuts the sheet on its empty bands, puts every piece
+on one shared canvas (one scale; friends stand on one baseline, treats and rocks are centered),
+snaps each pixel to the piece's own colors, traces with `vtracer`, and writes a TS file. Friends get
+role names (fill, dark, shade, ruby, sapphire) so the game can paint them gray or ivory; treats
+(`src/ui/treatArt.ts`) and rocks (`src/ui/rockArt.ts`) keep their colors. A sheet that is not there
+yet is skipped, so the recipes for treats (`03-treats.png`) and rocks (`04-rocks.png`) are ready and
+waiting: drop the sheet in, sample its real colors into the recipe (`--preview` shows the snap), run
+the script, then point `TreatArt` or `RockArt` at the output. Faces are drawn on top of the friends
+by `FriendArt` at `FACE_AT`. Needs `pip install vtracer pillow numpy`. vtracer 0.6.15 on Python 3.14
+crashes when given any setting, so the script runs it on its defaults (fine on a snapped picture).
 
 ## Results
 

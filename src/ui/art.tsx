@@ -1,7 +1,7 @@
 // All artwork is inline SVG so it stays crisp at any size and needs no files.
 // Friends are real chess-piece shapes with faces: kids meet "the one with the
 // crown" and later recognize the same shape on a real board. Their bodies are
-// traced from drawn art (friendBodies.ts, baked by scripts/bake-friends.py);
+// traced from drawn art (friendBodies.ts, baked by scripts/bake-art.py);
 // their faces are drawn here, so they blink and change mood.
 
 import type { Kind } from '../core/types.ts';
