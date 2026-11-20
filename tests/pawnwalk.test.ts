@@ -107,3 +107,21 @@ test('every pawn walk puzzle can be finished, and every helper friend is needed'
     }
   }
 });
+
+test('the pawn walk has two blocks of eight, and every guard and rock in a race matters', () => {
+  assert.deepEqual(PAWN_LEVELS.map((l) => l.set), [...Array(8).fill('walk'), ...Array(8).fill('races')]);
+  for (const l of PAWN_LEVELS.filter((x) => x.set === 'races')) {
+    const p = mustParseSneak(l.grid, PAWN_RULES(l));
+    const res = solveSneak(p, sneakStart(p));
+    assert.equal(res.status, 'solved', l.id);
+    if (res.status !== 'solved') continue;
+    l.grid.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (!'prbnq#'.includes(ch)) return;
+      const without = l.grid.map((x, i) => (i === r ? x.slice(0, c) + '.' + x.slice(c + 1) : x));
+      const parsed = parseSneak(without, PAWN_RULES(l));
+      if (!parsed.ok) return; // the last racer: without it there is no race at all
+      const w = solveSneak(parsed.puzzle, sneakStart(parsed.puzzle));
+      assert.ok(w.status !== 'solved' || w.moves.length < res.moves.length, `${l.id}: the ${ch} at ${r},${c} changes nothing`);
+    }));
+  }
+});

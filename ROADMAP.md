@@ -205,6 +205,13 @@ shows as pulsing red stripes, and the next hop must answer it (eat the gray pawn
 (2026-11-06) caught the first version waking on the gray pawn's step, which made no chess sense.
 Tests prove every helper friend is needed.
 
+**Status (2026-11-19):** the pawn walk grew from 8 to 16 puzzles: a second block of eight "big
+races" (`pawn-race-1`..`8`, ids kept separate so saved stars stay). Wider boards where the gray
+racer starts off to the side and one helper (rook, knight, king, bishop) has to get in its way or
+boop it in time, then two racers at once, and last two racers past a sleeping knight. Found by a
+random search and kept only when the pawn cannot win alone and every guard and rock matters
+(`tests/pawnwalk.test.ts` checks both). All 16 were played to a win by tapping in headless Chrome.
+
 **Status (2026-11-06):** cross with a team is in the lab (`#/lab`; plan `docs/TEAM_CROSSING.md`):
 8 fields in `src/content/crossing.ts`, rules in `src/core/cross.ts` (the usual moves; won when every
 friend stands on a gold home square). Fields teach the rook's lane, the bishop's color, the knight's

@@ -14,9 +14,11 @@ export interface PawnLevel {
   grid: readonly string[];
   /** Guard pawns are awake and walk down the board. */
   race?: boolean;
+  /** The picker shows each set as its own block: the first walks, then the big races. */
+  set?: string; // 'walk' or 'races'
 }
 
-export const PAWN_LEVELS: readonly PawnLevel[] = [
+const WALKS: readonly PawnLevel[] = [
   // Walk up, eat the treat diagonally, walk home and become a queen.
   { id: 'pawn-walk-1', grid: ['....', '..*.', '....', '.P..'] },
   // A sleepy guard pawn watches the path: munch sideways to slip past.
@@ -33,6 +35,26 @@ export const PAWN_LEVELS: readonly PawnLevel[] = [
   { id: 'pawn-walk-7', race: true, grid: ['.....', '.rp..', '.....', '.....', 'P..N.'] },
   // The queen catches the racer right away; the pawn boops the rook guard on its way home.
   { id: 'pawn-walk-8', race: true, grid: ['.....', '..r#.', 'p....', '.....', 'QP...'] },
-];
+].map((l) => ({ ...l, set: 'walk' as const }));
+
+/**
+ * Big races (second block): wider boards, the gray racer starts far off to
+ * the side, and one friend has to get in its way (or boop it) in time. Then
+ * two racers at once, and last, two racers past a sleeping knight. Found by a
+ * random search kept only when the pawn cannot win alone and every guard and
+ * rock matters; tests/pawnwalk.test.ts checks both.
+ */
+const RACES: readonly PawnLevel[] = [
+  { id: 'pawn-race-1', race: true, grid: ['......', '.....p', '......', '......', 'R.P...'] },
+  { id: 'pawn-race-2', race: true, grid: ['.....', 'p....', '.....', '..N..', '..P..'] },
+  { id: 'pawn-race-3', race: true, grid: ['...p..', '......', '......', 'K.....', '....P.'] },
+  { id: 'pawn-race-4', race: true, grid: ['.p...', '.....', '.....', '..B..', 'P....'] },
+  { id: 'pawn-race-5', race: true, grid: ['.....', '..p.p', '.....', '.....', 'N..P.'] },
+  { id: 'pawn-race-6', race: true, grid: ['......', '....p.', 'p.....', '......', '..RP..'] },
+  { id: 'pawn-race-7', race: true, grid: ['.p...', '.p...', '.....', '....B', '..P..'] },
+  { id: 'pawn-race-8', race: true, grid: ['...p..', '...n..', '....p.', '.B....', '.....P'] },
+].map((l) => ({ ...l, set: 'races' as const }));
+
+export const PAWN_LEVELS: readonly PawnLevel[] = [...WALKS, ...RACES];
 
 export const PAWN_RULES = (l: PawnLevel) => ({ goal: 'home' as const, race: !!l.race });
