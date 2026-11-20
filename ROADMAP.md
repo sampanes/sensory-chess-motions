@@ -281,17 +281,22 @@ home bubble.
 of the set-up puzzle. When the whole side of sixteen stands (levels 5 to 7), the meadow fades to a
 wooden chessboard and the friends turn ivory, keeping their faces, opposite the silver side, which
 wakes up: the kid is looking at a real chess set (`WOOD` and `IVORY` in `src/content/looks.ts`).
-Not built: 8x8 boards in the friend worlds, and Staunton shapes (the friends keep their own
-shapes; only their colors change).
+Not built: Staunton shapes (the friends keep their own shapes; only their colors change; the art
+prompt for them is prompt 2 in `docs/ART_PROMPTS.md`).
 
 **Status (2026-11-19):** the board reveal reaches the friend worlds. In the last world (all the
 friends together, `REVEAL_WORLD` in `src/content/looks.ts`), a first play of each puzzle sits on a
 board a little further from the meadow: puzzle 1 is grass, the middle ones dry to golden straw, and
 puzzle 15 is the wooden chessboard of the set-up reveal. The colors turn through hue, so the middle
-never goes muddy. Replays still roll a surprise theme. 8x8 hop puzzles were tried for the end of
-that world and set aside: the solver handles 8x8 fast (about 50 ms a board), but on an open 8x8
-board a team puzzle rarely needs every friend, and the difficulty score jumps past the curve test's
-step. They need hand design, maybe with more rocks.
+never goes muddy. Replays still roll a surprise theme.
+
+**Status (2026-11-19):** boards grow to 8x8. The same world now ends with three 8x8 puzzles
+(`friends-16`..`18`), its friends starting on the bottom row like a real back rank: queen and rook,
+queen and bishop around one rock, then bishop and knight. They sit on the wooden board, last in the
+climb (the curve test passes: 16.5, 17.7, 20.5, 21.5), and every friend and rock in them is needed.
+The size limit is now 8 everywhere (`LIMITS.maxSize`), so the maker offers 7x7 and 8x8 too, and share
+links allow the longer code. Random search rarely finds good 8x8 team puzzles (an open board seldom
+needs every friend), so these were tuned by hand. Not built: 8x8 in the other friend worlds.
 
 **Status (2026-11-13):** prompts for the art these need (and for the rest of the game's pictures)
 are in `docs/ART_PROMPTS.md`: one image-generator sheet per set, flat colors traced to small SVG.

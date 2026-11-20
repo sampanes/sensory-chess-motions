@@ -5,7 +5,7 @@
 // A link can also carry a SET of puzzles to play in order (for a class, or a
 // rainy day): the codes are joined with '_', as in ?p=<code>_<code>_<code>.
 
-import { parseGrid, type ParseResult } from './puzzle.ts';
+import { LIMITS, parseGrid, type ParseResult } from './puzzle.ts';
 import type { Puzzle } from './types.ts';
 
 const TO_URL: Readonly<Record<string, string>> = { '.': '-', '#': 'x', '*': 't' };
@@ -19,8 +19,12 @@ export function encodePuzzle(grid: readonly string[]): string {
   return grid.map((row) => [...row].map((ch) => TO_URL[ch] ?? ch).join('')).join('.');
 }
 
+/** The longest code a puzzle can have: the biggest board, plus a '.' between rows. */
+const CODE_MAX = LIMITS.maxSize * (LIMITS.maxSize + 1) - 1;
+const CODE_CHARS = /^[-xtKQRBNP.]+$/;
+
 export function decodePuzzle(code: string): ParseResult {
-  if (!/^[-xtKQRBNP.]{1,60}$/.test(code)) {
+  if (code.length > CODE_MAX || !CODE_CHARS.test(code)) {
     return { ok: false, error: 'That puzzle link is broken.' };
   }
   const grid = code.split('.').map((row) => [...row].map((ch) => FROM_URL[ch] ?? ch).join(''));

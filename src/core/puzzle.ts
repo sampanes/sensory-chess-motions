@@ -12,7 +12,7 @@ import type { Friend, GameState, Kind, Puzzle } from './types.ts';
 
 export const LIMITS = {
   minSize: 3,
-  maxSize: 6,
+  maxSize: 8, // 8x8 is a real chessboard: the end of the friend worlds, the set-up lab
   maxFriends: 3,
   maxTreats: 10,
 } as const;
