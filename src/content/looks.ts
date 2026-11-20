@@ -45,6 +45,62 @@ export const BOARD_THEMES: readonly BoardTheme[] = [
   { id: 'lavender', light: '#f1edfb', dark: '#d3c8f2', rim: '#a08ad9', rimDark: '#7d67b8', sky: '#f3effa' },
 ];
 
+/**
+ * A color part way (t from 0 to 1) from a to b, turning through hue rather
+ * than straight across: green grass turns golden on its way to wood instead
+ * of going muddy olive.
+ */
+function blend(a: string, b: string, t: number): string {
+  const [h1, s1, l1] = toHsl(a);
+  const [h2, s2, l2] = toHsl(b);
+  let dh = h2 - h1;
+  if (dh > 180) dh -= 360;
+  if (dh < -180) dh += 360;
+  return fromHsl((h1 + dh * t + 360) % 360, s1 + (s2 - s1) * t, l1 + (l2 - l1) * t);
+}
+
+function toHsl(hex: string): [number, number, number] {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+
+function fromHsl(h: number, s: number, l: number): string {
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [0, 8, 4].map((n) => Math.round(f(n) * 255).toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * The board reveal (milestone 5): the last friend world is the bridge to a
+ * real chess set, so on a first play its meadow turns, puzzle by puzzle, into
+ * the wooden board. Puzzle 1 is pure meadow, the last one is pure wood. A
+ * replay still rolls a surprise theme.
+ */
+export const REVEAL_WORLD = 'friends';
+
+/** The board between the meadow (t = 0) and the wooden board (t = 1). */
+export function revealBoard(t: number): BoardTheme {
+  const k = Math.min(1, Math.max(0, t));
+  if (k === 0) return MEADOW;
+  if (k === 1) return WOOD;
+  const mix = (key: 'light' | 'dark' | 'rim' | 'rimDark') => blend(MEADOW[key], WOOD[key], k);
+  return { id: `reveal-${Math.round(k * 100)}`, light: mix('light'), dark: mix('dark'), rim: mix('rim'), rimDark: mix('rimDark'), sky: '' };
+}
+
+/** The board a puzzle shows on its first play: the meadow, except in the reveal world. */
+export function firstBoard(worldId: string, levelIndex: number, levelCount: number): BoardTheme {
+  if (worldId !== REVEAL_WORLD || levelCount < 2) return MEADOW;
+  return revealBoard(levelIndex / (levelCount - 1));
+}
+
 /** How the munch notes and the win tune sound. */
 export interface Music {
   /** Semitones up (or down) from C major pentatonic. */
@@ -67,11 +123,11 @@ export interface Look {
 
 /**
  * The look for one play of a puzzle. A first play uses the world's own treat
- * and sky on the meadow; a replay rolls a fresh surprise each time, never the
+ * and sky on the meadow (or the world's own board, for the reveal); a replay rolls a fresh surprise each time, never the
  * plain look.
  */
-export function pickLook(world: { treat: TreatKind; sky: string }, replay: boolean, rand: () => number = Math.random): Look {
-  if (!replay) return { treat: world.treat, board: MEADOW, sky: world.sky, music: PLAIN_MUSIC };
+export function pickLook(world: { treat: TreatKind; sky: string; board?: BoardTheme }, replay: boolean, rand: () => number = Math.random): Look {
+  if (!replay) return { treat: world.treat, board: world.board ?? MEADOW, sky: world.sky, music: PLAIN_MUSIC };
   const pick = <T>(xs: readonly T[]) => xs[Math.floor(rand() * xs.length)];
   const board = pick(BOARD_THEMES);
   const music = { key: pick(KEYS), voice: pick(VOICES) };

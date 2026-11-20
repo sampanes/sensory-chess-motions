@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ALL_TREATS, BOARD_THEMES, MEADOW, PLAIN_MUSIC, pickLook } from '../src/content/looks.ts';
+import { ALL_TREATS, BOARD_THEMES, firstBoard, MEADOW, PLAIN_MUSIC, pickLook, REVEAL_WORLD, WOOD } from '../src/content/looks.ts';
 import { WORLDS } from '../src/content/worlds.ts';
 import { seededRandom } from '../src/core/generate.ts';
 
@@ -41,4 +41,22 @@ test('board themes keep a visible light/dark checker', () => {
     const gap = lum(t.light) - lum(t.dark);
     assert.ok(gap > 0.05 && gap < 0.2, `${t.id}: light/dark gap ${gap.toFixed(3)}`);
   }
+});
+
+test('the board reveal: the last friend world turns from meadow to wood, a little each puzzle', () => {
+  const world = WORLDS[WORLDS.length - 1];
+  assert.equal(world.id, REVEAL_WORLD);
+  const n = world.levels.length;
+  assert.equal(firstBoard(world.id, 0, n), MEADOW);
+  assert.equal(firstBoard(world.id, n - 1, n), WOOD);
+  // Every step is a little further along, and each one looks different from the last.
+  const along = (b: { id: string }) => (b.id === 'meadow' ? 0 : b.id === 'wood' ? 100 : Number(b.id.replace('reveal-', '')));
+  for (let i = 1; i < n; i++) {
+    const [a, b] = [firstBoard(world.id, i - 1, n), firstBoard(world.id, i, n)];
+    assert.ok(along(b) > along(a), `step ${i}`);
+    assert.notEqual(b.dark, a.dark, `step ${i}`);
+  }
+  // Every other world stays on the meadow, and the reveal board is the look of a first play.
+  for (const w of WORLDS.slice(0, -1)) assert.equal(firstBoard(w.id, w.levels.length - 1, w.levels.length), MEADOW);
+  assert.equal(pickLook({ ...world, board: firstBoard(world.id, n - 1, n) }, false).board, WOOD);
 });

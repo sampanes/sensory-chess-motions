@@ -284,6 +284,15 @@ wakes up: the kid is looking at a real chess set (`WOOD` and `IVORY` in `src/con
 Not built: 8x8 boards in the friend worlds, and Staunton shapes (the friends keep their own
 shapes; only their colors change).
 
+**Status (2026-11-19):** the board reveal reaches the friend worlds. In the last world (all the
+friends together, `REVEAL_WORLD` in `src/content/looks.ts`), a first play of each puzzle sits on a
+board a little further from the meadow: puzzle 1 is grass, the middle ones dry to golden straw, and
+puzzle 15 is the wooden chessboard of the set-up reveal. The colors turn through hue, so the middle
+never goes muddy. Replays still roll a surprise theme. 8x8 hop puzzles were tried for the end of
+that world and set aside: the solver handles 8x8 fast (about 50 ms a board), but on an open 8x8
+board a team puzzle rarely needs every friend, and the difficulty score jumps past the curve test's
+step. They need hand design, maybe with more rocks.
+
 **Status (2026-11-13):** prompts for the art these need (and for the rest of the game's pictures)
 are in `docs/ART_PROMPTS.md`: one image-generator sheet per set, flat colors traced to small SVG.
 

@@ -14,6 +14,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
+import { firstBoard } from '../content/looks.ts';
 import { WORLDS } from '../content/worlds.ts';
 import { firstLesson, type Lesson } from '../core/lesson.ts';
 import { markFinished, markWorldMet, needsFriendIntro } from '../core/progress.ts';
@@ -227,6 +228,7 @@ function Level({ wi, li, progress, lesson, onDone }: { wi: number; li: number; p
       puzzle={puzzle}
       treat={world.treat}
       sky={world.sky}
+      board={firstBoard(world.id, li, world.levels.length)}
       replay={progress.includes(level.id)}
       eagerHint={li === 0}
       lesson={lesson}
