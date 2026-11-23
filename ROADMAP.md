@@ -253,7 +253,7 @@ puzzles with a slime in the grumpy king's place, explained with no words. When t
 lands, every friend fires magic at the slime's patch (a straight sparkly beam along its lines; the
 knight lobs a ball) and sparkles land where it reaches. All hit: the slime pops. A square left open:
 the slime oozes a copy onto it. Everything around it hit but not the slime: it sticks its tongue out
-(stalemate). A friend dropped next to it with no protector gets gobbled (goo, back to the tray); for
+(stalemate). A friend dropped next to it with no protector gets gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray); for
 a protected one, the protector throws a magic bubble around it and the slime bonks off (John's
 idea, same day). Variants: glow (squares light while a friend is held, as bedtime) or beams (the
 held friend shows its own magic from where it would land, no red squares). The slime body, its

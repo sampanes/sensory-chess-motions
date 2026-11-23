@@ -8,7 +8,7 @@
 //   - a square around it left open: the slime oozes a copy onto each open square;
 //   - every square around it hit but not the slime: it sticks its tongue out (stalemate).
 // A friend dropped right next to the slime with nobody protecting it gets
-// gobbled (goo, then back to the tray). One that is protected: the slime reaches
+// gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray). One that is protected: the slime reaches
 // for it and bonks off the magic bubble its protector throws around it.
 //
 // Variants: 'glow' lights the squares around the slime while a friend is held,
@@ -24,7 +24,7 @@ import { AgainIcon, FriendArt, GoIcon, HandIcon, HomeIcon, PALETTE, RockArt } fr
 import { Confetti } from './Confetti.tsx';
 import { HIGH_CONTRAST } from '../content/looks.ts';
 import { highContrast } from './senses.ts';
-import { GooCover, SLIME, SlimeArt, Sparkle, type SlimeMood } from './slime.tsx';
+import { GooCover, SlimeArt, Sparkle, type SlimeMood } from './slime.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 import { useTimers } from './timers.ts';
 
@@ -241,11 +241,9 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
         const target = attempted.find((pl) => pl.tray === trayIndex)!;
         const t0 = i * GOBBLE_MS + 250;
         later(() => { setReach({ at: target.at, kind: 'gobble' }); sfx.gobble(); }, t0);
-        later(() => setSlimed((s) => [...s, trayIndex]), t0 + 380);
-        later(() => {
-          setPlaced((cur) => cur.filter((pl) => pl.tray !== trayIndex));
-          setReach(null);
-        }, t0 + 1000);
+        later(() => setSlimed((s) => [...s, trayIndex]), t0 + 330);
+        later(() => setPlaced((cur) => cur.filter((pl) => pl.tray !== trayIndex)), t0 + 900);
+        later(() => setReach(null), t0 + 1250);
       });
       later(() => {
         setPlaced(res.placed);
@@ -378,15 +376,16 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   let mood: SlimeMood = status === 'check' ? 'hit' : 'idle';
   if (reach) mood = bonked ? 'hit' : 'smug';
   if (zap) mood = zap.stage === 1 ? 'idle' : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit && zap.result === 'mate' ? 'hit' : 'smug';
-  const slimeAnim = popped ? 'slime-pop' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach ? 'lean' : 'bob';
+  const slimeAnim = popped ? 'slime-pop' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach ? 'slime-hop' : 'bob';
   const kr = Math.floor(p.king / p.cols);
   const kc = p.king % p.cols;
-  const glowZone = variant === 'glow' && !zap && !won;
+  const glowZone = variant === 'glow' && !zap && !won && !reach;
   // Beams variant: the held friend's own magic, from where it would land.
   const held = variant === 'beams' && drag?.moved && drag.over !== null ? friendsOf(p, [...lifted, { tray: drag.tray, at: drag.over }]) : null;
   const previewBeams = held ? beamsOf(p, held).filter((b) => b.friend === held.length - 1) : [];
-  const lunge = reach?.kind === 'thwart'
-    ? { '--lx': `${((reach.at % p.cols) - kc) * 34}%`, '--ly': `${(Math.floor(reach.at / p.cols) - kr) * 34}%` } as CSSProperties
+  const reachBy = reach?.kind === 'thwart' ? 30 : 100;
+  const lunge = reach
+    ? { '--lx': `${((reach.at % p.cols) - kc) * reachBy}%`, '--ly': `${(Math.floor(reach.at / p.cols) - kr) * reachBy}%` } as CSSProperties
     : undefined;
 
   return (
@@ -441,7 +440,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
             </svg>
 
             {!popped && !won && (
-              <div className="friend slime-at" style={cellStyle(p.king)}>
+              <div className={`friend slime-at ${reach?.kind === 'gobble' ? 'on-top' : ''}`} style={cellStyle(p.king)}>
                 <div key={`s${round}-${slimeAnim}`} className={`friend-body ${slimeAnim}`} style={lunge}>
                   <SlimeArt mood={mood} className="fill" />
                 </div>
@@ -483,23 +482,11 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
                 <div className={`friend-body ${won ? 'dance' : 'landed'}`}>
                   <FriendArt kind={p.tray[pl.tray]} mood={won ? 'wow' : 'happy'} className="fill" />
                 </div>
-                {slimed.includes(pl.tray) && <GooCover className="fill goo-cover" />}
               </div>
             ))}
 
             {/* The goo reaching for a friend, and a protector's zap, over everyone: next-door squares would hide them. */}
             <svg className="zap-layer over" viewBox={`0 0 ${p.cols * 100} ${p.rows * 100}`} aria-hidden="true">
-              {reach?.kind === 'gobble' && (() => {
-                const a = center(p, p.king);
-                const b = center(p, reach.at);
-                const d = `M${a.x + (b.x - a.x) * 0.3} ${a.y + 14 + (b.y - a.y) * 0.3} L${b.x} ${b.y + 14}`; // from the slime's edge
-                return (
-                  <g key={`reach${reach.at}${reach.kind}`} className={`goo-reach ${reach.kind}`}>
-                    <path d={d} pathLength={1} className="goo-edge" stroke={SLIME.dark} />
-                    <path d={d} pathLength={1} className="goo-body" stroke={SLIME.fill} />
-                  </g>
-                );
-              })()}
               {reach?.kind === 'thwart' && reach.by && (
                 <BeamArt p={p} from={reach.by.at} to={reach.at} kind={reach.by.kind} delay={0} />
               )}
@@ -510,6 +497,11 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
                 <Sparkle className="fill" />
               </div>
             ))}
+            {reach?.kind === 'gobble' && (
+              <div key={`goo${reach.at}`} className="friend goo-left" style={cellStyle(reach.at)}>
+                <GooCover className="fill" />
+              </div>
+            )}
             {reach?.kind === 'thwart' && reach.by && (
               <div
                 key={`sh${reach.at}`}
