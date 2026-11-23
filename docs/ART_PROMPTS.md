@@ -237,6 +237,32 @@ of the square. No text. Flat colors, thick outlines, no gradients.
 
 ---
 
+## 8. The slime (slime lab, `#/lab/slime`)
+
+The slime that stands in for the grumpy king in the slime lab. Like the friends, its face stays code
+(so it can squint, grin and stick its tongue out), so the body comes with a plain face patch. The goo
+is what drips over a gobbled friend; the sparkle is what lands where magic hits. The beams, the
+knight's lob and the protector's bubble stay code: they stretch and move along a path, which a
+picture cannot do. Save as `art/sheets/08-slime.png`.
+
+```
+Same style as the attached picture. Three items for a toddler's puzzle game. 1: a friendly blob of
+green slime (#a3e635, outline #3f6212), a soft round dome with a wide wobbly bottom edge and two or
+three small drips, about as wide as it is tall, filling most of its cell; one small white shine mark
+at the top left and two tiny pale bubbles inside (#ecfccb). NO face: leave a smooth plain area in the
+middle of the dome where a face will go. 2: a sheet of the same slime goo, wider than tall, with five
+or six rounded drips hanging down, as if poured over something. 3: a chunky four-point sparkle star,
+yellow (#fde047, outline #ca8a04), with two tiny white dots beside it. Grid: 3 columns, 1 row.
+Style: flat vector sticker art for a toddler's game. Thick, even, dark outline around every shape
+(the outline is a darker shade of that shape's own color, never black). Flat solid fills only: no
+gradients, no shading, no texture, no glow, no drop shadow, no highlights except where named. Round,
+chunky, soft corners, nothing thin or spiky. Very few colors. No text, no letters, no numbers, no
+logos anywhere. Each item sits alone in its own cell of an even grid with wide empty space around
+it; nothing touches anything else. Transparent background (or plain white). Wide image.
+```
+
+---
+
 ## After a sheet comes back
 
 One script bakes every sheet: `python scripts/bake-art.py [friends|treats|rocks|all]` (`--check`
