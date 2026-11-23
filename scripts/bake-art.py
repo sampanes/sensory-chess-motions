@@ -65,15 +65,15 @@ RECIPES = {
         'out': 'src/ui/treatArt.ts',
         'layout': 'center',
         'roles': False,
-        'budget': 4000,
+        'budget': 5500,
         'palette': {
             'berry': {'red': '#ef4444', 'dark': '#991b1b', 'seed': '#fde68a', 'leaf': GREEN, 'leafDark': GREEN_DARK},
             'star': {'gold': '#facc15', 'dark': '#ca8a04'},
             'carrot': {'orange': '#f97316', 'dark': '#c2410c', 'leaf': GREEN, 'leafDark': GREEN_DARK},
             'cupcake': {'cup': '#60a5fa', 'cupDark': '#1d4ed8', 'frosting': '#fbcfe8', 'frostingDark': '#db2777', 'cherry': '#ef4444'},
-            'apple': {'red': '#f87171', 'dark': '#b91c1c', 'stem': '#78350f', 'leaf': GREEN},
-            'candy': {'lilac': '#c4b5fd', 'dark': '#6d28d9', 'stripe': '#a78bfa'},
-            'cookie': {'dough': '#d6a064', 'dark': '#92400e', 'chip': '#5b3a1a'},
+            'apple': {'red': '#f87171', 'dark': '#b91c1c', 'stem': '#78350f', 'leaf': GREEN, 'leafDark': GREEN_DARK, 'shine': '#fecaca'},
+            'candy': {'lilac': '#c8a0f8', 'dark': '#6018b8', 'stripe': '#9050e0'},  # sampled from the sheet
+            'cookie': {'dough': '#f0a848', 'dark': '#783808'},  # the sheet's chips are the outline brown
         },
         'open': 'export const TREAT_PATHS: Record<TreatKind, readonly (readonly [string, string])[]> = {',
         'head': [

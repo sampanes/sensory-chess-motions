@@ -298,3 +298,8 @@ crashes when given any setting, so the script runs it on its defaults (fine on a
 - **8, the slime (2026-11-23):** `art/sheets/08-slime.png` (transparent PNG), first roll. Body, goo,
   sparkle, left to right (`python scripts/bake-art.py slime`). The face stays code, scaled into the
   plain middle of the dome, clear of the shine and the bubbles. In the slime lab since this date.
+- **3, treats (2026-11-23):** `art/sheets/03-treats.png` (transparent PNG), first roll, in prompt order.
+  The candy and cookie colors in the recipe are sampled from the sheet (ChatGPT drew them a bit off
+  the prompt; the cookie's chips are its outline brown). The apple keeps its shine. The cupcake is
+  the most detailed (5.3 KB of path), so treats have a 5,500-character budget. In the game since
+  this date.

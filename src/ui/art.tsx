@@ -8,6 +8,7 @@ import type { Kind } from '../core/types.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import { FRIEND_BODIES, type BodyRole } from './friendBodies.ts';
 import { ROCK_PATHS } from './rockArt.ts';
+import { TREAT_PATHS } from './treatArt.ts';
 
 export const PALETTE: Record<Kind, { fill: string; dark: string }> = {
   king: { fill: '#fcd34d', dark: '#b45309' },
@@ -152,78 +153,13 @@ export const TREAT_COLOR: Record<TreatKind, string> = {
   cookie: '#d6a064',
 };
 
+// Treats are traced from art/sheets/03-treats.png (src/ui/treatArt.ts).
 export function TreatArt({ kind, className }: { kind: TreatKind; className?: string }) {
-  let body;
-  switch (kind) {
-    case 'berry':
-      body = (
-        <>
-          <path d="M50 88 Q22 70 24 46 Q26 32 50 34 Q74 32 76 46 Q78 70 50 88 Z" fill="#ef4444" stroke="#991b1b" strokeWidth={3} />
-          <g fill="#fde68a">
-            <ellipse cx={40} cy={50} rx={2} ry={3} /><ellipse cx={58} cy={48} rx={2} ry={3} />
-            <ellipse cx={48} cy={62} rx={2} ry={3} /><ellipse cx={62} cy={64} rx={2} ry={3} />
-            <ellipse cx={38} cy={66} rx={2} ry={3} /><ellipse cx={50} cy={76} rx={2} ry={3} />
-          </g>
-          <path d="M50 36 L36 24 L47 29 L50 16 L53 29 L64 24 Z" fill="#22c55e" stroke="#15803d" strokeWidth={2.5} strokeLinejoin="round" />
-        </>
-      );
-      break;
-    case 'star':
-      body = <polygon points={starPoints(50, 54, 40, 18)} fill="#facc15" stroke="#ca8a04" strokeWidth={3.5} strokeLinejoin="round" />;
-      break;
-    case 'carrot':
-      body = (
-        <>
-          <path d="M52 32 Q52 12 60 7 Q60 20 58 32 Z M56 34 Q70 18 82 20 Q72 28 62 38 Z" fill="#22c55e" stroke="#15803d" strokeWidth={2.5} strokeLinejoin="round" />
-          <path d="M34 36 Q48 24 66 38 L38 88 Q33 91 31 85 Z" fill="#f97316" stroke="#c2410c" strokeWidth={3} strokeLinejoin="round" />
-          <path d="M42 50 L50 53 M38 64 L45 66 M50 44 L57 47" stroke="#c2410c" strokeWidth={2.5} strokeLinecap="round" />
-        </>
-      );
-      break;
-    case 'cupcake':
-      body = (
-        <>
-          <path d="M28 56 H72 L64 88 H36 Z" fill="#60a5fa" stroke="#1d4ed8" strokeWidth={3} strokeLinejoin="round" />
-          <path d="M42 58 L45 86 M58 58 L55 86" stroke="#1d4ed8" strokeWidth={2} opacity={0.5} />
-          <path d="M24 58 Q20 44 35 42 Q38 26 50 28 Q62 26 65 42 Q80 44 76 58 Z" fill="#fbcfe8" stroke="#db2777" strokeWidth={3} strokeLinejoin="round" />
-          <circle cx={50} cy={22} r={7} fill="#ef4444" stroke="#991b1b" strokeWidth={2.5} />
-        </>
-      );
-      break;
-    case 'apple':
-      body = (
-        <>
-          <path d="M50 36 Q30 22 22 46 Q18 72 40 86 Q50 90 60 86 Q82 72 78 46 Q70 22 50 36 Z" fill="#f87171" stroke="#b91c1c" strokeWidth={3} />
-          <path d="M50 36 Q50 24 54 16" stroke="#78350f" strokeWidth={4} strokeLinecap="round" fill="none" />
-          <path d="M55 24 Q66 14 74 20 Q66 30 55 24 Z" fill="#22c55e" stroke="#15803d" strokeWidth={2.5} />
-          <ellipse cx={36} cy={52} rx={5} ry={8} fill="#fff" opacity={0.45} />
-        </>
-      );
-      break;
-    case 'candy':
-      body = (
-        <>
-          <path d="M30 50 L12 36 L14 64 Z M70 50 L88 36 L86 64 Z" fill="#c4b5fd" stroke="#6d28d9" strokeWidth={3} strokeLinejoin="round" />
-          <circle cx={50} cy={50} r={22} fill="#a78bfa" stroke="#6d28d9" strokeWidth={3} />
-          <path d="M40 42 Q50 34 60 44 Q62 56 50 58 Q42 58 44 50" stroke="#fff" strokeWidth={3.5} fill="none" strokeLinecap="round" />
-        </>
-      );
-      break;
-    case 'cookie':
-      body = (
-        <>
-          <circle cx={50} cy={52} r={34} fill="#d6a064" stroke="#92400e" strokeWidth={3} />
-          <g fill="#5b3a1a">
-            <circle cx={38} cy={42} r={4.5} /><circle cx={60} cy={38} r={4} /><circle cx={52} cy={58} r={5} />
-            <circle cx={36} cy={64} r={3.5} /><circle cx={66} cy={62} r={4} />
-          </g>
-        </>
-      );
-      break;
-  }
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      {body}
+      {TREAT_PATHS[kind].map(([fill, d], k) => (
+        <path key={k} d={d} fill={fill} />
+      ))}
     </svg>
   );
 }
