@@ -9,10 +9,10 @@
 //   - every square around it hit but not the slime: it sticks its tongue out (stalemate).
 // A friend dropped right next to the slime with nobody protecting it gets
 // gobbled (goo, then back to the tray). One that is protected: the slime reaches
-// for it and the protector's magic zaps the goo back.
+// for it and bonks off the magic bubble its protector throws around it.
 //
 // Variants: 'glow' lights the squares around the slime while a friend is held,
-// as bedtime does; 'beams' leaves all the explaining to the magic.
+// as bedtime does; 'beams' shows the held friend's own magic instead.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import {
@@ -39,7 +39,9 @@ const DRAG_PX = 10;
 const BEAM_STAGGER_MS = 110;
 const BEAM_DRAW_MS = 380;
 const GOBBLE_MS = 1300;
-const THWART_MS = 1150;
+const THWART_MS = 1650;
+/** Thwart: when the lunging slime meets the protector's bubble. */
+const BONK_MS = 950;
 const AFTER_RESULT_MS = 2300;
 
 interface Drag {
@@ -133,6 +135,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   const [round, setRound] = useState(0);
   const [zap, setZap] = useState<Zap | null>(null);
   const [reach, setReach] = useState<Reach | null>(null);
+  const [bonked, setBonked] = useState(false);
   const [slimed, setSlimed] = useState<number[]>([]);
   const [hint, setHint] = useState<Placement | null>(null);
   const [idleKey, setIdleKey] = useState(0);
@@ -259,14 +262,15 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
 
     let wait = 0;
     if (touchesKing(p, at)) {
-      // Protected: the slime reaches for it and the protector zaps the goo back.
+      // Protected: the protector throws a magic bubble around it, and the slime bonks off it.
       const me = after.findIndex((f) => f.at === at);
       const by = after[defenders(p, after, me)[0]];
       setBusy(true);
-      later(() => setReach({ at, kind: 'thwart', by }), 200);
-      later(() => sfx.zap(2), 620);
+      later(() => { setReach({ at, kind: 'thwart', by }); sfx.zap(2); }, 100);
+      later(() => { setBonked(true); sfx.boing(); }, 100 + BONK_MS);
       later(() => {
         setReach(null);
+        setBonked(false);
         if (!finish) setBusy(false);
       }, THWART_MS);
       wait = THWART_MS + 150;
@@ -353,6 +357,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
     setPlaced([]);
     setZap(null);
     setReach(null);
+    setBonked(false);
     setSlimed([]);
     setChosen(null);
     setWon(false);
@@ -371,12 +376,18 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   const slimeHit = zap !== null && zap.stage >= 2 && zap.hits.has(p.king);
   const popped = zap?.stage === 3 && zap.result === 'mate';
   let mood: SlimeMood = status === 'check' ? 'hit' : 'idle';
-  if (reach) mood = 'smug';
+  if (reach) mood = bonked ? 'hit' : 'smug';
   if (zap) mood = zap.stage === 1 ? 'idle' : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit && zap.result === 'mate' ? 'hit' : 'smug';
-  const slimeAnim = popped ? 'slime-pop' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach ? 'lean' : 'bob';
+  const slimeAnim = popped ? 'slime-pop' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach ? 'lean' : 'bob';
   const kr = Math.floor(p.king / p.cols);
   const kc = p.king % p.cols;
   const glowZone = variant === 'glow' && !zap && !won;
+  // Beams variant: the held friend's own magic, from where it would land.
+  const held = variant === 'beams' && drag?.moved && drag.over !== null ? friendsOf(p, [...lifted, { tray: drag.tray, at: drag.over }]) : null;
+  const previewBeams = held ? beamsOf(p, held).filter((b) => b.friend === held.length - 1) : [];
+  const lunge = reach?.kind === 'thwart'
+    ? { '--lx': `${((reach.at % p.cols) - kc) * 34}%`, '--ly': `${(Math.floor(reach.at / p.cols) - kr) * 34}%` } as CSSProperties
+    : undefined;
 
   return (
     <div className="screen play bedtime slime-lab" style={{ background: sky }}>
@@ -414,6 +425,16 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
 
             {/* Every beam, under the friends. */}
             <svg className="zap-layer" viewBox={`0 0 ${p.cols * 100} ${p.rows * 100}`} aria-hidden="true">
+              {held && previewBeams.map((b, i) => {
+                const kind = held[b.friend].kind;
+                const d = beamPath(p, held[b.friend].at, b.to, kind);
+                return (
+                  <g key={`pv${i}`}>
+                    <path d={d} className={`beam-preview ${kind === 'knight' ? 'lob' : ''}`} stroke={PALETTE[kind].dark} />
+                    {kind !== 'knight' && <path d={d} className="beam-preview-dots" />}
+                  </g>
+                );
+              })}
               {zap?.beams.map((b, i) => (
                 <BeamArt key={`b${i}`} p={p} from={zap.friends[b.friend].at} to={b.to} kind={zap.friends[b.friend].kind} delay={i * BEAM_STAGGER_MS} />
               ))}
@@ -421,7 +442,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
 
             {!popped && !won && (
               <div className="friend slime-at" style={cellStyle(p.king)}>
-                <div key={`s${round}-${slimeAnim}`} className={`friend-body ${slimeAnim}`}>
+                <div key={`s${round}-${slimeAnim}`} className={`friend-body ${slimeAnim}`} style={lunge}>
                   <SlimeArt mood={mood} className="fill" />
                 </div>
               </div>
@@ -468,7 +489,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
 
             {/* The goo reaching for a friend, and a protector's zap, over everyone: next-door squares would hide them. */}
             <svg className="zap-layer over" viewBox={`0 0 ${p.cols * 100} ${p.rows * 100}`} aria-hidden="true">
-              {reach && (() => {
+              {reach?.kind === 'gobble' && (() => {
                 const a = center(p, p.king);
                 const b = center(p, reach.at);
                 const d = `M${a.x + (b.x - a.x) * 0.3} ${a.y + 14 + (b.y - a.y) * 0.3} L${b.x} ${b.y + 14}`; // from the slime's edge
@@ -480,7 +501,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
                 );
               })()}
               {reach?.kind === 'thwart' && reach.by && (
-                <BeamArt p={p} from={reach.by.at} to={reach.at} kind={reach.by.kind} delay={380} />
+                <BeamArt p={p} from={reach.by.at} to={reach.at} kind={reach.by.kind} delay={0} />
               )}
             </svg>
 
@@ -489,11 +510,20 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
                 <Sparkle className="fill" />
               </div>
             ))}
-            {reach?.kind === 'thwart' && (
-              <div key={`t${reach.at}`} className="hit-spark thwart-spark" style={cellStyle(reach.at)}>
-                <Sparkle className="fill" />
+            {reach?.kind === 'thwart' && reach.by && (
+              <div
+                key={`sh${reach.at}`}
+                className="shield"
+                style={{ ...cellStyle(reach.at), '--sh': PALETTE[reach.by.kind].dark, '--shf': PALETTE[reach.by.kind].fill } as CSSProperties}
+              >
+                <div className="shield-bubble" />
               </div>
             )}
+            {previewBeams.map((b) => (
+              <div key={`ps${b.to}`} className="hit-spark preview-spark" style={cellStyle(b.to)}>
+                <Sparkle className="fill" />
+              </div>
+            ))}
 
             {ghost !== null && drag && (
               <div className="friend ghost" style={cellStyle(ghost)}>

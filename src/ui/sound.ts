@@ -173,6 +173,11 @@ export const sfx = {
     note(330, 0, 0.3, { type: 'sine', vol: 0.18, glideTo: 90 });
     note(140, 0.22, 0.12, { type: 'triangle', vol: 0.12, glideTo: 220 });
   },
+  /** Slime lab: the slime bonks off a magic bubble. */
+  boing() {
+    note(220, 0, 0.12, { type: 'sine', vol: 0.18, glideTo: 520 });
+    note(520, 0.1, 0.22, { type: 'sine', vol: 0.12, glideTo: 260 });
+  },
   /** Slime lab: the slime pops into sparkles. */
   splat() {
     buzz([20, 40, 20]);
