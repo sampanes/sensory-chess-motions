@@ -151,6 +151,59 @@ export function coverage(p: MatePuzzle, friends: readonly Friend[], skip = -1): 
   return out;
 }
 
+/** One magic beam (or a knight's lob): friend `friend` (an index into the friends list) reaches square `to`. */
+export interface Beam {
+  friend: number;
+  to: number;
+}
+
+/**
+ * The beams that explain a board: every friend reaches each square of the grumpy
+ * king's patch (his square and the squares around him) that it watches. A sliding
+ * friend fires one beam per direction, out to the farthest patch square on it; a
+ * line through the king keeps going, as in coverage().
+ */
+export function beams(p: MatePuzzle, friends: readonly Friend[]): Beam[] {
+  const patch = new Set([p.king, ...kingZone(p)]);
+  const friendAt = new Set(friends.map((f) => f.at));
+  const out: Beam[] = [];
+  friends.forEach((f, i) => {
+    const hits = watchedBy(p, f, friendAt).filter((pos) => patch.has(pos));
+    if (!SLIDES[f.kind]) {
+      for (const to of hits) out.push({ friend: i, to });
+      return;
+    }
+    const far = new Map<string, number>();
+    const r0 = Math.floor(f.at / p.cols);
+    const c0 = f.at % p.cols;
+    for (const to of hits) {
+      const dr = Math.floor(to / p.cols) - r0;
+      const dc = (to % p.cols) - c0;
+      const key = `${Math.sign(dr)},${Math.sign(dc)}`;
+      const best = far.get(key);
+      const dist = Math.max(Math.abs(dr), Math.abs(dc));
+      if (best === undefined || dist > Math.max(Math.abs(Math.floor(best / p.cols) - r0), Math.abs((best % p.cols) - c0))) far.set(key, to);
+    }
+    for (const to of far.values()) out.push({ friend: i, to });
+  });
+  return out;
+}
+
+/** Friends (indexes) that protect friend `i`: they watch its square. */
+export function defenders(p: MatePuzzle, friends: readonly Friend[], i: number): number[] {
+  const friendAt = new Set(friends.map((f) => f.at));
+  const out: number[] = [];
+  friends.forEach((f, j) => {
+    if (j !== i && watchedBy(p, f, friendAt).includes(friends[i].at)) out.push(j);
+  });
+  return out;
+}
+
+/** True when friend square `at` touches the grumpy king's square. */
+export function touchesKing(p: MatePuzzle, at: number): boolean {
+  return near(p, at, p.king);
+}
+
 /** Squares around the king he could still step to (or take a lonely friend on). */
 export function escapes(p: MatePuzzle, friends: readonly Friend[]): number[] {
   const cover = coverage(p, friends);

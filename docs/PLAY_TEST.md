@@ -53,6 +53,7 @@ on. Any screen can be opened directly with its link (the list is in `README.md`)
 | Watch | It works if |
 |-------|-------------|
 | Crossing (`#/lab`): spots, steps or plain. | Pick the variant where the kid stops trying to put the bishop on the wrong-color home. Do the footprints mean anything to them? |
+| Slime (`#/lab/slime`): glow or beams. | After a failed bed, they point at the oozing copy, or move a friend to cover that square. The tongue (stalemate) makes them laugh AND makes them move a friend off. A gobble makes them add a protector, not just try another square. |
 | Set up the board (`#/lab/setup`): ghosts or copy. | With ghosts: is it too easy to be a puzzle? With copy: do they look up at the sleeping side? Level 4 (queen and king) is the real question. |
 | The reveal when the whole side stands (levels 5 to 7). | They notice the board turned to wood and say something about it. Then put a real set next to it. |
 

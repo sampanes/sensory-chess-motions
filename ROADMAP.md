@@ -248,6 +248,17 @@ stars stay):
 `tests/bedtime-sets.test.ts` proves every tray friend is needed (none can be left in the tray), and
 every helper is needed (the puzzle cannot be won without it). The grown-up table has a row per set.
 
+**Status (2026-11-23):** "slime" is in the lab (`#/lab/slime`, John's idea): the same 24 bedtime
+puzzles with a slime in the grumpy king's place, explained with no words. When the last friend
+lands, every friend fires magic at the slime's patch (a straight sparkly beam along its lines; the
+knight lobs a ball) and sparkles land where it reaches. All hit: the slime pops. A square left open:
+the slime oozes a copy onto it. Everything around it hit but not the slime: it sticks its tongue out
+(stalemate). A friend dropped next to it with no protector gets gobbled (goo, back to the tray); a
+protected one, the slime reaches for and the protector zaps the goo back. Variants: glow (squares
+light while a friend is held, as bedtime) or beams (only the magic explains). Drawn in code until
+it earns an art sheet. The bedtime bubble itself still explains a failed bed with words on screen
+(2026-11-19), which the kids cannot read; if slime wins, it replaces that.
+
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.
 

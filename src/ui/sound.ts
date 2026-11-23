@@ -161,6 +161,28 @@ export const sfx = {
   snore() {
     note(150, 0, 0.5, { type: 'triangle', vol: 0.12, glideTo: 110 });
   },
+  /** Slime lab: a friend's magic beam, a sparkly swoop up (each one a little higher). */
+  zap(nth: number) {
+    const f = PENTA[nth % PENTA.length];
+    note(f, 0, 0.22, { type: 'sine', vol: 0.1, glideTo: f * 1.5 });
+    note(f * 2, 0.05, 0.12, { type: 'sine', vol: 0.05 });
+  },
+  /** Slime lab: the slime slurps a lonely friend. */
+  gobble() {
+    buzz(20);
+    note(330, 0, 0.3, { type: 'sine', vol: 0.18, glideTo: 90 });
+    note(140, 0.22, 0.12, { type: 'triangle', vol: 0.12, glideTo: 220 });
+  },
+  /** Slime lab: the slime pops into sparkles. */
+  splat() {
+    buzz([20, 40, 20]);
+    note(180, 0, 0.12, { type: 'triangle', vol: 0.22, glideTo: 520 });
+    [1046.5, 1318.51, 1567.98].forEach((f, i) => note(f, 0.1 + i * 0.05, 0.18, { type: 'sine', vol: 0.08 }));
+  },
+  /** Slime lab: nyah nyah, a wobbly raspberry. */
+  raspberry() {
+    for (let i = 0; i < 7; i++) note(i % 2 ? 150 : 125, i * 0.06, 0.07, { type: 'sawtooth', vol: 0.06 });
+  },
   tap() {
     note(660, 0, 0.08, { type: 'sine', vol: 0.12 });
   },

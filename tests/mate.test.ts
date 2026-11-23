@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { BEDTIME_LEVELS } from '../src/content/bedtime.ts';
 import {
+  beams, defenders, touchesKing,
   canPlace, coverage, drop, escapes, friendsOf, mateStatus, mustParseMate, parseMate, solveMate,
   type MatePuzzle, type Placement,
 } from '../src/core/mate.ts';
@@ -90,4 +91,25 @@ test('every bedtime puzzle parses, is not already won, and can be finished', () 
 test('the first bedtime puzzle needs only one drop', () => {
   const p = mustParseMate(BEDTIME_LEVELS[0].grid, BEDTIME_LEVELS[0].tray);
   assert.equal(Math.min(...solveMate(p).map((w) => w.length)), 1);
+});
+
+test('beams: one per sliding direction, out to the farthest patch square; knights lob to each', () => {
+  const p = mustParseMate(['..k..', '.....', '.....', 'R...N'], 'Q');
+  const friends = friendsOf(p, []);
+  const got = beams(p, friends).map((b) => `${friends[b.friend].kind}>${b.to}`).sort();
+  // The rook on 15 reaches nothing near the king on 2; the knight on 19 reaches 8 (row 1, col 3).
+  assert.deepEqual(got, ['knight>8']);
+  const q = friendsOf(p, [{ tray: 0, at: 12 }]); // queen in the middle, below the king
+  const qb = beams(p, q).filter((b) => q[b.friend].kind === 'queen').map((b) => b.to).sort((a, b) => a - b);
+  // Up the file through the king (2), and diagonally up to 6 and 8 (the line goes on past them off the patch).
+  assert.ok(qb.includes(2), 'a line through the king');
+  assert.ok(qb.includes(6) && qb.includes(8));
+  assert.ok(!qb.includes(7), 'one beam per direction: the farthest square, not each one');
+});
+
+test('defenders: who protects a friend', () => {
+  const p = mustParseMate(['..k..', '.....', '..K..', '.....'], 'Q');
+  const friends = friendsOf(p, [{ tray: 0, at: 7 }]); // queen right under the king, the king two below
+  assert.deepEqual(defenders(p, friends, 1), [0]);
+  assert.ok(touchesKing(p, 7) && !touchesKing(p, 12));
 });

@@ -8,12 +8,17 @@
 //                            footprints (how many hops it needs alone), or plain.
 //   set up    (#/lab/setup)  put every friend on its starting square of a real board.
 //                            Variants: ghosts on the squares to fill, or copy the far side.
+//   slime     (#/lab/slime)  the bedtime puzzles with a slime instead of the grumpy king,
+//                            explained with magic beams, oozing and a tongue, no words.
+//                            Variants: glow (squares light while a friend is held) or beams.
 // (Tiptoe puzzles and the pawn walk graduated to their own home bubbles.)
 
+import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { CROSS_LEVELS } from '../content/crossing.ts';
 import { SETUP_LEVELS, SETUP_SKY } from '../content/setup.ts';
 import { CrossScreen } from './CrossScreen.tsx';
 import { SetupScreen } from './SetupScreen.tsx';
+import { SlimeScreen, type SlimeVariant } from './SlimeScreen.tsx';
 
 export type LabVariant = 'plain' | 'spots' | 'steps';
 export type SetupVariant = 'ghosts' | 'copy';
@@ -29,14 +34,20 @@ const SETUP_VARIANTS: { id: SetupVariant; label: string }[] = [
   { id: 'copy', label: 'copy' },
 ];
 
+const SLIME_VARIANTS: { id: SlimeVariant; label: string }[] = [
+  { id: 'glow', label: 'glow' },
+  { id: 'beams', label: 'beams' },
+];
+
 export const LAB_LEVELS = CROSS_LEVELS;
 export const LAB_SETUP_LEVELS = SETUP_LEVELS;
+export const LAB_SLIME_LEVELS = BEDTIME_LEVELS;
 
 const home = () => window.location.assign(window.location.pathname);
 
 /** The grown-up strip: which prototype, which puzzle, which variant. */
 function Strip<V extends string>({ proto, li, n, variant, variants, go }: {
-  proto: 'crossing' | 'setup';
+  proto: 'crossing' | 'setup' | 'slime';
   li: number;
   n: number;
   variant: V;
@@ -47,6 +58,7 @@ function Strip<V extends string>({ proto, li, n, variant, variants, go }: {
     <div className="lab-strip">
       <button className={proto === 'crossing' ? 'on' : ''} onClick={() => { window.location.hash = '#/lab'; }}>crossing</button>
       <button className={proto === 'setup' ? 'on' : ''} onClick={() => { window.location.hash = '#/lab/setup'; }}>set up</button>
+      <button className={proto === 'slime' ? 'on' : ''} onClick={() => { window.location.hash = '#/lab/slime'; }}>slime</button>
       <span className="lab-gap" />
       <button onClick={() => go((li + n - 1) % n, variant)} aria-label="Previous puzzle">&lt;</button>
       <span>{li + 1}/{n}</span>
@@ -90,6 +102,24 @@ export function LabSetupScreen({ li, variant, go }: { li: number; variant: Setup
       sky={SETUP_SKY}
       eagerHint={li === 0}
       top={<Strip proto="setup" li={li} n={n} variant={variant} variants={SETUP_VARIANTS} go={go} />}
+      onNext={() => go((li + 1) % n, variant)}
+      onHome={home}
+    />
+  );
+}
+
+export function LabSlimeScreen({ li, variant, go }: { li: number; variant: SlimeVariant; go: (li: number, v: SlimeVariant) => void }) {
+  const n = LAB_SLIME_LEVELS.length;
+  const level = LAB_SLIME_LEVELS[li];
+  return (
+    <SlimeScreen
+      key={`${level.id}-${variant}`}
+      grid={level.grid}
+      tray={level.tray}
+      sky={BEDTIME_SKY}
+      variant={variant}
+      eagerHint={li === 0}
+      top={<Strip proto="slime" li={li} n={n} variant={variant} variants={SLIME_VARIANTS} go={go} />}
       onNext={() => go((li + 1) % n, variant)}
       onHome={home}
     />
