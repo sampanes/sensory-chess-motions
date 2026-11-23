@@ -132,7 +132,7 @@ export function Board(props: BoardProps) {
             const c = pos % cols;
             return (
               <div key={`sq${pos}`} className="square" style={{ ...cellStyle(pos), background: (r + c) % 2 ? dark : light }}>
-                {puzzle.rocks[pos] && <RockArt className="fill" />}
+                {puzzle.rocks[pos] && <RockArt className="fill" at={pos} />}
               </div>
             );
           })}

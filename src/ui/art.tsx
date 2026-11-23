@@ -7,6 +7,7 @@
 import type { Kind } from '../core/types.ts';
 import type { TreatKind } from '../content/worlds.ts';
 import { FRIEND_BODIES, type BodyRole } from './friendBodies.ts';
+import { ROCK_PATHS } from './rockArt.ts';
 
 export const PALETTE: Record<Kind, { fill: string; dark: string }> = {
   king: { fill: '#fcd34d', dark: '#b45309' },
@@ -227,13 +228,25 @@ export function TreatArt({ kind, className }: { kind: TreatKind; className?: str
   );
 }
 
-export function RockArt({ className }: { className?: string }) {
+// One of three rocks (traced from art/sheets/04-rocks.png), picked by the square, so a
+// board with several does not look stamped. `at` is the square; leave it out for the moss one.
+const ROCK_ORDER = ['plain', 'moss', 'crack'] as const;
+
+export function rockFor(at: number): (typeof ROCK_ORDER)[number] {
+  let h = Math.imul(at ^ 0x5bd1e995, 0x85ebca6b); // a small hash: neighbors look unrelated
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return ROCK_ORDER[(h >>> 0) % 3];
+}
+
+export function RockArt({ className, at }: { className?: string; at?: number }) {
+  const parts = ROCK_PATHS[at === undefined ? 'moss' : rockFor(at)];
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <ellipse cx={50} cy={86} rx={36} ry={5} fill="rgba(0,0,0,0.15)" />
-      <path d="M16 78 Q12 60 28 50 Q36 30 56 32 Q76 34 83 56 Q90 76 72 83 Q48 90 16 78 Z" fill="#a8a29e" stroke="#57534e" strokeWidth={3} strokeLinejoin="round" />
-      <path d="M36 44 Q46 38 56 40" stroke="#fff" strokeWidth={4} strokeLinecap="round" opacity={0.5} fill="none" />
-      <path d="M22 72 Q30 62 42 68 Q36 76 22 72 Z" fill="#84cc16" opacity={0.8} />
+      {parts.map(([fill, d], k) => (
+        <path key={k} d={d} fill={fill} />
+      ))}
     </svg>
   );
 }

@@ -323,7 +323,7 @@ export function BedtimeScreen({ grid, tray, sky, eagerHint, dots, onWin, onNext,
                 const c = pos % p.cols;
                 return (
                   <div key={pos} className="square" style={{ ...cellStyle(pos), background: (r + c) % 2 ? contrast?.dark ?? DARK : contrast?.light ?? LIGHT }}>
-                    {p.rocks[pos] && <RockArt className="fill" />}
+                    {p.rocks[pos] && <RockArt className="fill" at={pos} />}
                   </div>
                 );
               })}

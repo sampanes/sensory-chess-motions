@@ -266,3 +266,6 @@ crashes when given any setting, so the script runs it on its defaults (fine on a
 - **1, friend bodies (2026-11-13):** ChatGPT, first roll, `art/sheets/01-friend-bodies.png`. No
   faces, two colors each plus the knight's mane shade and the king's jewels. The knight faces
   left, as in the anchor (an earlier note here said right: wrong). In the game since this date.
+- **4, rocks (2026-11-23):** `art/sheets/04-rocks.png` (transparent PNG), first roll. Plain, moss,
+  crack, left to right; the moss has its own dark-green outline (`mossdark` in the recipe). In the
+  game since this date: each rock square picks one of the three by a hash of its square.

@@ -89,11 +89,12 @@ RECIPES = {
         'out': 'src/ui/rockArt.ts',
         'layout': 'center',
         'roles': False,
-        'budget': 3000,
+        'budget': 4000,
         'palette': {
-            'moss': {'gray': '#a8a29e', 'dark': '#57534e', 'moss': '#84cc16'},
-            'crack': {'gray': '#a8a29e', 'dark': '#57534e'},
+            # left to right on the sheet
             'plain': {'gray': '#a8a29e', 'dark': '#57534e'},
+            'moss': {'gray': '#a8a29e', 'dark': '#57534e', 'moss': '#84cc16', 'mossdark': '#4d7c0f'},
+            'crack': {'gray': '#a8a29e', 'dark': '#57534e'},
         },
         'open': 'export const ROCK_PATHS: Record<string, readonly (readonly [string, string])[]> = {',
         'head': [
