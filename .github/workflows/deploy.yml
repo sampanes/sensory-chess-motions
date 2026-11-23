@@ -49,6 +49,19 @@ jobs:
         with:
           # Upload the dist directory
           path: './dist'
+      # GitHub's artifact lookup sometimes fails right after a good upload ("Fetching artifact
+      # metadata failed", 2026-11-19 and 11-23, status page all green). Wait a minute, try once more.
       - name: Deploy to GitHub Pages
-        id: deployment
+        id: first
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+      - name: Wait before the second try
+        if: steps.first.outcome == 'failure'
+        run: sleep 60
+      - name: Deploy to GitHub Pages (second try)
+        id: second
+        if: steps.first.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+      - name: Page address
+        id: deployment
+        run: echo "page_url=${{ steps.first.outputs.page_url || steps.second.outputs.page_url }}" >> "$GITHUB_OUTPUT"
