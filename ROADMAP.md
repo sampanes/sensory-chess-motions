@@ -256,8 +256,9 @@ the slime oozes a copy onto it. Everything around it hit but not the slime: it s
 (stalemate). A friend dropped next to it with no protector gets gobbled (goo, back to the tray); for
 a protected one, the protector throws a magic bubble around it and the slime bonks off (John's
 idea, same day). Variants: glow (squares light while a friend is held, as bedtime) or beams (the
-held friend shows its own magic from where it would land, no red squares). Drawn in code until
-it earns an art sheet. The bedtime bubble itself still explains a failed bed with words on screen
+held friend shows its own magic from where it would land, no red squares). The slime body, its
+goo and the sparkle are traced from art sheet 8 (face in code, like the friends); the beams, the
+lob and the bubble stay code because they move along a path. The bedtime bubble itself still explains a failed bed with words on screen
 (2026-11-19), which the kids cannot read; if slime wins, it replaces that.
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a

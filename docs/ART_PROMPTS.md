@@ -295,3 +295,6 @@ crashes when given any setting, so the script runs it on its defaults (fine on a
 - **4, rocks (2026-11-23):** `art/sheets/04-rocks.png` (transparent PNG), first roll. Plain, moss,
   crack, left to right; the moss has its own dark-green outline (`mossdark` in the recipe). In the
   game since this date: each rock square picks one of the three by a hash of its square.
+- **8, the slime (2026-11-23):** `art/sheets/08-slime.png` (transparent PNG), first roll. Body, goo,
+  sparkle, left to right (`python scripts/bake-art.py slime`). The face stays code, scaled into the
+  plain middle of the dome, clear of the shine and the bubbles. In the slime lab since this date.

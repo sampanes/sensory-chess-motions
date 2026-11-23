@@ -1,6 +1,6 @@
 """Bake an art sheet into small SVG paths for the game.
 
-usage: python scripts/bake-art.py [friends|treats|rocks|all]        write the TS file(s)
+usage: python scripts/bake-art.py [friends|treats|rocks|slime|all]        write the TS file(s)
        python scripts/bake-art.py [which] --check    fail if a file is stale or over budget
        python scripts/bake-art.py [which] --preview DIR   also write each snapped piece as a PNG
 A sheet that is not in art/sheets/ yet is skipped with a note (its prompt is in
@@ -100,6 +100,26 @@ RECIPES = {
         'head': [
             '// Three rocks, so a board with several does not look stamped. Each is a stack of',
             '// [color, path] pairs, bottom first, in the 0..100 box RockArt draws in.',
+            '',
+        ],
+    },
+    'slime': {
+        'sheet': '08-slime.png',
+        'out': 'src/ui/slimeArt.ts',
+        'layout': 'center',
+        'roles': False,
+        'budget': 4000,
+        'palette': {
+            # left to right on the sheet; the face is drawn by code (SlimeArt), like the friends'
+            'body': {'fill': '#a3e635', 'dark': '#3f6212', 'bubble': '#ecfccb', 'shine': '#ffffff'},
+            'goo': {'fill': '#a3e635', 'dark': '#3f6212'},
+            'sparkle': {'gold': '#fcd34d', 'dark': '#b45309', 'white': '#ffffff'},
+        },
+        'open': 'export const SLIME_PATHS: Record<string, readonly (readonly [string, string])[]> = {',
+        'head': [
+            '// The slime lab: the slime body (no face: SlimeArt draws it), the goo that drips over a',
+            '// gobbled friend, and the sparkle where magic lands. Each is a stack of [color, path]',
+            '// pairs, bottom first, in the 0..100 box they are drawn in.',
             '',
         ],
     },

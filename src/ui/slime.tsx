@@ -1,5 +1,9 @@
 // The slime (lab prototype, #/lab/slime): the bedtime puzzles with a wobbly slime
-// in the grumpy king's place. Drawn here in code until it earns an art sheet.
+// in the grumpy king's place. Body, goo and sparkle are traced from
+// art/sheets/08-slime.png (src/ui/slimeArt.ts); the face is drawn here, so it can
+// change mood, like the friends' faces.
+
+import { SLIME_PATHS } from './slimeArt.ts';
 
 export type SlimeMood = 'idle' | 'hit' | 'smug' | 'nyah';
 
@@ -58,22 +62,26 @@ function Mouth({ mood }: { mood: SlimeMood }) {
   }
 }
 
+function Paths({ name }: { name: string }) {
+  return (
+    <>
+      {SLIME_PATHS[name].map(([fill, d], k) => (
+        <path key={k} d={d} fill={fill} />
+      ))}
+    </>
+  );
+}
+
 export function SlimeArt({ mood = 'idle', className }: { mood?: SlimeMood; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <ellipse cx={50} cy={89} rx={36} ry={5} fill="rgba(0,0,0,0.15)" />
-      <path
-        d="M12 84 C8 70 14 57 25 51 C26 31 37 19 50 19 C63 19 74 31 75 51 C86 57 92 70 88 84 C81 90 72 85 66 88 C59 92 42 92 35 88 C28 85 19 90 12 84 Z"
-        fill={SLIME.fill}
-        stroke={SLIME.dark}
-        strokeWidth={3.5}
-        strokeLinejoin="round"
-      />
-      <path d="M33 33 Q39 26 47 25" stroke="#fff" strokeWidth={4} strokeLinecap="round" opacity={0.65} fill="none" />
-      <circle cx={74} cy={70} r={3.2} fill={SLIME.light} opacity={0.8} />
-      <circle cx={24} cy={74} r={2.2} fill={SLIME.light} opacity={0.8} />
-      <Eyes mood={mood} />
-      <Mouth mood={mood} />
+      <ellipse cx={50} cy={86} rx={34} ry={5} fill="rgba(0,0,0,0.15)" />
+      <Paths name="body" />
+      {/* The face fits the plain middle of the dome: clear of the shine, the bubbles and the drips. */}
+      <g transform="translate(50 46) scale(0.9) translate(-50 -50)">
+        <Eyes mood={mood} />
+        <Mouth mood={mood} />
+      </g>
     </svg>
   );
 }
@@ -82,25 +90,16 @@ export function SlimeArt({ mood = 'idle', className }: { mood?: SlimeMood; class
 export function GooCover({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <path
-        d="M14 30 C20 14 80 14 86 30 L86 58 Q82 70 78 58 L76 50 Q72 78 66 52 Q60 44 56 66 Q52 82 48 60 Q44 46 40 56 Q36 70 32 52 Q28 44 24 62 Q20 72 16 56 Z"
-        fill={SLIME.fill}
-        stroke={SLIME.dark}
-        strokeWidth={3}
-        strokeLinejoin="round"
-        opacity={0.92}
-      />
+      <Paths name="goo" />
     </svg>
   );
 }
 
 /** A four-point sparkle, for magic landing on a square. */
-export function Sparkle({ className, color = '#fde047' }: { className?: string; color?: string }) {
+export function Sparkle({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <path d="M50 8 Q56 44 92 50 Q56 56 50 92 Q44 56 8 50 Q44 44 50 8 Z" fill={color} stroke="#fff" strokeWidth={4} strokeLinejoin="round" />
-      <circle cx={80} cy={22} r={6} fill="#fff" />
-      <circle cx={22} cy={78} r={4} fill="#fff" />
+      <Paths name="sparkle" />
     </svg>
   );
 }
