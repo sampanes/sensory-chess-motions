@@ -245,10 +245,18 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
         later(() => setPlaced((cur) => cur.filter((pl) => pl.tray !== trayIndex)), t0 + 900);
         later(() => setReach(null), t0 + 1250);
       });
+      // On the last drop the showdown follows with whoever is left, so the slime also oozes
+      // onto every square it can still reach. Earlier drops just lose the friend: order matters.
+      const lastDrop = attempted.length === p.tray.length;
       later(() => {
         setPlaced(res.placed);
         setSlimed([]);
-        setBusy(false);
+        if (!lastDrop) {
+          setBusy(false);
+          return;
+        }
+        const left = friendsOf(p, res.placed);
+        showdown(left, mateStatus(p, left));
       }, res.shooed.length * GOBBLE_MS + 250);
       return;
     }
@@ -383,6 +391,10 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   // Beams variant: the held friend's own magic, from where it would land.
   const held = variant === 'beams' && drag?.moved && drag.over !== null ? friendsOf(p, [...lifted, { tray: drag.tray, at: drag.over }]) : null;
   const previewBeams = held ? beamsOf(p, held).filter((b) => b.friend === held.length - 1) : [];
+  // Beams variant: friends already on the board keep their magic showing, faint (glow's lit squares do the same).
+  const standingFriends = variant === 'beams' && !zap && !won && !reach ? friendsOf(p, lifted) : [];
+  const standingBeams = beamsOf(p, standingFriends);
+  const standingSparks = [...new Set(standingBeams.map((b) => b.to))].filter((pos) => !previewBeams.some((b) => b.to === pos));
   const reachBy = reach?.kind === 'thwart' ? 30 : 100;
   const lunge = reach
     ? { '--lx': `${((reach.at % p.cols) - kc) * reachBy}%`, '--ly': `${(Math.floor(reach.at / p.cols) - kr) * reachBy}%` } as CSSProperties
@@ -424,6 +436,12 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
 
             {/* Every beam, under the friends. */}
             <svg className="zap-layer" viewBox={`0 0 ${p.cols * 100} ${p.rows * 100}`} aria-hidden="true">
+              {standingBeams.map((b, i) => {
+                const f = standingFriends[b.friend];
+                return (
+                  <path key={`st${i}`} d={beamPath(p, f.at, b.to, f.kind)} className={`beam-preview standing ${f.kind === 'knight' ? 'lob' : ''}`} stroke={PALETTE[f.kind].dark} />
+                );
+              })}
               {held && previewBeams.map((b, i) => {
                 const kind = held[b.friend].kind;
                 const d = beamPath(p, held[b.friend].at, b.to, kind);
@@ -511,6 +529,11 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
                 <div className="shield-bubble" />
               </div>
             )}
+            {standingSparks.map((pos) => (
+              <div key={`ss${pos}`} className="hit-spark preview-spark standing" style={cellStyle(pos)}>
+                <Sparkle className="fill" />
+              </div>
+            ))}
             {previewBeams.map((b) => (
               <div key={`ps${b.to}`} className="hit-spark preview-spark" style={cellStyle(b.to)}>
                 <Sparkle className="fill" />

@@ -1179,6 +1179,10 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .preview-spark > svg { transform: scale(0.6); }
 .beam-preview { fill: none; stroke-width: 22; stroke-linecap: round; opacity: 0.6; }
 .beam-preview.lob { stroke-width: 7; stroke-dasharray: 0 20; opacity: 0.85; }
+.beam-preview.standing { stroke-width: 14; opacity: 0.35; }
+.beam-preview.standing.lob { stroke-width: 6; opacity: 0.55; }
+.preview-spark.standing { opacity: 0.55; }
+.preview-spark.standing > svg { transform: scale(0.45); }
 .beam-preview-dots { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 0 26; animation: sparkle-run 0.6s linear infinite; }
 /* A protector's magic bubble around a friend next to the slime. */
 .shield { position: absolute; z-index: 5; pointer-events: none; }

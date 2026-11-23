@@ -253,10 +253,12 @@ puzzles with a slime in the grumpy king's place, explained with no words. When t
 lands, every friend fires magic at the slime's patch (a straight sparkly beam along its lines; the
 knight lobs a ball) and sparkles land where it reaches. All hit: the slime pops. A square left open:
 the slime oozes a copy onto it. Everything around it hit but not the slime: it sticks its tongue out
-(stalemate). A friend dropped next to it with no protector gets gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray); for
+(stalemate). A friend dropped next to it with no protector gets gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray). Order matters, so the protector has to land first; when the
+gobble is on the last drop, the showdown follows with whoever is left (John, 2026-11-23); for
 a protected one, the protector throws a magic bubble around it and the slime bonks off (John's
 idea, same day). Variants: glow (squares light while a friend is held, as bedtime) or beams (the
-held friend shows its own magic from where it would land, no red squares). The slime body, its
+held friend shows its own magic from where it would land, no red squares; friends already down keep
+their beams showing, faint, the way glow keeps its lit squares). The slime body, its
 goo and the sparkle are traced from art sheet 8 (face in code, like the friends); the beams, the
 lob and the bubble stay code because they move along a path. The bedtime bubble itself still explains a failed bed with words on screen
 (2026-11-19), which the kids cannot read; if slime wins, it replaces that.
