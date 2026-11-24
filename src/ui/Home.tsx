@@ -5,6 +5,7 @@ import { TIPTOE_LEVELS, TIPTOE_SKY } from '../content/tiptoe.ts';
 import { WORLDS, type World } from '../content/worlds.ts';
 import { doneCount, isWorldOpen, needsFriendIntro, type Progress } from '../core/progress.ts';
 import { FriendArt, GearIcon, GRUMPY, HomeIcon, StarIcon, SunIcon } from './art.tsx';
+import { SlimeArt } from './slime.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 import { today, type Today } from './today.ts';
 import { WORLD_LEVEL_IDS } from './useProgress.ts';
@@ -235,8 +236,8 @@ function BedtimeBubble({ done, onOpen }: { done: number; onOpen: () => void }) {
     >
       <div className="bubble night">
         <div className="bubble-moon" />
-        {/* Awake and grumpy: on this screen a sleeping face means "not open yet". */}
-        <FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="bubble-friend" />
+        {/* The slime is awake: on this screen a sleeping face means "not open yet". */}
+        <SlimeArt className="bubble-friend" />
       </div>
       <div className="bubble-stars">
         {BEDTIME_LEVELS.map((l, i) => <StarIcon key={l.id} filled={i < done} className="mini-star" />)}

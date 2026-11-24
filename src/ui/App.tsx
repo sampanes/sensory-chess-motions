@@ -3,7 +3,7 @@
 //   #/friends       the friends folder: every friend world
 //   #/w/rook        a friend's puzzles
 //   #/w/rook/3      puzzle 3 of that friend
-//   #/bed           bedtime puzzles (always open)
+//   #/bed           bedtime puzzles with the slime (always open)
 //   #/bed/2         bedtime puzzle 2
 //   #/today         today's puzzle (always open, new every day)
 //   #/tiptoe        tiptoe puzzles: sneak past sleepy guards (always open)
@@ -11,7 +11,7 @@
 //   #/pawn          walk the pawn home (always open), #/pawn/2 = puzzle 2
 //   #/lab           the lab: prototypes of new ideas, now the team crossing (#/lab/3/spots = puzzle 3, a variant)
 //   #/lab/setup     the lab's second prototype: set up a real board (#/lab/setup/4/copy = puzzle 4, a variant)
-//   #/lab/slime     the lab's third: bedtime with a slime, no words (#/lab/slime/5/beams = puzzle 5, a variant)
+//   #/lab/slime     bedtime's slime, both variants (#/lab/slime/5/glow = puzzle 5, glow); beams is the real one
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -21,7 +21,6 @@ import { firstLesson, type Lesson } from '../core/lesson.ts';
 import { markFinished, markWorldMet, needsFriendIntro } from '../core/progress.ts';
 import { mustParse } from '../core/puzzle.ts';
 import { StarIcon, SunIcon } from './art.tsx';
-import { BedtimeScreen } from './BedtimeScreen.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { FriendsDrawer, Home } from './Home.tsx';
@@ -34,7 +33,7 @@ import { today, TODAY_SKY } from './today.ts';
 import { useProgress, WORLD_LEVEL_IDS } from './useProgress.ts';
 import { WorldScreen } from './WorldScreen.tsx';
 import type { LabVariant, SetupVariant } from './LabScreen.tsx';
-import type { SlimeVariant } from './SlimeScreen.tsx';
+import { SlimeScreen, type SlimeVariant } from './SlimeScreen.tsx';
 import { SNEAK_MODES, PAWN_MODE, type SneakMode } from './sneakModes.tsx';
 
 type Route =
@@ -114,13 +113,14 @@ export function App() {
     const level = BEDTIME_LEVELS[li];
     const last = li === BEDTIME_LEVELS.length - 1;
     return (
-      <BedtimeScreen
+      <SlimeScreen
         key={level.id}
         grid={level.grid}
         tray={level.tray}
         sky={BEDTIME_SKY}
+        variant="beams"
         eagerHint={BEDTIME_LEVELS.findIndex((l) => l.set === level.set) === li}
-        dots={BEDTIME_LEVELS.map((l, i) => (l.set !== level.set ? null : (
+        top={BEDTIME_LEVELS.map((l, i) => (l.set !== level.set ? null : (
           <StarIcon key={l.id} filled={progress.done.includes(l.id)} className={i === li ? 'dot-star current' : 'dot-star'} />
         )))}
         onWin={(own) => update((p) => markFinished(p, level.id, own))}

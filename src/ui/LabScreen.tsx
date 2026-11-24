@@ -11,6 +11,7 @@
 //   slime     (#/lab/slime)  the bedtime puzzles with a slime instead of the grumpy king,
 //                            explained with magic beams, oozing and a tongue, no words.
 //                            Variants: glow (squares light while a friend is held) or beams.
+//                            Beams graduated into Bedtime itself (2026-11-24); glow stays here.
 // (Tiptoe puzzles and the pawn walk graduated to their own home bubbles.)
 
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';

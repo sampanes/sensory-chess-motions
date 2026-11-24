@@ -8,6 +8,7 @@ import { BEDTIME_LEVELS } from '../content/bedtime.ts';
 import { PAWN_LEVELS } from '../content/pawnwalk.ts';
 import { TIPTOE_LEVELS } from '../content/tiptoe.ts';
 import { FriendArt, GRUMPY, SunIcon } from './art.tsx';
+import { SlimeArt } from './slime.tsx';
 import { autoLook, canFullScreen, currentScreenPref, saveScreenPref, toggleFullScreen, type ScreenPref } from './screenMode.ts';
 import { canBuzz, currentSenses, saveSenses, type Senses } from './senses.ts';
 
@@ -102,12 +103,15 @@ export function GrownUps({ progress, update, onClose }: {
           ))}
           <li>
             <div className="lesson-faces">
-              <FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="lesson-friend" />
+              <SlimeArt className="lesson-friend" />
             </div>
             <span>
-              Bedtime puzzles (the night-sky bubble, always open): drag friends from the tray until the grumpy king is
-              in check and every square he could step to is watched. That is checkmate. Red squares show what a
-              friend would watch before you let go. Three sets: first beds, then a helper already on the board
+              Bedtime puzzles (the night-sky bubble, always open): drag friends from the tray until the slime (the
+              king) is in check and every square it could step to is watched. That is checkmate. While a friend is
+              held, its magic beams show what it would watch; friends already down keep theirs showing, faint. With
+              everyone placed they all fire: the slime pops (checkmate), oozes a copy onto every square left open,
+              or sticks its tongue out (stalemate). A friend dropped next to the slime with no protector gets eaten;
+              a protected one gets a magic bubble. Three sets: first beds, then a helper already on the board
               that the new friend must lean on (protecting a piece), then a big 6x6 bed. Finished {BEDTIME_LEVELS.filter((l) => progress.done.includes(l.id)).length}{' '}
               of {BEDTIME_LEVELS.length}.
             </span>
@@ -189,7 +193,7 @@ export function GrownUps({ progress, update, onClose }: {
             {(['first', 'helpers', 'big'] as const).map((set) => (
               <KnowRow
                 key={set}
-                faces={<FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="know-friend" />}
+                faces={<SlimeArt className="know-friend" />}
                 name={BEDTIME_SET_NAMES[set]}
                 report={knowReport(progress, BEDTIME_LEVELS.filter((l) => l.set === set).map((l) => l.id))}
               />

@@ -262,8 +262,13 @@ idea, same day). Variants: glow (squares light while a friend is held, as bedtim
 held friend shows its own magic from where it would land, no red squares; friends already down keep
 their beams showing, faint, the way glow keeps its lit squares). The slime body, its
 goo and the sparkle are traced from art sheet 8 (face in code, like the friends); the beams, the
-lob and the bubble stay code because they move along a path. The bedtime bubble itself still explains a failed bed with words on screen
-(2026-11-19), which the kids cannot read; if slime wins, it replaces that.
+lob and the bubble stay code because they move along a path.
+
+**Status (2026-11-24):** the slime graduated into Bedtime itself (John): `#/bed/N` is the slime in
+the beams variant, and the words on screen that explained a failed bed (which the kids cannot read)
+are gone. The home bubble, the picker and the grown-up panel show the slime instead of the grumpy
+king; stars, the "alone" count and the set dots work as before. A screen reader still hears one
+line after each showdown. `#/lab/slime` stays, to compare glow.
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.

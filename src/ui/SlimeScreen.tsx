@@ -1,4 +1,5 @@
-// Slime lab (#/lab/slime): the bedtime puzzles, explained with no words.
+// Bedtime puzzles (#/bed/N), explained with no words: the slime.
+// Graduated from the lab 2026-11-24 in the beams variant; #/lab/slime keeps both variants.
 //
 // A slime sits where the grumpy king was; same rules (src/core/mate.ts). When
 // every friend is on the board, each one fires magic at the slime's patch: a
@@ -10,8 +11,9 @@
 //   - every square around it hit but not the slime: it sticks its tongue out (stalemate).
 // A friend dropped right next to the slime with nobody protecting it gets
 // gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray).
-// On the last drop the slime stays where it ate and celebrates: that bite was its way out, game over. One that is protected: the slime reaches
-// for it and bonks off the magic bubble its protector throws around it.
+// On the last drop the slime stays where it ate and celebrates: that bite was its way out, game over.
+// One that is protected: the slime reaches for it and bonks off the magic bubble its protector
+// throws around it.
 //
 // Variants: 'glow' lights the squares around the slime while a friend is held,
 // as bedtime does; 'beams' shows the held friend's own magic instead.
@@ -118,13 +120,15 @@ function BeamArt({ p, from, to, kind, delay }: { p: MatePuzzle; from: number; to
   );
 }
 
-export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, onHome }: {
+export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, onNext, onHome }: {
   grid: readonly string[];
   tray: string;
   sky: string;
   variant: SlimeVariant;
   eagerHint?: boolean;
   top?: ReactNode;
+  /** `own` is true when no hint hand showed since the puzzle was opened. */
+  onWin?: (own: boolean) => void;
   onNext?: () => void;
   onHome: () => void;
 }) {
@@ -145,7 +149,10 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   const [feast, setFeast] = useState<number | null>(null);
   const [hint, setHint] = useState<Placement | null>(null);
   const [idleKey, setIdleKey] = useState(0);
+  /** What a screen reader hears after a showdown or a gobble (the kids get pictures). */
+  const [said, setSaid] = useState('');
   const layer = useRef<HTMLDivElement>(null);
+  const hinted = useRef(false);
   const dragRef = useRef<Drag | null>(null);
   dragRef.current = drag;
 
@@ -182,7 +189,10 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
     if (won || busy || dragging) return;
     const t = window.setTimeout(() => {
       const way = solveMate(p, placed, 1)[0];
-      if (way && way.length > 0) setHint(way[0]);
+      if (way && way.length > 0) {
+        hinted.current = true; // a win after this was not found alone
+        setHint(way[0]);
+      }
     }, eagerHint && placed.length === 0 ? EAGER_HINT_MS : HINT_MS);
     return () => window.clearTimeout(t);
   }, [won, busy, dragging, p, placed, eagerHint, idleKey]);
@@ -198,6 +208,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
     setReach(null);
     setSlimed([]);
     setFeast(null);
+    setSaid('');
     setPlaced([]);
     setHint(null);
     setRound((r) => r + 1);
@@ -213,6 +224,8 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
     const hits = new Set(list.map((b) => b.to));
     const oozes = result === 'mate' || result === 'stalemate' ? [] : escapes(p, after);
     setZap({ beams: list, friends: after, stage: 1, result, hits, oozes });
+    // Saved at once, so leaving during the show still keeps the star.
+    if (result === 'mate') onWin?.(!hinted.current);
     list.slice(0, 10).forEach((_, i) => later(() => sfx.zap(i), i * BEAM_STAGGER_MS + 60));
     const land = list.length * BEAM_STAGGER_MS + BEAM_DRAW_MS;
     later(() => setZap((z) => (z ? { ...z, stage: 2 } : z)), land);
@@ -222,6 +235,9 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
       if (result === 'mate') sfx.splat();
       else if (result === 'stalemate') sfx.raspberry();
       else sfx.gobble();
+      setSaid(result === 'mate' ? 'Checkmate! The slime pops.'
+        : result === 'stalemate' ? 'Stalemate: the slime is not hit, but cannot move.'
+        : 'The slime oozes onto a square nobody watches.');
     }, answer);
     if (result === 'mate') {
       later(() => {
@@ -255,7 +271,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
         later(() => setSlimed((s) => [...s, trayIndex]), t0 + 330);
         later(() => setPlaced((cur) => cur.filter((pl) => pl.tray !== trayIndex)), t0 + 900);
         if (stay) {
-          later(() => { setFeast(target.at); setReach(null); sfx.raspberry(); }, t0 + 950);
+          later(() => { setFeast(target.at); setReach(null); sfx.raspberry(); setSaid('The slime eats a friend nobody protects.'); }, t0 + 950);
         } else {
           later(() => setReach(null), t0 + 1250);
         }
@@ -376,6 +392,8 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
     setReach(null);
     setBonked(false);
     setSlimed([]);
+    setFeast(null);
+    setSaid('');
     setChosen(null);
     setWon(false);
     setShowGo(false);
@@ -571,6 +589,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
           </div>
         </div>
         {won && <Confetti />}
+        <div className="sr-status" role="status" aria-live="polite">{said}</div>
       </div>
 
       <div className="bottombar">

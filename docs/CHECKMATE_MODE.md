@@ -3,7 +3,8 @@
 Status (2026-11-02): **first version built and live** as "bedtime puzzles", the night-sky bubble on
 the home screen. Always open: new modes never wait for the friend worlds to be finished (John).
 Rules in `src/core/mate.ts` (tested in `tests/mate.test.ts`), 8 puzzles in
-`src/content/bedtime.ts`, screens `src/ui/BedtimeScreen.tsx` and `src/ui/BedtimeWorld.tsx`. Built
+`src/content/bedtime.ts`, screens `src/ui/BedtimeWorld.tsx` and (since 2026-11-24, when the slime
+graduated from the lab and replaced the grumpy king and the word bubble) `src/ui/SlimeScreen.tsx`. Built
 with the proposed defaults below: red only around the king, rocks as walls, mate in one later.
 Not yet: kid testing, the fill flash, a lullaby win tune. Every rule in "Rules that never change"
 still applies.

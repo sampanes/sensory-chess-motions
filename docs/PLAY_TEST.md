@@ -36,8 +36,9 @@ on. Any screen can be opened directly with its link (the list is in `README.md`)
 | Tiptoe, third set (stay safe): puzzle 1 offers a capture that wakes the bishop. | After the wake they go for the bishop first. If they repeat the same capture three times, the lesson is not landing. |
 | Pawn walk: a race against the gray pawn, and the angry queen when it gets home first. | They laugh or at least are not scared, and try again. |
 | Bedtime: one checkmate puzzle. | A 4 to 5 year old finishes one without help (the milestone 4 bar). |
-| Bedtime helpers (second block): a friend already on the board. | Does the kid put the new friend next to the helper on purpose, or only after the king shoos it back once? Both are fine; the second is the lesson landing. |
-| Bedtime big beds (third block): 6x6, two or three friends. | Older kids only. Watch whether the red squares on the big board help or overwhelm. |
+| Bedtime helpers (second block): a friend already on the board. | Does the kid put the new friend next to the helper on purpose, or only after the slime eats it once? Both are fine; the second is the lesson landing. |
+| Bedtime big beds (third block): 6x6, two or three friends. | Older kids only. Watch whether the beams on the big board help or overwhelm. |
+| Bedtime, a failed bed (the slime). | They point at the oozing copy, or move a friend to cover that square. The tongue (stalemate) makes them laugh AND makes them move a friend off. A gobble makes them add a protector, not just try another square. |
 | Today's puzzle. | They can finish it; note the friend and the day if not. |
 
 ## The big touchscreen
@@ -53,7 +54,7 @@ on. Any screen can be opened directly with its link (the list is in `README.md`)
 | Watch | It works if |
 |-------|-------------|
 | Crossing (`#/lab`): spots, steps or plain. | Pick the variant where the kid stops trying to put the bishop on the wrong-color home. Do the footprints mean anything to them? |
-| Slime (`#/lab/slime`): glow or beams. | After a failed bed, they point at the oozing copy, or move a friend to cover that square. The tongue (stalemate) makes them laugh AND makes them move a friend off. A gobble makes them add a protector, not just try another square. |
+| Slime (`#/lab/slime`): glow instead of beams. | Only if beams confuses them in Bedtime: do the lit squares work better? |
 | Set up the board (`#/lab/setup`): ghosts or copy. | With ghosts: is it too easy to be a puzzle? With copy: do they look up at the sleeping side? Level 4 (queen and king) is the real question. |
 | The reveal when the whole side stands (levels 5 to 7). | They notice the board turned to wood and say something about it. Then put a real set next to it. |
 

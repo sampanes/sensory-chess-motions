@@ -5,7 +5,8 @@
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
 import { mustParseMate } from '../core/mate.ts';
 import type { Progress } from '../core/progress.ts';
-import { FriendArt, GRUMPY, HomeIcon, PALETTE, StarIcon } from './art.tsx';
+import { HomeIcon, PALETTE, StarIcon } from './art.tsx';
+import { SLIME, SlimeArt } from './slime.tsx';
 import { levelSets } from './sneakModes.tsx';
 import { sfx, wakeAudio } from './sound.ts';
 
@@ -22,7 +23,7 @@ export function BedtimeWorld({ progress, onPlay, onHome }: {
           <HomeIcon className="icon" />
         </button>
         <div className="world-hero">
-          <FriendArt kind="king" colors={GRUMPY} mood="grumpy" className="hero-friend" />
+          <SlimeArt className="hero-friend" />
         </div>
         <div className="round-btn-spacer" />
       </div>
@@ -48,7 +49,7 @@ export function BedtimeWorld({ progress, onPlay, onHome }: {
   );
 }
 
-/** Tiny picture of a bedtime puzzle: the board, the grumpy king, and the tray friends underneath. */
+/** Tiny picture of a bedtime puzzle: the board, the slime, and the tray friends underneath. */
 function BedtimeMini({ grid, tray }: { grid: readonly string[]; tray: string }) {
   const p = mustParseMate(grid, tray);
   const w = p.cols * 10;
@@ -62,7 +63,7 @@ function BedtimeMini({ grid, tray }: { grid: readonly string[]; tray: string }) 
         return <rect key={pos} x={c * 10} y={r * 10} width={10} height={10} fill={(r + c) % 2 ? '#bfe6a4' : '#eaf7d8'} />;
       })}
       {p.rocks.map((rock, pos) => (rock ? <circle key={`r${pos}`} {...dot(pos)} r={3.8} fill="#a8a29e" /> : null))}
-      <circle {...dot(p.king)} r={3.8} fill={GRUMPY.fill} stroke={GRUMPY.dark} strokeWidth={1.2} />
+      <circle {...dot(p.king)} r={3.8} fill={SLIME.fill} stroke={SLIME.dark} strokeWidth={1.2} />
       {p.fixed.map((f) => (
         <circle key={`f${f.at}`} {...dot(f.at)} r={3.8} fill={PALETTE[f.kind].fill} stroke={PALETTE[f.kind].dark} strokeWidth={1.2} />
       ))}
