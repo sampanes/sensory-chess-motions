@@ -1049,6 +1049,11 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 }
 @media (prefers-reduced-motion: reduce) { .drawer-grid, .bubble.folder.news { animation: none; } }
 
+/* Chase the slime (#/lab/chase): friends and the slime slide to their new squares. */
+.chase .friend.chase-piece { transition: left 0.34s ease-in-out, top 0.34s ease-in-out; }
+.chase .friend.on-top { z-index: 6; }
+.friend-body.chase-picked > svg { filter: drop-shadow(0 0 5px #fde047) drop-shadow(0 0 2px #ca8a04); }
+
 /* Slime lab (#/lab/slime): magic beams, the knight's lob, goo, sparkles. */
 .zap-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
 .zap-layer.over { z-index: 4; }

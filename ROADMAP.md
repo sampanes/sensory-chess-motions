@@ -275,6 +275,24 @@ on the rock or friend in the way if there is one) and shrugs, so a kid sees whic
 The slime is purple, not the sheet's lime green, so it stands out on the green board (John, 2026-11-24;
 recolored as it is drawn, so the traced art is untouched).
 
+**Status (2026-11-24):** two more slime ideas are in the lab (John picked both):
+- **Chase the slime** (`#/lab/chase`, 8 puzzles, `src/core/chase.ts`): the slime moves now. The friends
+  start on the board and the kid moves one per turn, the way it always moves; then the slime takes one
+  step to a square no friend watches. Checkmate pops it, as in bedtime. A friend left next to it with
+  nobody protecting it gets eaten and a stalemate gets the tongue; either way that move is undone, so
+  the kid just tries another. Secretly: the real endgames, king and queen, king and rook, two rooks.
+  Every position is worked out when the puzzle opens (an endgame table, under a second on a 6x6
+  board), so the slime always runs the longest way and the hint hand knows the quickest win. The
+  puzzles climb from a one-move finish to six moves on a 6x6 board; tests prove each wins in exactly
+  the moves it says, against every slime reply.
+- **A slime boss for each friend world** (`#/lab/boss`, `src/content/bosses.ts`): a bedtime puzzle with
+  a crowned slime that only that world's friend can finish (three rooks, two bishops, a wall of four
+  pawns...). The king cannot catch a slime alone, so his boss has a rook already zapping it and the
+  king closes the gaps. Not yet at the end of the worlds: that waits on John's verdict.
+
+Considered, not built: a sticker book (John 2026-11-24: worried that churn and saved progress being
+lost, or stickers a kid does not remember earning after a month away, would confuse more than help).
+
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.
 

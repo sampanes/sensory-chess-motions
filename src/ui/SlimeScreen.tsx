@@ -90,17 +90,17 @@ function closedSquares(p: MatePuzzle, friends: readonly Friend[]): { zone: Set<n
   return { zone, check: status === 'check' || status === 'mate' };
 }
 
-const center = (p: MatePuzzle, pos: number) => ({ x: (pos % p.cols) * 100 + 50, y: Math.floor(pos / p.cols) * 100 + 50 });
+export const center = (p: MatePuzzle, pos: number) => ({ x: (pos % p.cols) * 100 + 50, y: Math.floor(pos / p.cols) * 100 + 50 });
 
 /** The path a beam takes: straight, or a high arc for the knight's lob. */
-function beamPath(p: MatePuzzle, from: number, to: number, kind: Kind): string {
+export function beamPath(p: MatePuzzle, from: number, to: number, kind: Kind): string {
   const a = center(p, from);
   const b = center(p, to);
   if (kind !== 'knight') return `M${a.x} ${a.y} L${b.x} ${b.y}`;
   return `M${a.x} ${a.y} Q${(a.x + b.x) / 2} ${Math.min(a.y, b.y) - 110} ${b.x} ${b.y}`;
 }
 
-function BeamArt({ p, from, to, kind, delay }: { p: MatePuzzle; from: number; to: number; kind: Kind; delay: number }) {
+export function BeamArt({ p, from, to, kind, delay }: { p: MatePuzzle; from: number; to: number; kind: Kind; delay: number }) {
   const d = beamPath(p, from, to, kind);
   const style = { '--d': `${delay}ms` } as CSSProperties;
   if (kind === 'knight') {
@@ -216,11 +216,13 @@ function FizzleArt({ p, f, friends, delay }: { p: MatePuzzle; f: Friend; friends
   );
 }
 
-export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, onNext, onHome }: {
+export function SlimeScreen({ grid, tray, sky, variant, boss, eagerHint, top, onWin, onNext, onHome }: {
   grid: readonly string[];
   tray: string;
   sky: string;
   variant: SlimeVariant;
+  /** A world's boss: the slime wears a crown. */
+  boss?: boolean;
   eagerHint?: boolean;
   top?: ReactNode;
   /** `own` is true when no hint hand showed since the puzzle was opened. */
@@ -594,7 +596,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, o
             {!popped && !won && (
               <div className={`friend slime-at ${reach?.kind === 'gobble' || feast !== null ? 'on-top' : ''}`} style={cellStyle(feast ?? p.king)}>
                 <div key={`s${round}-${slimeAnim}`} className={`friend-body ${slimeAnim}`} style={lunge}>
-                  <SlimeArt mood={mood} className="fill" />
+                  <SlimeArt mood={mood} crown={boss} className="fill" />
                 </div>
               </div>
             )}

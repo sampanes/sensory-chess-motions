@@ -95,11 +95,24 @@ function Paths({ name }: { name: string }) {
   );
 }
 
-export function SlimeArt({ mood = 'idle', className }: { mood?: SlimeMood; className?: string }) {
+/** A boss slime wears a little gold crown, tipped to one side. */
+function Crown() {
+  return (
+    <g transform="rotate(-12 50 16)">
+      <path d="M34 24 L33 9 L42 16 L50 5 L58 16 L67 9 L66 24 Z" fill="#fcd34d" stroke="#b45309" strokeWidth={2.5} strokeLinejoin="round" />
+      <circle cx={50} cy={18} r={3} fill="#f472b6" stroke="#be185d" strokeWidth={1.5} />
+      <circle cx={33} cy={9} r={2.2} fill="#fcd34d" stroke="#b45309" strokeWidth={1.5} />
+      <circle cx={67} cy={9} r={2.2} fill="#fcd34d" stroke="#b45309" strokeWidth={1.5} />
+    </g>
+  );
+}
+
+export function SlimeArt({ mood = 'idle', crown, className }: { mood?: SlimeMood; crown?: boolean; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
       <ellipse cx={50} cy={86} rx={34} ry={5} fill="rgba(0,0,0,0.15)" />
       <Paths name="body" />
+      {crown && <Crown />}
       {/* The face fits the plain middle of the dome: clear of the shine, the bubbles and the drips. */}
       <g transform="translate(50 46) scale(0.9) translate(-50 -50)">
         <Eyes mood={mood} />

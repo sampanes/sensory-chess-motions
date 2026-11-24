@@ -12,6 +12,8 @@
 //   #/lab           the lab: prototypes of new ideas, now the team crossing (#/lab/3/spots = puzzle 3, a variant)
 //   #/lab/setup     the lab's second prototype: set up a real board (#/lab/setup/4/copy = puzzle 4, a variant)
 //   #/lab/slime     bedtime's slime, both variants (#/lab/slime/5/glow = puzzle 5, glow); beams is the real one
+//   #/lab/chase     chase the slime: it moves now (#/lab/chase/3 = puzzle 3)
+//   #/lab/boss      a slime boss for each friend world (#/lab/boss/5 = the knight's)
 
 import { useEffect, useMemo, useState } from 'react';
 import { BEDTIME_LEVELS, BEDTIME_SKY } from '../content/bedtime.ts';
@@ -24,7 +26,10 @@ import { StarIcon, SunIcon } from './art.tsx';
 import { BedtimeWorld } from './BedtimeWorld.tsx';
 import { GrownUps } from './GrownUps.tsx';
 import { FriendsDrawer, Home } from './Home.tsx';
-import { LAB_LEVELS, LAB_SETUP_LEVELS, LAB_SLIME_LEVELS, LabScreen, LabSetupScreen, LabSlimeScreen } from './LabScreen.tsx';
+import {
+  LAB_BOSS_LEVELS, LAB_CHASE_LEVELS, LAB_LEVELS, LAB_SETUP_LEVELS, LAB_SLIME_LEVELS,
+  LabBossScreen, LabChaseScreen, LabScreen, LabSetupScreen, LabSlimeScreen,
+} from './LabScreen.tsx';
 import { TiptoeScreen } from './TiptoeScreen.tsx';
 import { TiptoeWorld } from './TiptoeWorld.tsx';
 import { MeetFriend } from './MeetFriend.tsx';
@@ -48,7 +53,9 @@ type Route =
   | { screen: 'sneak'; mode: SneakMode; li: number }
   | { screen: 'lab'; li: number; variant: LabVariant }
   | { screen: 'labSetup'; li: number; variant: SetupVariant }
-  | { screen: 'labSlime'; li: number; variant: SlimeVariant };
+  | { screen: 'labSlime'; li: number; variant: SlimeVariant }
+  | { screen: 'labChase'; li: number }
+  | { screen: 'labBoss'; li: number };
 
 function parseHash(hash: string): Route {
   if (hash === '#/today') return { screen: 'today' };
@@ -68,6 +75,12 @@ function parseHash(hash: string): Route {
   if (slime) {
     const li = Math.min(Math.max(Number(slime[1] ?? 1) - 1, 0), LAB_SLIME_LEVELS.length - 1);
     return { screen: 'labSlime', li, variant: slime[2] === 'beams' ? 'beams' : 'glow' };
+  }
+  const chase = /^#\/lab\/(chase|boss)(?:\/(\d+))?$/.exec(hash);
+  if (chase) {
+    const n = chase[1] === 'chase' ? LAB_CHASE_LEVELS.length : LAB_BOSS_LEVELS.length;
+    const li = Math.min(Math.max(Number(chase[2] ?? 1) - 1, 0), n - 1);
+    return chase[1] === 'chase' ? { screen: 'labChase', li } : { screen: 'labBoss', li };
   }
   const lab = /^#\/lab(?:\/(\d+))?(?:\/(plain|spots|steps|reach))?$/.exec(hash);
   if (lab) {
@@ -140,6 +153,14 @@ export function App() {
 
   if (route.screen === 'labSlime') {
     return <LabSlimeScreen li={route.li} variant={route.variant} go={(li, v) => go(`#/lab/slime/${li + 1}/${v}`, true)} />;
+  }
+
+  if (route.screen === 'labChase') {
+    return <LabChaseScreen li={route.li} go={(li) => go(`#/lab/chase/${li + 1}`, true)} />;
+  }
+
+  if (route.screen === 'labBoss') {
+    return <LabBossScreen li={route.li} go={(li) => go(`#/lab/boss/${li + 1}`, true)} />;
   }
 
   if (route.screen === 'sneakWorld') {
