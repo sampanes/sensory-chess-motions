@@ -407,7 +407,8 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   const held = variant === 'beams' && drag?.moved && drag.over !== null ? friendsOf(p, [...lifted, { tray: drag.tray, at: drag.over }]) : null;
   const previewBeams = held ? beamsOf(p, held).filter((b) => b.friend === held.length - 1) : [];
   // Beams variant: friends already on the board keep their magic showing, faint (glow's lit squares do the same).
-  const standingFriends = variant === 'beams' && !zap && !won && !reach && feast === null ? friendsOf(p, lifted) : [];
+  // Hidden while anything plays (gobble, bubble, showdown), so they never blink back on between two parts.
+  const standingFriends = variant === 'beams' && !busy && !zap && !won ? friendsOf(p, lifted) : [];
   const standingBeams = beamsOf(p, standingFriends);
   const standingSparks = [...new Set(standingBeams.map((b) => b.to))].filter((pos) => !previewBeams.some((b) => b.to === pos));
   const reachBy = reach?.kind === 'thwart' ? 30 : 100;
