@@ -390,13 +390,15 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   const ghost = drag?.moved && drag.over !== null ? drag.over : null;
   const draggingFromBoard = drag?.moved && drag.from === 'board' ? drag.tray : null;
 
-  const slimeHit = zap !== null && zap.stage >= 2 && zap.hits.has(p.king);
+  // A beam that runs through the slime ends on the square past it: ask the rules, not the beam ends.
+  const aimedAt = zap !== null && (zap.result === 'mate' || zap.result === 'check');
+  const slimeHit = aimedAt && zap.stage >= 2;
   const popped = zap?.stage === 3 && zap.result === 'mate';
   // Hit but with somewhere to go: the slime leaves its square for good; only the copies are left.
   const fled = zap?.stage === 3 && zap.result === 'check';
-  let mood: SlimeMood = status === 'check' ? 'hit' : 'idle';
+  let mood: SlimeMood = status === 'check' ? 'scared' : 'idle';
   if (reach || feast !== null) mood = bonked ? 'hit' : 'smug';
-  if (zap) mood = zap.stage === 1 ? 'idle' : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit ? 'hit' : 'smug';
+  if (zap) mood = zap.stage === 1 ? (aimedAt ? 'scared' : 'idle') : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit ? 'hit' : 'smug';
   const slimeAnim = popped ? 'slime-pop' : fled ? 'split-away' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach?.stay ? 'slime-take' : reach ? 'slime-hop' : feast !== null ? 'dance' : 'bob';
   const kr = Math.floor(p.king / p.cols);
   const kc = p.king % p.cols;

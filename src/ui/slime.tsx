@@ -5,7 +5,7 @@
 
 import { SLIME_PATHS } from './slimeArt.ts';
 
-export type SlimeMood = 'idle' | 'hit' | 'smug' | 'nyah';
+export type SlimeMood = 'idle' | 'scared' | 'hit' | 'smug' | 'nyah';
 
 export const SLIME = { fill: '#a3e635', dark: '#3f6212', light: '#ecfccb' };
 const INK = '#1f2937';
@@ -17,6 +17,24 @@ function Eyes({ mood }: { mood: SlimeMood }) {
       <g stroke={INK} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
         <path d="M33 45 L41 50 L33 55" />
         <path d="M67 45 L59 50 L67 55" />
+      </g>
+    );
+  }
+  if (mood === 'scared') {
+    // wide eyes, tiny pupils, worried brows, a sweat drop
+    return (
+      <g>
+        {[39, 61].map((x) => (
+          <g key={x}>
+            <circle cx={x} cy={50} r={10} fill="#fff" stroke={SLIME.dark} strokeWidth={2} />
+            <circle cx={x} cy={50} r={2.8} fill={INK} />
+          </g>
+        ))}
+        <g stroke={INK} strokeWidth={3} strokeLinecap="round" fill="none">
+          <path d="M30 39 Q37 36 45 33" />
+          <path d="M70 39 Q63 36 55 33" />
+        </g>
+        <path d="M78 30 Q74 37 78 40 Q82 37 78 30 Z" fill="#7dd3fc" stroke="#0369a1" strokeWidth={1.5} />
       </g>
     );
   }
@@ -47,6 +65,8 @@ function Mouth({ mood }: { mood: SlimeMood }) {
   switch (mood) {
     case 'hit':
       return <ellipse cx={50} cy={68} rx={4.5} ry={5.5} fill={INK} />;
+    case 'scared':
+      return <path d="M40 70 Q45 65 50 70 Q55 75 60 70" stroke={INK} strokeWidth={3.5} strokeLinecap="round" fill="none" />;
     case 'smug':
       return <path d="M38 64 Q50 76 63 63" stroke={INK} strokeWidth={3.5} strokeLinecap="round" fill="none" />;
     case 'nyah':
