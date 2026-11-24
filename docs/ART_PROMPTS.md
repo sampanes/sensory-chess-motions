@@ -96,6 +96,11 @@ it; nothing touches anything else. Transparent background (or plain white). Squa
 
 ## 2. Friends dressed up as real chess pieces (milestone 5, "friends into pieces")
 
+**Not to be generated (John, 2026-11-24):** a real Staunton set should be a real, existing drawing,
+not a diffusion roll. Use an open-licensed set instead (for example Cburnett's SVG pieces on Wikimedia
+Commons, offered under BSD among others; check each file's license and credit it). The prompt below is
+kept only as a record.
+
 The roadmap's missing Staunton shapes: the end of "set up the board", where the friends turn into
 a real chess set and keep their faces. Drawn in ivory; code turns a copy dark for the other side.
 
@@ -282,6 +287,10 @@ crashes when given any setting, so the script runs it on its defaults (fine on a
 ## Results
 
 (Which tool made each sheet, which roll was kept, and anything that had to be re-rolled.)
+
+- **7, the app icon (2026-11-24):** John's picture (the golden king between the pink queen and the
+  blue knight), kept as `art/sheets/07-app-icon.png`. Its black corners are cleared for the plain icons;
+  the iPhone icon fills them with the frame purple; the Android maskable icon sits at 80% on that purple.
 
 - **0, the anchor (2026-11-13):** ChatGPT, `art/sheets/00-anchor.png` (transparent PNG). Kept over
   Gemini's because it reads at board-square size: chunky shapes, big faces on the head. Faces sit

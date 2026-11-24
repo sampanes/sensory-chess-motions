@@ -11,7 +11,7 @@ const LEGACY_CACHE = 'tbk-v1';
 const SLOW_MS = 4000;
 const scoped = (path) => new URL(path, self.registration.scope).href;
 const ROOT = scoped('./');
-const OPTIONAL_SHELL = ['favicon.svg', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
+const OPTIONAL_SHELL = ['favicon.png', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

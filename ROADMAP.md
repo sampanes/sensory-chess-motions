@@ -310,8 +310,8 @@ home bubble.
 of the set-up puzzle. When the whole side of sixteen stands (levels 5 to 7), the meadow fades to a
 wooden chessboard and the friends turn ivory, keeping their faces, opposite the silver side, which
 wakes up: the kid is looking at a real chess set (`WOOD` and `IVORY` in `src/content/looks.ts`).
-Not built: Staunton shapes (the friends keep their own shapes; only their colors change; the art
-prompt for them is prompt 2 in `docs/ART_PROMPTS.md`).
+Not built: Staunton shapes (the friends keep their own shapes; only their colors change). John,
+2026-11-24: those come from a real open-licensed set, never generated (`docs/ART_PROMPTS.md`, prompt 2).
 
 **Status (2026-11-19):** the board reveal reaches the friend worlds. In the last world (all the
 friends together, `REVEAL_WORLD` in `src/content/looks.ts`), a first play of each puzzle sits on a
