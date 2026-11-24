@@ -1240,8 +1240,8 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
   width: 24%;
   height: 24%;
   border-radius: 50%;
-  background: #a3e635;
-  border: 3px solid #3f6212;
+  background: #a855f7;
+  border: 3px solid #581c87;
   animation: splat 0.7s ease-out forwards;
 }
 @keyframes splat { to { transform: translate(var(--dx), var(--dy)) scale(0.35); opacity: 0; } }

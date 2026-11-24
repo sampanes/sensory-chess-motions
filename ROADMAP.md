@@ -272,6 +272,8 @@ line after each showdown. `#/lab/slime` stays, to compare glow. A friend whose m
 the slime's squares fizzles in the showdown (along its OWN lines toward the slime, so a rook goes up
 and sideways, never diagonally: a few blobs of its color that shrink, droop and end in a gray poof,
 on the rock or friend in the way if there is one) and shrugs, so a kid sees which friend did not help (2026-11-24).
+The slime is purple, not the sheet's lime green, so it stands out on the green board (John, 2026-11-24;
+recolored as it is drawn, so the traced art is untouched).
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.

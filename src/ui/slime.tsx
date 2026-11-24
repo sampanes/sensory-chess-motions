@@ -7,7 +7,10 @@ import { SLIME_PATHS } from './slimeArt.ts';
 
 export type SlimeMood = 'idle' | 'scared' | 'hit' | 'smug' | 'nyah';
 
-export const SLIME = { fill: '#a3e635', dark: '#3f6212', light: '#ecfccb' };
+// Purple, so it stands out on the green board (John, 2026-11-24). The traced art is green; it is
+// recolored as it is drawn, so a re-bake keeps working.
+export const SLIME = { fill: '#a855f7', dark: '#581c87', light: '#f3e8ff' };
+const RECOLOR: Record<string, string> = { '#a3e635': SLIME.fill, '#3f6212': SLIME.dark, '#ecfccb': SLIME.light };
 const INK = '#1f2937';
 
 function Eyes({ mood }: { mood: SlimeMood }) {
@@ -86,7 +89,7 @@ function Paths({ name }: { name: string }) {
   return (
     <>
       {SLIME_PATHS[name].map(([fill, d], k) => (
-        <path key={k} d={d} fill={fill} />
+        <path key={k} d={d} fill={RECOLOR[fill] ?? fill} />
       ))}
     </>
   );
