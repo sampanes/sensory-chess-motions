@@ -126,37 +126,92 @@ function dudsOf(friends: readonly Friend[], list: readonly Beam[]): number[] {
   return friends.map((_, i) => i).filter((i) => !list.some((b) => b.friend === i));
 }
 
+type Step = readonly [number, number];
+const KNIGHT_STEPS: readonly Step[] = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+
 /**
- * A friend whose magic reaches nothing: a few blobs of its magic hop toward the slime, each smaller
- * and lower than the last (out of push), and end in a gray poof well short of it.
+ * The directions a fizzle takes: the friend's OWN lines that point toward the slime, so a rook
+ * fizzles up and sideways, never diagonally. [row step, column step].
  */
-function FizzleArt({ p, from, kind, delay }: { p: MatePuzzle; from: number; kind: Kind; delay: number }) {
-  const a = center(p, from);
-  const k = center(p, p.king);
-  const len = Math.hypot(k.x - a.x, k.y - a.y) || 1;
-  const ux = (k.x - a.x) / len;
-  const uy = (k.y - a.y) / len;
-  // Along the way toward the slime, sagging more the further it gets (in board units, 100 a square).
-  const at = (dist: number, sag: number) => ({ x: a.x + ux * dist, y: a.y + uy * dist + sag });
-  const blobs = [at(48, 0), at(72, 6), at(94, 15), at(112, 27)];
-  const poof = at(128, 40);
+function fizzleSteps(p: MatePuzzle, f: Friend): Step[] {
+  const dr = Math.floor(p.king / p.cols) - Math.floor(f.at / p.cols);
+  const dc = (p.king % p.cols) - (f.at % p.cols);
+  const sr = Math.sign(dr);
+  const sc = Math.sign(dc);
+  const straight: Step[] = [...(sr ? [[sr, 0] as const] : []), ...(sc ? [[0, sc] as const] : [])];
+  const diagonal: Step[] = sr && sc ? [[sr, sc]] : sr ? [[sr, -1], [sr, 1]] : [[-1, sc], [1, sc]];
+  switch (f.kind) {
+    case 'rook': return straight;
+    case 'bishop': return diagonal;
+    case 'queen': return [...straight, ...diagonal];
+    case 'king': return [[sr, sc]];
+    case 'pawn': return sc ? [[-1, sc]] : [[-1, -1], [-1, 1]]; // a pawn reaches the two squares ahead, slantwise
+    case 'knight': {
+      // The one jump that lands nearest the slime.
+      const far = (s: Step) => Math.hypot(dr - s[0], dc - s[1]);
+      return [[...KNIGHT_STEPS].sort((a, b) => far(a) - far(b))[0]];
+    }
+  }
+}
+
+/**
+ * A friend whose magic reaches nothing: along each of its own lines toward the slime, a few blobs of
+ * its magic hop out, each smaller and lower than the last (out of push), and end in a gray poof. A
+ * rock or a friend in the way catches the poof; a line that leaves the board at once is skipped.
+ */
+function FizzleArt({ p, f, friends, delay }: { p: MatePuzzle; f: Friend; friends: readonly Friend[]; delay: number }) {
+  const a = center(p, f.at);
+  const r0 = Math.floor(f.at / p.cols);
+  const c0 = f.at % p.cols;
+  const onBoard = (r: number, c: number) => r >= 0 && r < p.rows && c >= 0 && c < p.cols;
+  const blocked = (r: number, c: number) => p.rocks[r * p.cols + c] || friends.some((o) => o.at === r * p.cols + c);
+  const slides = f.kind === 'rook' || f.kind === 'bishop' || f.kind === 'queen';
+  const trails = fizzleSteps(p, f).flatMap(([sr, sc]) => {
+    if (!onBoard(r0 + sr, c0 + sc)) return [];
+    // How far it gets, in squares along the line: a slider runs out of push a bit past one square.
+    let reach: number;
+    if (blocked(r0 + sr, c0 + sc)) reach = 0.8; // the poof lands on whatever is in the way
+    else if (!slides) reach = 0.9;
+    else reach = onBoard(r0 + 2 * sr, c0 + 2 * sc) && !blocked(r0 + 2 * sr, c0 + 2 * sc) ? 1.35 : 1;
+    return [{ sr, sc, reach }];
+  });
+  // Nothing of its own points anywhere useful: aim straight at the slime instead.
+  if (trails.length === 0) {
+    const k = center(p, p.king);
+    const len = Math.hypot(k.x - a.x, k.y - a.y) || 1;
+    trails.push({ sr: (k.y - a.y) / len, sc: (k.x - a.x) / len, reach: 1.25 });
+  }
   return (
     <g className="fizzle" style={{ '--d': `${delay}ms` } as CSSProperties}>
-      {blobs.map((b, i) => (
-        <circle
-          key={i}
-          cx={b.x}
-          cy={b.y}
-          r={11 - i * 2}
-          className="fizzle-blob"
-          fill={PALETTE[kind].fill}
-          stroke={PALETTE[kind].dark}
-          style={{ '--i': i } as CSSProperties}
-        />
-      ))}
-      {[[-10, 2, 11], [7, -6, 13], [9, 9, 9]].map(([dx, dy, r], i) => (
-        <circle key={`p${i}`} cx={poof.x + dx} cy={poof.y + dy} r={r} className="fizzle-puff" />
-      ))}
+      {trails.map(({ sr, sc, reach }, t) => {
+        const along = (frac: number) => {
+          const d = 0.45 + (reach - 0.45) * frac; // from the friend's edge out to its reach
+          return { x: a.x + sc * 100 * d, y: a.y + sr * 100 * d + 16 * frac * frac };
+        };
+        const poof = along(1);
+        return (
+          <g key={t}>
+            {[0, 0.3, 0.55, 0.78].map((frac, i) => {
+              const b = along(frac);
+              return (
+                <circle
+                  key={i}
+                  cx={b.x}
+                  cy={b.y}
+                  r={11 - i * 2}
+                  className="fizzle-blob"
+                  fill={PALETTE[f.kind].fill}
+                  stroke={PALETTE[f.kind].dark}
+                  style={{ '--i': i } as CSSProperties}
+                />
+              );
+            })}
+            {[[-10, 2, 11], [7, -6, 13], [9, 9, 9]].map(([dx, dy, r], i) => (
+              <circle key={`p${i}`} cx={poof.x + dx} cy={poof.y + dy} r={r} className="fizzle-puff" />
+            ))}
+          </g>
+        );
+      })}
     </g>
   );
 }
@@ -588,7 +643,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, o
             <svg className="zap-layer over" viewBox={`0 0 ${p.cols * 100} ${p.rows * 100}`} aria-hidden="true">
               {/* Over the friends, or the fizzling friend would hide its own fizzle. */}
               {zap && dudsOf(zap.friends, zap.beams).map((fi, k) => (
-                <FizzleArt key={`z${fi}`} p={p} from={zap.friends[fi].at} kind={zap.friends[fi].kind} delay={(zap.beams.length + k) * BEAM_STAGGER_MS} />
+                <FizzleArt key={`z${fi}`} p={p} f={zap.friends[fi]} friends={zap.friends} delay={(zap.beams.length + k) * BEAM_STAGGER_MS} />
               ))}
               {reach?.kind === 'thwart' && reach.by && (
                 <BeamArt p={p} from={reach.by.at} to={reach.at} kind={reach.by.kind} delay={0} />

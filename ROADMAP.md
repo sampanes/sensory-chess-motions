@@ -269,8 +269,9 @@ the beams variant, and the words on screen that explained a failed bed (which th
 are gone. The home bubble, the picker and the grown-up panel show the slime instead of the grumpy
 king; stars, the "alone" count and the set dots work as before. A screen reader still hears one
 line after each showdown. `#/lab/slime` stays, to compare glow. A friend whose magic reaches none of
-the slime's squares fizzles in the showdown (a few blobs of its color that shrink, droop and end in a
-gray poof well short of the slime) and shrugs, so a kid sees which friend did not help (2026-11-24).
+the slime's squares fizzles in the showdown (along its OWN lines toward the slime, so a rook goes up
+and sideways, never diagonally: a few blobs of its color that shrink, droop and end in a gray poof,
+on the rock or friend in the way if there is one) and shrugs, so a kid sees which friend did not help (2026-11-24).
 
 **Done when:** each mechanic has at least 8 solver-checked puzzles. A 4-5 year old can finish a
 tuck-the-king-into-bed puzzle, which is a real mate in one, without help.
