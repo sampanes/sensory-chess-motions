@@ -1082,6 +1082,32 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 }
 @keyframes sparkle-run { to { stroke-dashoffset: -60; } }
 @keyframes fade-in { to { opacity: 1; } }
+/* A friend whose magic reaches nothing: blobs hop out, each smaller and lower, then a gray poof; it all droops and fades. */
+.fizzle { animation: fizzle 1.5s var(--d, 0ms) ease-in forwards; }
+@keyframes fizzle {
+  0%, 60% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(16px); }
+}
+.fizzle-blob {
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fizzle-pop 0.22s calc(var(--d, 0ms) + var(--i) * 90ms) cubic-bezier(0.3, 1.6, 0.6, 1) both;
+}
+@keyframes fizzle-pop { from { transform: scale(0); } to { transform: scale(1); } }
+.fizzle-puff {
+  fill: #e2e8f0;
+  stroke: #64748b;
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fizzle-poof 0.45s calc(var(--d, 0ms) + 380ms) ease-out both;
+}
+@keyframes fizzle-poof {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
 .lob-trail {
   fill: none;
   stroke-width: 7;

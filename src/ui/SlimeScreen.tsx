@@ -4,7 +4,8 @@
 // A slime sits where the grumpy king was; same rules (src/core/mate.ts). When
 // every friend is on the board, each one fires magic at the slime's patch: a
 // straight sparkly beam along its lines, or a lobbed ball for the knight.
-// Sparkles land on every square a beam reaches. Then:
+// Sparkles land on every square a beam reaches. A friend whose magic reaches none of the slime's
+// squares fizzles: a little puff toward the slime that droops and falls short, and a shrug. Then:
 //   - every square hit, the slime too: it pops (the win);
 //   - a square around it left open: the slime oozes a copy onto each open square
 //     (if it was hit too, it leaves its own square: only the copies are left);
@@ -120,6 +121,46 @@ function BeamArt({ p, from, to, kind, delay }: { p: MatePuzzle; from: number; to
   );
 }
 
+/** Friends (by index) none of whose magic reaches the slime's patch. */
+function dudsOf(friends: readonly Friend[], list: readonly Beam[]): number[] {
+  return friends.map((_, i) => i).filter((i) => !list.some((b) => b.friend === i));
+}
+
+/**
+ * A friend whose magic reaches nothing: a few blobs of its magic hop toward the slime, each smaller
+ * and lower than the last (out of push), and end in a gray poof well short of it.
+ */
+function FizzleArt({ p, from, kind, delay }: { p: MatePuzzle; from: number; kind: Kind; delay: number }) {
+  const a = center(p, from);
+  const k = center(p, p.king);
+  const len = Math.hypot(k.x - a.x, k.y - a.y) || 1;
+  const ux = (k.x - a.x) / len;
+  const uy = (k.y - a.y) / len;
+  // Along the way toward the slime, sagging more the further it gets (in board units, 100 a square).
+  const at = (dist: number, sag: number) => ({ x: a.x + ux * dist, y: a.y + uy * dist + sag });
+  const blobs = [at(48, 0), at(72, 6), at(94, 15), at(112, 27)];
+  const poof = at(128, 40);
+  return (
+    <g className="fizzle" style={{ '--d': `${delay}ms` } as CSSProperties}>
+      {blobs.map((b, i) => (
+        <circle
+          key={i}
+          cx={b.x}
+          cy={b.y}
+          r={11 - i * 2}
+          className="fizzle-blob"
+          fill={PALETTE[kind].fill}
+          stroke={PALETTE[kind].dark}
+          style={{ '--i': i } as CSSProperties}
+        />
+      ))}
+      {[[-10, 2, 11], [7, -6, 13], [9, 9, 9]].map(([dx, dy, r], i) => (
+        <circle key={`p${i}`} cx={poof.x + dx} cy={poof.y + dy} r={r} className="fizzle-puff" />
+      ))}
+    </g>
+  );
+}
+
 export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, onNext, onHome }: {
   grid: readonly string[];
   tray: string;
@@ -227,7 +268,9 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, o
     // Saved at once, so leaving during the show still keeps the star.
     if (result === 'mate') onWin?.(!hinted.current);
     list.slice(0, 10).forEach((_, i) => later(() => sfx.zap(i), i * BEAM_STAGGER_MS + 60));
-    const land = list.length * BEAM_STAGGER_MS + BEAM_DRAW_MS;
+    const duds = dudsOf(after, list);
+    duds.forEach((_, k) => later(() => sfx.nudge(), (list.length + k) * BEAM_STAGGER_MS + 160));
+    const land = (list.length + duds.length) * BEAM_STAGGER_MS + BEAM_DRAW_MS;
     later(() => setZap((z) => (z ? { ...z, stage: 2 } : z)), land);
     const answer = land + 650;
     later(() => {
@@ -405,6 +448,8 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, o
 
   const contrast = highContrast() ? HIGH_CONTRAST : null;
   const placedTrays = new Set(placed.map((pl) => pl.tray));
+  // Friends whose magic fizzled shrug once it has fallen short.
+  const shrugAt = new Set(zap && zap.stage >= 2 ? dudsOf(zap.friends, zap.beams).map((fi) => zap.friends[fi].at) : []);
   const ghost = drag?.moved && drag.over !== null ? drag.over : null;
   const draggingFromBoard = drag?.moved && drag.from === 'board' ? drag.tray : null;
 
@@ -521,7 +566,9 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, o
 
             {p.fixed.map((f) => (
               <div key={`f${f.at}`} className="friend" style={cellStyle(f.at)}>
-                <div className={`friend-body ${won ? 'dance' : ''}`}><FriendArt kind={f.kind} mood={won ? 'wow' : 'happy'} className="fill" /></div>
+                <div className={`friend-body ${won ? 'dance' : shrugAt.has(f.at) ? 'confused' : ''}`}>
+                  <FriendArt kind={f.kind} mood={won ? 'wow' : shrugAt.has(f.at) ? 'wow' : 'happy'} className="fill" />
+                </div>
               </div>
             ))}
 
@@ -531,14 +578,18 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onWin, o
                 className={`friend ${draggingFromBoard === pl.tray ? 'lifted-away' : ''} ${slimed.includes(pl.tray) ? 'slimed' : ''}`}
                 style={cellStyle(pl.at)}
               >
-                <div className={`friend-body ${won ? 'dance' : 'landed'}`}>
-                  <FriendArt kind={p.tray[pl.tray]} mood={won ? 'wow' : 'happy'} className="fill" />
+                <div className={`friend-body ${won ? 'dance' : shrugAt.has(pl.at) ? 'confused' : 'landed'}`}>
+                  <FriendArt kind={p.tray[pl.tray]} mood={won ? 'wow' : shrugAt.has(pl.at) ? 'wow' : 'happy'} className="fill" />
                 </div>
               </div>
             ))}
 
             {/* The goo reaching for a friend, and a protector's zap, over everyone: next-door squares would hide them. */}
             <svg className="zap-layer over" viewBox={`0 0 ${p.cols * 100} ${p.rows * 100}`} aria-hidden="true">
+              {/* Over the friends, or the fizzling friend would hide its own fizzle. */}
+              {zap && dudsOf(zap.friends, zap.beams).map((fi, k) => (
+                <FizzleArt key={`z${fi}`} p={p} from={zap.friends[fi].at} kind={zap.friends[fi].kind} delay={(zap.beams.length + k) * BEAM_STAGGER_MS} />
+              ))}
               {reach?.kind === 'thwart' && reach.by && (
                 <BeamArt p={p} from={reach.by.at} to={reach.at} kind={reach.by.kind} delay={0} />
               )}
