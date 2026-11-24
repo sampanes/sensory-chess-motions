@@ -252,7 +252,8 @@ every helper is needed (the puzzle cannot be won without it). The grown-up table
 puzzles with a slime in the grumpy king's place, explained with no words. When the last friend
 lands, every friend fires magic at the slime's patch (a straight sparkly beam along its lines; the
 knight lobs a ball) and sparkles land where it reaches. All hit: the slime pops. A square left open:
-the slime oozes a copy onto it. Everything around it hit but not the slime: it sticks its tongue out
+the slime oozes a copy onto it; if the slime itself was hit, it leaves its own square and only the
+copies are left (John, 2026-11-24). Everything around it hit but not the slime: it sticks its tongue out
 (stalemate). A friend dropped next to it with no protector gets gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray). Order matters, so the protector has to land first; when the
 gobble is on the last drop, the showdown follows with whoever is left (John, 2026-11-23); for
 a protected one, the protector throws a magic bubble around it and the slime bonks off (John's

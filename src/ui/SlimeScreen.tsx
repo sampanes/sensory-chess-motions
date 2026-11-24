@@ -5,7 +5,8 @@
 // straight sparkly beam along its lines, or a lobbed ball for the knight.
 // Sparkles land on every square a beam reaches. Then:
 //   - every square hit, the slime too: it pops (the win);
-//   - a square around it left open: the slime oozes a copy onto each open square;
+//   - a square around it left open: the slime oozes a copy onto each open square
+//     (if it was hit too, it leaves its own square: only the copies are left);
 //   - every square around it hit but not the slime: it sticks its tongue out (stalemate).
 // A friend dropped right next to the slime with nobody protecting it gets
 // gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray). One that is protected: the slime reaches
@@ -381,10 +382,12 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
 
   const slimeHit = zap !== null && zap.stage >= 2 && zap.hits.has(p.king);
   const popped = zap?.stage === 3 && zap.result === 'mate';
+  // Hit but with somewhere to go: the slime leaves its square for good; only the copies are left.
+  const fled = zap?.stage === 3 && zap.result === 'check';
   let mood: SlimeMood = status === 'check' ? 'hit' : 'idle';
   if (reach) mood = bonked ? 'hit' : 'smug';
-  if (zap) mood = zap.stage === 1 ? 'idle' : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit && zap.result === 'mate' ? 'hit' : 'smug';
-  const slimeAnim = popped ? 'slime-pop' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach ? 'slime-hop' : 'bob';
+  if (zap) mood = zap.stage === 1 ? 'idle' : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit ? 'hit' : 'smug';
+  const slimeAnim = popped ? 'slime-pop' : fled ? 'split-away' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach ? 'slime-hop' : 'bob';
   const kr = Math.floor(p.king / p.cols);
   const kc = p.king % p.cols;
   const glowZone = variant === 'glow' && !zap && !won && !reach;
@@ -510,7 +513,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
               )}
             </svg>
 
-            {zap && zap.stage >= 2 && [...zap.hits].filter((pos) => pos !== p.king || zap.stage === 2 || zap.result === 'mate').map((pos) => (
+            {zap && zap.stage >= 2 && [...zap.hits].filter((pos) => pos !== p.king || zap.stage === 2 || zap.result === 'mate' || zap.result === 'check').map((pos) => (
               <div key={`h${pos}`} className={`hit-spark ${pos === p.king ? 'on-slime' : ''}`} style={cellStyle(pos)}>
                 <Sparkle className="fill" />
               </div>
