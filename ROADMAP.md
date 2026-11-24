@@ -255,7 +255,8 @@ knight lobs a ball) and sparkles land where it reaches. All hit: the slime pops.
 the slime oozes a copy onto it; if the slime itself was hit, it leaves its own square and only the
 copies are left (John, 2026-11-24). Everything around it hit but not the slime: it sticks its tongue out
 (stalemate). A friend dropped next to it with no protector gets gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray). Order matters, so the protector has to land first; when the
-gobble is on the last drop, the showdown follows with whoever is left (John, 2026-11-23); for
+gobble is on the last drop, that bite is the slime's way out: it stays on the square it ate and
+celebrates, no showdown (John, 2026-11-24); for
 a protected one, the protector throws a magic bubble around it and the slime bonks off (John's
 idea, same day). Variants: glow (squares light while a friend is held, as bedtime) or beams (the
 held friend shows its own magic from where it would land, no red squares; friends already down keep

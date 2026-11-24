@@ -9,7 +9,8 @@
 //     (if it was hit too, it leaves its own square: only the copies are left);
 //   - every square around it hit but not the slime: it sticks its tongue out (stalemate).
 // A friend dropped right next to the slime with nobody protecting it gets
-// gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray). One that is protected: the slime reaches
+// gobbled (the slime hops onto it, chomps, hops home and leaves goo; the friend goes back to the tray).
+// On the last drop the slime stays where it ate and celebrates: that bite was its way out, game over. One that is protected: the slime reaches
 // for it and bonks off the magic bubble its protector throws around it.
 //
 // Variants: 'glow' lights the squares around the slime while a friend is held,
@@ -73,6 +74,8 @@ interface Zap {
 interface Reach {
   at: number;
   kind: 'gobble' | 'thwart';
+  /** Gobble on the last drop: the slime stays on the square it ate. */
+  stay?: boolean;
   /** Thwart: the protector that zaps the goo. */
   by?: Friend;
 }
@@ -138,6 +141,8 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   const [reach, setReach] = useState<Reach | null>(null);
   const [bonked, setBonked] = useState(false);
   const [slimed, setSlimed] = useState<number[]>([]);
+  /** Where the slime sits after eating the last friend dropped, celebrating. */
+  const [feast, setFeast] = useState<number | null>(null);
   const [hint, setHint] = useState<Placement | null>(null);
   const [idleKey, setIdleKey] = useState(0);
   const layer = useRef<HTMLDivElement>(null);
@@ -192,6 +197,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
     setZap(null);
     setReach(null);
     setSlimed([]);
+    setFeast(null);
     setPlaced([]);
     setHint(null);
     setRound((r) => r + 1);
@@ -238,26 +244,30 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
       const attempted = [...placed.filter((pl) => pl.tray !== t), { tray: t, at }];
       setPlaced(attempted);
       setBusy(true);
+      // Earlier drops just lose the friend: order matters. On the last drop the slime's final bite
+      // is its way out: it stays on that square and celebrates, and the puzzle starts over.
+      const lastDrop = attempted.length === p.tray.length;
       res.shooed.forEach((trayIndex, i) => {
         const target = attempted.find((pl) => pl.tray === trayIndex)!;
         const t0 = i * GOBBLE_MS + 250;
-        later(() => { setReach({ at: target.at, kind: 'gobble' }); sfx.gobble(); }, t0);
+        const stay = lastDrop && i === res.shooed.length - 1;
+        later(() => { setReach({ at: target.at, kind: 'gobble', stay }); sfx.gobble(); }, t0);
         later(() => setSlimed((s) => [...s, trayIndex]), t0 + 330);
         later(() => setPlaced((cur) => cur.filter((pl) => pl.tray !== trayIndex)), t0 + 900);
-        later(() => setReach(null), t0 + 1250);
+        if (stay) {
+          later(() => { setFeast(target.at); setReach(null); sfx.raspberry(); }, t0 + 950);
+        } else {
+          later(() => setReach(null), t0 + 1250);
+        }
       });
-      // On the last drop the showdown follows with whoever is left, so the slime also oozes
-      // onto every square it can still reach. Earlier drops just lose the friend: order matters.
-      const lastDrop = attempted.length === p.tray.length;
+      if (lastDrop) {
+        later(reset, (res.shooed.length - 1) * GOBBLE_MS + 250 + 950 + AFTER_RESULT_MS);
+        return;
+      }
       later(() => {
         setPlaced(res.placed);
         setSlimed([]);
-        if (!lastDrop) {
-          setBusy(false);
-          return;
-        }
-        const left = friendsOf(p, res.placed);
-        showdown(left, mateStatus(p, left));
+        setBusy(false);
       }, res.shooed.length * GOBBLE_MS + 250);
       return;
     }
@@ -385,17 +395,17 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
   // Hit but with somewhere to go: the slime leaves its square for good; only the copies are left.
   const fled = zap?.stage === 3 && zap.result === 'check';
   let mood: SlimeMood = status === 'check' ? 'hit' : 'idle';
-  if (reach) mood = bonked ? 'hit' : 'smug';
+  if (reach || feast !== null) mood = bonked ? 'hit' : 'smug';
   if (zap) mood = zap.stage === 1 ? 'idle' : zap.stage === 2 ? (slimeHit ? 'hit' : 'smug') : zap.result === 'stalemate' ? 'nyah' : slimeHit ? 'hit' : 'smug';
-  const slimeAnim = popped ? 'slime-pop' : fled ? 'split-away' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach ? 'slime-hop' : 'bob';
+  const slimeAnim = popped ? 'slime-pop' : fled ? 'split-away' : zap?.stage === 3 && zap.result === 'stalemate' ? 'nyah' : slimeHit && zap?.stage === 2 ? 'flinch' : reach?.kind === 'thwart' ? 'lunge' : reach?.stay ? 'slime-take' : reach ? 'slime-hop' : feast !== null ? 'dance' : 'bob';
   const kr = Math.floor(p.king / p.cols);
   const kc = p.king % p.cols;
-  const glowZone = variant === 'glow' && !zap && !won && !reach;
+  const glowZone = variant === 'glow' && !zap && !won && !reach && feast === null;
   // Beams variant: the held friend's own magic, from where it would land.
   const held = variant === 'beams' && drag?.moved && drag.over !== null ? friendsOf(p, [...lifted, { tray: drag.tray, at: drag.over }]) : null;
   const previewBeams = held ? beamsOf(p, held).filter((b) => b.friend === held.length - 1) : [];
   // Beams variant: friends already on the board keep their magic showing, faint (glow's lit squares do the same).
-  const standingFriends = variant === 'beams' && !zap && !won && !reach ? friendsOf(p, lifted) : [];
+  const standingFriends = variant === 'beams' && !zap && !won && !reach && feast === null ? friendsOf(p, lifted) : [];
   const standingBeams = beamsOf(p, standingFriends);
   const standingSparks = [...new Set(standingBeams.map((b) => b.to))].filter((pos) => !previewBeams.some((b) => b.to === pos));
   const reachBy = reach?.kind === 'thwart' ? 30 : 100;
@@ -461,7 +471,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
             </svg>
 
             {!popped && !won && (
-              <div className={`friend slime-at ${reach?.kind === 'gobble' ? 'on-top' : ''}`} style={cellStyle(p.king)}>
+              <div className={`friend slime-at ${reach?.kind === 'gobble' || feast !== null ? 'on-top' : ''}`} style={cellStyle(feast ?? p.king)}>
                 <div key={`s${round}-${slimeAnim}`} className={`friend-body ${slimeAnim}`} style={lunge}>
                   <SlimeArt mood={mood} className="fill" />
                 </div>
@@ -518,7 +528,7 @@ export function SlimeScreen({ grid, tray, sky, variant, eagerHint, top, onNext, 
                 <Sparkle className="fill" />
               </div>
             ))}
-            {reach?.kind === 'gobble' && (
+            {reach?.kind === 'gobble' && !reach.stay && (
               <div key={`goo${reach.at}`} className="friend goo-left" style={cellStyle(reach.at)}>
                 <GooCover className="fill" />
               </div>
