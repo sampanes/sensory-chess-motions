@@ -21,7 +21,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import {
-  beams as beamsOf, canPlace, defenders, drop, escapes, friendsOf, kingZone, mateStatus, mustParseMate, solveMate,
+  beams as beamsOf, canPlace, defenders, drop, escapes, friendsOf, kingZone, mateStatus, mustParseMate, patchWatchers, solveMate,
   touchesKing, type Beam, type MatePuzzle, type MateStatus, type Placement,
 } from '../core/mate.ts';
 import type { Friend, Kind } from '../core/types.ts';
@@ -119,6 +119,15 @@ export function BeamArt({ p, from, to, kind, delay }: { p: MatePuzzle; from: num
       <path d={d} className="beam-sparkles" />
     </g>
   );
+}
+
+/** A covered patch square: one friend's color, or stripes of each friend's when several watch it. */
+function coverFill(fills: readonly string[]): string {
+  const unique = [...new Set(fills)];
+  if (unique.length === 1) return unique[0];
+  const band = 12;
+  const stops = unique.map((f, i) => `${f} ${i * band}px ${(i + 1) * band}px`).join(', ');
+  return `repeating-linear-gradient(45deg, ${stops})`;
 }
 
 /** Friends (by index) none of whose magic reaches the slime's patch. */
@@ -530,7 +539,13 @@ export function SlimeScreen({ grid, tray, sky, variant, boss, eagerHint, top, on
   // Hidden while anything plays (gobble, bubble, showdown), so they never blink back on between two parts.
   const standingFriends = variant === 'beams' && !busy && !zap && !won ? friendsOf(p, lifted) : [];
   const standingBeams = beamsOf(p, standingFriends);
-  const standingSparks = [...new Set(standingBeams.map((b) => b.to))].filter((pos) => !previewBeams.some((b) => b.to === pos));
+  // Beams variant: every square of the slime's patch says where it stands. Covered: the color of
+  // the friend(s) watching it, a solid edge and a sparkle. Open (the slime could go there, or is
+  // not hit yet): a dashed purple edge. While a friend is held, what its drop would make, and the
+  // squares it would newly cover pulse. Hidden while anything plays, like the standing beams.
+  const patchFriends = variant === 'beams' && !busy && !zap && !won ? held ?? standingFriends : null;
+  const patch = patchFriends ? patchWatchers(p, patchFriends) : null;
+  const patchBefore = held ? patchWatchers(p, standingFriends) : null;
   const reachBy = reach?.kind === 'thwart' ? 30 : 100;
   const lunge = reach
     ? { '--lx': `${((reach.at % p.cols) - kc) * reachBy}%`, '--ly': `${(Math.floor(reach.at / p.cols) - kr) * reachBy}%` } as CSSProperties
@@ -568,6 +583,20 @@ export function SlimeScreen({ grid, tray, sky, variant, boss, eagerHint, top, on
                 <div key={`z${pos}`} className={`watched ${preview && !before.has(pos) ? 'fresh' : ''}`} style={cellStyle(pos)} />
               ))}
               {glowZone && shown.check && <div className="watched check" style={cellStyle(p.king)} />}
+              {patch && patchFriends && [...patch].map(([pos, who]) => {
+                if (who.length === 0) return <div key={`pt${pos}`} className="patch open" style={cellStyle(pos)} />;
+                const colors = who.map((i) => PALETTE[patchFriends[i].kind]);
+                const fresh = patchBefore !== null && (patchBefore.get(pos)?.length ?? 0) === 0;
+                return (
+                  <div
+                    key={`pt${pos}`}
+                    className={`patch covered ${fresh ? 'fresh' : ''}`}
+                    style={{ ...cellStyle(pos), background: coverFill(colors.map((c) => c.fill)), '--cd': colors[0].dark } as CSSProperties}
+                  >
+                    <Sparkle className="fill" />
+                  </div>
+                );
+              })}
             </div>
 
             {/* Every beam, under the friends. */}
@@ -671,16 +700,6 @@ export function SlimeScreen({ grid, tray, sky, variant, boss, eagerHint, top, on
                 <div className="shield-bubble" />
               </div>
             )}
-            {standingSparks.map((pos) => (
-              <div key={`ss${pos}`} className="hit-spark preview-spark standing" style={cellStyle(pos)}>
-                <Sparkle className="fill" />
-              </div>
-            ))}
-            {previewBeams.map((b) => (
-              <div key={`ps${b.to}`} className="hit-spark preview-spark" style={cellStyle(b.to)}>
-                <Sparkle className="fill" />
-              </div>
-            ))}
 
             {ghost !== null && drag && (
               <div className="friend ghost" style={cellStyle(ghost)}>

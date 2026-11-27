@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { BEDTIME_LEVELS } from '../src/content/bedtime.ts';
 import {
-  beams, defenders, touchesKing,
+  beams, defenders, patchWatchers, touchesKing,
   canPlace, coverage, drop, escapes, friendsOf, mateStatus, mustParseMate, parseMate, solveMate,
   type MatePuzzle, type Placement,
 } from '../src/core/mate.ts';
@@ -112,4 +112,35 @@ test('defenders: who protects a friend', () => {
   const friends = friendsOf(p, [{ tray: 0, at: 7 }]); // queen right under the king, the king two below
   assert.deepEqual(defenders(p, friends, 1), [0]);
   assert.ok(touchesKing(p, 7) && !touchesKing(p, 12));
+});
+
+test('patch watchers agree with the rules: open squares are the escapes, a watched king is in check', () => {
+  // Every friend dropped on every square of every bedtime puzzle, one at a time, plus each
+  // solution's steps: the colored and dashed squares the screen draws must tell the truth.
+  for (const l of BEDTIME_LEVELS) {
+    const p = mustParseMate(l.grid, l.tray);
+    const boards: Placement[][] = [[]];
+    for (let t = 0; t < p.tray.length; t++) {
+      for (let at = 0; at < p.rows * p.cols; at++) {
+        if (canPlace(p, friendsOf(p, []), p.tray[t], at)) boards.push([{ tray: t, at }]);
+      }
+    }
+    for (const way of solveMate(p, [], 5)) {
+      for (let n = 1; n <= way.length; n++) boards.push(way.slice(0, n));
+    }
+    for (const placed of boards) {
+      const friends = friendsOf(p, placed);
+      const w = patchWatchers(p, friends);
+      const open = new Set(escapes(p, friends));
+      for (const [pos, who] of w) {
+        if (pos === p.king) {
+          const check = ['check', 'mate'].includes(mateStatus(p, friends));
+          assert.equal(who.length > 0, check, `${l.id}: the king's square and check disagree`);
+        } else {
+          assert.equal(who.length === 0, open.has(pos), `${l.id}: square ${pos} watched/open disagrees with escapes()`);
+        }
+      }
+      for (const pos of open) assert.ok(w.has(pos), `${l.id}: escape ${pos} is not in the patch`);
+    }
+  }
 });

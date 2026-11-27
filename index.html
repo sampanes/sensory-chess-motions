@@ -11,7 +11,11 @@
     <meta name="theme-color" content="#7cc4f5" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Tiny Hops" />
-    <meta name="color-scheme" content="light" />
+    <!-- "only light": a phone in dark mode (Chrome, Brave, Samsung Internet) otherwise
+         auto-darkens the page and turns the light meadow board near black. The game has
+         one hand-picked palette; "only" asks the browser to leave it alone. Same rule on
+         :root in src/index.css. -->
+    <meta name="color-scheme" content="only light" />
   </head>
   <body>
     <div id="root"></div>

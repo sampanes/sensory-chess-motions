@@ -189,6 +189,22 @@ export function beams(p: MatePuzzle, friends: readonly Friend[]): Beam[] {
   return out;
 }
 
+/**
+ * Who watches each square of the grumpy king's patch: his own square and every square around
+ * him that is not a rock, each mapped to the friends (indexes) that watch it. A square with
+ * nobody is open: he could step there, or take the lonely friend on it; his own square with
+ * nobody means he is not in check. Agrees with escapes() and mateStatus().
+ */
+export function patchWatchers(p: MatePuzzle, friends: readonly Friend[]): Map<number, number[]> {
+  const friendAt = new Set(friends.map((f) => f.at));
+  const out = new Map<number, number[]>();
+  for (const pos of [p.king, ...kingZone(p)]) if (!p.rocks[pos]) out.set(pos, []);
+  friends.forEach((f, i) => {
+    for (const pos of watchedBy(p, f, friendAt)) out.get(pos)?.push(i);
+  });
+  return out;
+}
+
 /** Friends (indexes) that protect friend `i`: they watch its square. */
 export function defenders(p: MatePuzzle, friends: readonly Friend[], i: number): number[] {
   const friendAt = new Set(friends.map((f) => f.at));

@@ -5,6 +5,12 @@
 /* Visible height. A custom property cannot fall back by repeating it (the
    last one always wins, even if the browser lacks dvh), hence @supports. */
 :root { --vh: 100vh; }
+
+/* Dark mode: without this a phone browser in dark mode auto-darkens the page and
+   turns the light board near black. "only light" asks it to leave the colors alone.
+   Do not set color-scheme on anything below the root: auto-darkening is decided per
+   element, and a plain "light" lower down switches it back on for that subtree. */
+:root { color-scheme: only light; }
 @supports (height: 100dvh) { :root { --vh: 100dvh; } }
 
 html, body, #root { margin: 0; height: 100%; }
@@ -1178,10 +1184,32 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 4px solid
 .hit-spark > svg { transform: scale(0.85); }
 .hit-spark.on-slime > svg { transform: scale(1.05); }
 .preview-spark { animation: none; opacity: 0.8; }
+/* Bedtime, square by square around the slime (src/ui/SlimeScreen.tsx). Covered: the watching
+   friend's color, a solid edge and a sparkle. Open: a dashed purple edge on a pale wash. Two
+   different looks (solid and sparkly, dashed and empty), so it never rests on color alone. */
+.patch { position: absolute; pointer-events: none; box-sizing: border-box; }
+.patch.covered {
+  box-shadow: inset 0 0 0 calc(18px / var(--cols, 5)) var(--cd);
+  padding: calc(26% / var(--cols, 5)); /* a padding % is of the board, not the square */
+  opacity: 0.92;
+}
+.patch.covered > svg { opacity: 0.95; }
+.patch.covered.fresh { animation: patch-pulse 0.8s ease-in-out infinite; }
+@keyframes patch-pulse { 0%, 100% { opacity: 0.92; } 50% { opacity: 0.5; } }
+.patch.open { background: rgba(243, 232, 255, 0.55); }
+.patch.open::after {
+  content: '';
+  position: absolute;
+  inset: 7%;
+  border: calc(16px / var(--cols, 5)) dashed #a855f7;
+  border-radius: 18%;
+}
+[data-contrast='high'] .patch.covered { box-shadow: inset 0 0 0 5px #0f172a; }
+[data-contrast='high'] .patch.open::after { border-color: #581c87; }
 .preview-spark > svg { transform: scale(0.6); }
 .beam-preview { fill: none; stroke-width: 22; stroke-linecap: round; opacity: 0.6; }
 .beam-preview.lob { stroke-width: 7; stroke-dasharray: 0 20; opacity: 0.85; }
-.beam-preview.standing { stroke-width: 14; opacity: 0.35; }
+.beam-preview.standing { stroke-width: 14; opacity: 0.45; }
 .beam-preview.standing.lob { stroke-width: 6; opacity: 0.55; }
 .preview-spark.standing { opacity: 0.55; }
 .preview-spark.standing > svg { transform: scale(0.45); }
